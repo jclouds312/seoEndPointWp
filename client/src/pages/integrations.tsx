@@ -4,9 +4,38 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Globe, Key, Lock, Search } from "lucide-react";
+import { CheckCircle2, Globe, Key, Lock, Search, RefreshCw, XCircle, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
 
 export default function Integrations() {
+  const [yoastKey, setYoastKey] = useState("sk_live_xxxxxxxxxxxxx");
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
+
+  const handleConnect = () => {
+    setIsConnecting(true);
+    // Simulate API verification
+    setTimeout(() => {
+      setIsConnecting(false);
+      setIsConnected(true);
+      toast({
+        title: "Connection Successful",
+        description: "Yoast SEO Premium API key verified.",
+      });
+    }, 2000);
+  };
+
+  const handleDisconnect = () => {
+    setIsConnected(false);
+    setYoastKey("");
+    toast({
+      title: "Disconnected",
+      description: "Yoast SEO integration has been removed.",
+      variant: "destructive",
+    });
+  };
+
   return (
     <SidebarLayout>
       <div className="flex items-center justify-between mb-8">
@@ -65,7 +94,13 @@ export default function Integrations() {
                   <CardDescription>SEO Metadata & Analysis</CardDescription>
                 </div>
               </div>
-              <Badge className="bg-green-600 hover:bg-green-700">Connected</Badge>
+              <div className="flex items-center gap-2">
+                 {isConnected ? (
+                   <Badge className="bg-green-600 hover:bg-green-700">Connected</Badge>
+                 ) : (
+                   <Badge variant="outline" className="text-slate-500">Not Connected</Badge>
+                 )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -74,13 +109,44 @@ export default function Integrations() {
                 <Label>API Key</Label>
                 <div className="relative">
                    <Key className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                   <Input type="password" value="sk_live_xxxxxxxxxxxxx" disabled className="pl-9 bg-slate-50" />
+                   <Input 
+                      type="password" 
+                      value={yoastKey} 
+                      onChange={(e) => setYoastKey(e.target.value)}
+                      placeholder="sk_live_..."
+                      className="pl-9 bg-white" 
+                      disabled={isConnected}
+                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Plugin Version</Label>
                 <Input value="25.7" disabled className="bg-slate-50" />
               </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              {isConnected ? (
+                <>
+                  <Button variant="outline" className="text-slate-600" onClick={() => toast({ title: "Test Successful", description: "API is responding correctly." })}>
+                    Test Connection
+                  </Button>
+                  <Button variant="destructive" onClick={handleDisconnect}>
+                    Disconnect
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={handleConnect} disabled={!yoastKey || isConnecting} className="min-w-[120px]">
+                  {isConnecting ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    "Connect API"
+                  )}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
