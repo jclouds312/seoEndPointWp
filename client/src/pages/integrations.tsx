@@ -9,7 +9,7 @@ import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 
 export default function Integrations() {
-  const [yoastKey, setYoastKey] = useState("sk_live_xxxxxxxxxxxxx");
+  const [yoastKey, setYoastKey] = useState("sk_live_eJs3M*LnfSSo68P!RtXC9lZ"); // Updated with provided credential part
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
 
@@ -21,7 +21,7 @@ export default function Integrations() {
       setIsConnected(true);
       toast({
         title: "Connection Successful",
-        description: "Yoast SEO Premium API key verified.",
+        description: "API key verified.",
       });
     }, 2000);
   };
@@ -31,7 +31,7 @@ export default function Integrations() {
     setYoastKey("");
     toast({
       title: "Disconnected",
-      description: "Yoast SEO integration has been removed.",
+      description: "Integration has been removed.",
       variant: "destructive",
     });
   };
@@ -65,18 +65,22 @@ export default function Integrations() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Site URL</Label>
-                <Input value="https://www.californiapersonalinjurylawyersblog.com/" disabled className="bg-white" />
+                <Input value="https://www.californiapersonalinjurylawyersblog.com/" disabled className="bg-white font-mono text-xs" />
               </div>
               <div className="space-y-2">
                 <Label>Admin Username</Label>
-                <Input value="walchlaw4" disabled className="bg-white" />
+                <Input value="walchlaw4" disabled className="bg-white font-mono text-xs" />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>API Endpoint</Label>
+                <Input value="https://www.californiapersonalinjurylawyersblog.com/wp-json/wp/v2/" disabled className="bg-white font-mono text-xs" />
               </div>
             </div>
             <div className="mt-4 p-4 bg-blue-100 rounded-lg text-sm text-blue-800 flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
               <div>
                 <strong>Connection Healthy</strong>
-                <p className="mt-1 text-blue-700/80">Last successful ping: 2 minutes ago. REST API is accessible.</p>
+                <p className="mt-1 text-blue-700/80">Authenticated as walchlaw4. REST API is accessible.</p>
               </div>
             </div>
           </CardContent>
@@ -113,8 +117,8 @@ export default function Integrations() {
                       type="password" 
                       value={yoastKey} 
                       onChange={(e) => setYoastKey(e.target.value)}
-                      placeholder="sk_live_..."
-                      className="pl-9 bg-white" 
+                      placeholder="Enter API Key"
+                      className="pl-9 bg-white font-mono text-xs" 
                       disabled={isConnected}
                    />
                 </div>
