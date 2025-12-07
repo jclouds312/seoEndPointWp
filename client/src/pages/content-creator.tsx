@@ -31,6 +31,7 @@ import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Campaign } from "@/lib/schema";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface ContentTemplate {
   id: string;
@@ -121,6 +122,7 @@ export default function ContentCreator() {
   const [creativity, setCreativity] = useState([0.7]);
   const [includeImages, setIncludeImages] = useState(true);
   const [includeSEO, setIncludeSEO] = useState(true);
+  const [aiProvider, setAiProvider] = useState<'openai' | 'claude'>('openai');
   const [generatedContent, setGeneratedContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
@@ -153,7 +155,9 @@ export default function ContentCreator() {
     try {
       const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
       
-      const response = await fetch('/api/generate-content', {
+      const endpoint = aiProvider === 'claude' ? '/api/generate-content-claude' : '/api/generate-content';
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -211,7 +215,7 @@ export default function ContentCreator() {
 
       toast({
         title: "¡Contenido generado exitosamente!",
-        description: "El contenido ha sido creado con OpenAI GPT-4"
+        description: `El contenido ha sido creado con ${aiProvider === 'claude' ? 'Claude 3.5 Sonnet' : 'OpenAI GPT-4'}`
       });
 
       if (includeSEO) {
@@ -412,6 +416,19 @@ export default function ContentCreator() {
               </div>
 
               <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Proveedor de IA</Label>
+                  <RadioGroup value={aiProvider} onValueChange={(value: any) => setAiProvider(value)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="openai" id="openai" />
+                      <Label htmlFor="openai" className="font-normal">OpenAI GPT-4</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="claude" id="claude" />
+                      <Label htmlFor="claude" className="font-normal">Claude 3.5 Sonnet</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
                 <div className="flex items-center justify-between">
                   <Label>Sugerir imágenes</Label>
                   <Switch checked={includeImages} onCheckedChange={setIncludeImages} />

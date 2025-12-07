@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { Router } from "express";
 import { z } from "zod";
 import { generateContent, generateBulkContent, type ContentGenerationRequest } from "./openai";
+import { generateContentWithClaude, generateWithClaude } from "./claude"; // Assuming claude.ts exists and has these functions
 
 export async function registerRoutes(
   httpServer: Server,
@@ -65,6 +66,64 @@ export async function registerRoutes(
       });
     }
   });
+
+  // Content Generation with Claude
+  router.post("/api/generate-content-claude", async (req, res) => {
+    try {
+      const schema = z.object({
+        topic: z.string().min(1),
+        keywords: z.array(z.string()),
+        wordCount: z.number().min(300).max(8000),
+        tone: z.string(),
+        language: z.string().optional(),
+      });
+
+      const data = schema.parse(req.body);
+      const result = await generateContentWithClaude(
+        data.topic,
+        data.keywords,
+        data.wordCount,
+        data.tone,
+        data.language
+      );
+
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error generating content with Claude:", error);
+      res.status(500).json({
+        error: "Failed to generate content with Claude",
+        message: error.message
+      });
+    }
+  });
+
+  // Generic Claude API endpoint
+  router.post("/api/claude", async (req, res) => {
+    try {
+      const schema = z.object({
+        messages: z.array(z.object({
+          role: z.enum(['user', 'assistant']),
+          content: z.string(),
+        })),
+        model: z.string().optional(),
+        max_tokens: z.number().optional(),
+        temperature: z.number().optional(),
+        system: z.string().optional(),
+      });
+
+      const data = schema.parse(req.body);
+      const result = await generateWithClaude(data);
+
+      res.json({ content: result });
+    } catch (error: any) {
+      console.error("Error calling Claude API:", error);
+      res.status(500).json({
+        error: "Failed to call Claude API",
+        message: error.message
+      });
+    }
+  });
+
 
   app.use(router);
 
