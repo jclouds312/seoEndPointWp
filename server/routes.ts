@@ -7,6 +7,14 @@ import { campaigns } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { generateContent, optimizeSEO, generateImageSuggestions } from "./openai";
 import WordPressDatabase from "./wordpress-db";
+import JetpackIntegration from "./jetpack-integration";
+
+// Inicializar conexión a WordPress y Jetpack
+const jetpack = new JetpackIntegration({
+  siteUrl: 'https://www.californiapersonalinjurylawyersblog.com',
+  wpUsername: process.env.WP_USERNAME || 'walchlaw4',
+  wpPassword: process.env.WP_PASSWORD || ''
+});
 
 // Inicializar conexión a WordPress DB
 let wpDb: WordPressDatabase | null = null;
@@ -266,6 +274,87 @@ export async function registerRoutes(
     } catch (error) {
       console.error('Categories fetch error:', error);
       res.status(500).json({ error: 'Failed to fetch categories' });
+    }
+  });
+
+  // Jetpack Routes
+  
+  // Verificar estado de Jetpack
+  app.get("/api/jetpack/status", async (req, res) => {
+    try {
+      const isActive = await jetpack.isJetpackActive();
+      res.json({ active: isActive });
+    } catch (error) {
+      console.error('Jetpack status check error:', error);
+      res.status(500).json({ error: 'Failed to check Jetpack status' });
+    }
+  });
+
+  // Obtener estadísticas de Jetpack
+  app.get("/api/jetpack/stats", async (req, res) => {
+    try {
+      const days = parseInt(req.query.days as string) || 30;
+      const stats = await jetpack.getStats(days);
+      res.json({ stats });
+    } catch (error) {
+      console.error('Jetpack stats error:', error);
+      res.status(500).json({ error: 'Failed to fetch Jetpack stats' });
+    }
+  });
+
+  // Compartir post en redes sociales
+  app.post("/api/jetpack/share/:postId", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.postId);
+      const { message } = req.body;
+      
+      const result = await jetpack.shareToSocial(postId, message);
+      res.json({ success: true, result });
+    } catch (error) {
+      console.error('Jetpack share error:', error);
+      res.status(500).json({ error: 'Failed to share post' });
+    }
+  });
+
+  // Obtener conexiones de redes sociales
+  app.get("/api/jetpack/social-connections", async (req, res) => {
+    try {
+      const connections = await jetpack.getSocialConnections();
+      res.json({ connections });
+    } catch (error) {
+      console.error('Jetpack connections error:', error);
+      res.status(500).json({ error: 'Failed to fetch social connections' });
+    }
+  });
+
+  // Optimizar imagen con Jetpack CDN
+  app.get("/api/jetpack/optimize-image", async (req, res) => {
+    try {
+      const imageUrl = req.query.url as string;
+      const width = req.query.width ? parseInt(req.query.width as string) : undefined;
+      const height = req.query.height ? parseInt(req.query.height as string) : undefined;
+
+      if (!imageUrl) {
+        return res.status(400).json({ error: 'Image URL required' });
+      }
+
+      const optimizedUrl = jetpack.getPhotonUrl(imageUrl, width, height);
+      res.json({ optimizedUrl });
+    } catch (error) {
+      console.error('Image optimization error:', error);
+      res.status(500).json({ error: 'Failed to optimize image' });
+    }
+  });
+
+  // Análisis SEO de Jetpack
+  app.get("/api/jetpack/seo/:postId", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.postId);
+      const analysis = await jetpack.analyzeSEO(postId);
+      res.json(analysis);
+    } catch (error) {
+      console.error('Jetpack SEO analysis error:', error);
+      res.status(500).json({ error: 'Failed to analyze SEO' });
     }
   });
 
