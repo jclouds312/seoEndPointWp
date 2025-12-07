@@ -10,6 +10,8 @@ import Workflows from "@/pages/workflow-editor";
 import Integrations from "@/pages/integrations";
 import DataSources from "@/pages/data-sources";
 import Settings from "@/pages/settings";
+import LocalSEO from "@/pages/local-seo";
+import Deployment from "@/pages/deployment";
 
 function Router() {
   return (
@@ -19,6 +21,8 @@ function Router() {
       <Route path="/workflows" component={Workflows} />
       <Route path="/integrations" component={Integrations} />
       <Route path="/data-sources" component={DataSources} />
+      <Route path="/local-seo" component={LocalSEO} />
+      <Route path="/deployment" component={Deployment} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
