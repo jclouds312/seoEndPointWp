@@ -1,0 +1,105 @@
+{
+  "colorScheme": "light",
+  "fonts": [
+    {
+      "family": "Open Sans",
+      "role": "body"
+    },
+    {
+      "family": "Arial",
+      "role": "body"
+    }
+  ],
+  "colors": {
+    "primary": "#21375D",
+    "accent": "#3B63A6",
+    "background": "#FFFFFF",
+    "textPrimary": "#000000",
+    "link": "#3B63A6"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "Open Sans",
+      "heading": "Open Sans"
+    },
+    "fontStacks": {
+      "heading": [
+        "Open Sans",
+        "sans-serif"
+      ],
+      "body": [
+        "Open Sans",
+        "sans-serif"
+      ],
+      "paragraph": [
+        "Open Sans",
+        "sans-serif"
+      ]
+    },
+    "fontSizes": {
+      "h1": "40px",
+      "h2": "23.9999px",
+      "body": "18px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "2px"
+  },
+  "components": {
+    "input": {
+      "borderColor": "#CCCCCC",
+      "borderRadius": "2px"
+    },
+    "buttonPrimary": {
+      "background": "#19992E",
+      "textColor": "#FFFFFF",
+      "borderRadius": "3px",
+      "shadow": "none"
+    },
+    "buttonSecondary": {
+      "background": "#374B6D",
+      "textColor": "#000000",
+      "borderRadius": "0px",
+      "shadow": "none"
+    }
+  },
+  "images": {
+    "logo": "https://www.californiapersonalinjurylawyersblog.com/jresources/v/20230218010354/images/logo.png",
+    "favicon": "https://www.californiapersonalinjurylawyersblog.com/jresources/v/20230218010354/icons/favicon.ico",
+    "ogImage": "https://www.californiapersonalinjurylawyersblog.com/files/2019/02/social-image-logo-og.png"
+  },
+  "__framework_hints": [],
+  "__llm_logo_reasoning": {
+    "selectedIndex": 0,
+    "reasoning": "Logo #0 is the only one that visually represents the brand name 'California Personal Injury Lawyers Blog' and is located in the header, linking to the homepage.",
+    "confidence": 0.9
+  },
+  "__llm_button_reasoning": {
+    "primary": {
+      "index": 0,
+      "text": "Contact Us for a Free Consultation",
+      "reasoning": "Button #0 has a vibrant green background (#19992E) and action-oriented text 'Contact Us for a Free Consultation', making it the primary call-to-action."
+    },
+    "secondary": {
+      "index": 1,
+      "text": "Contact Us for a Free Consultation",
+      "reasoning": "Button #1 has a vibrant blue background (#374B6D) which is different from the primary button's green, making it a suitable secondary option."
+    },
+    "confidence": 0.95
+  },
+  "personality": {
+    "tone": "professional",
+    "energy": "medium",
+    "targetAudience": "individuals seeking legal assistance for personal injury cases"
+  },
+  "designSystem": {
+    "framework": "unknown",
+    "componentLibrary": null
+  },
+  "confidence": {
+    "buttons": 0.95,
+    "colors": 0.9,
+    "overall": 0.925
+  }
+}
