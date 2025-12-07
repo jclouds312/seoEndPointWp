@@ -1,14 +1,11 @@
-import { defineConfig } from "drizzle-kit";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL, ensure the database is provisioned");
-}
+import type { Config } from "drizzle-kit";
 
-export default defineConfig({
-  out: "./migrations",
+export default {
   schema: "./shared/schema.ts",
+  out: "./migrations",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: process.env.DATABASE_URL || "postgresql://localhost:5432/seo_hub",
   },
-});
+} satisfies Config;
