@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Workflow, Zap, Settings, LogOut, Globe, Database, MapPin, Code, Book, ShoppingBag, Megaphone, SearchCheck } from "lucide-react";
+import { LayoutDashboard, Workflow, Zap, Settings, LogOut, Globe, Database, MapPin, Code, Book, ShoppingBag, Megaphone, SearchCheck, FileText } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -19,6 +19,7 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
     { icon: Book, label: "Documentation", href: "/documentation" },
     { icon: Settings, label: "Settings", href: "/settings" },
     { icon: Megaphone, label: "Campañas", href: "/campaigns" },
+    { icon: FileText, label: "Crear Contenido", href: "/content-creator" },
   ];
 
   return (
