@@ -6,6 +6,17 @@ import { db } from "../db";
 import { campaigns } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { generateContent, optimizeSEO, generateImageSuggestions } from "./openai";
+import WordPressDatabase from "./wordpress-db";
+
+// Inicializar conexión a WordPress DB
+let wpDb: WordPressDatabase | null = null;
+
+if (process.env.WORDPRESS_DB_URL) {
+  wpDb = new WordPressDatabase(
+    process.env.WORDPRESS_DB_URL,
+    process.env.WP_TABLE_PREFIX || 'wp_'
+  );
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -150,6 +161,154 @@ export async function registerRoutes(
     } catch (error) {
       console.error('Content publishing error:', error);
       res.status(500).json({ error: 'Failed to publish content' });
+    }
+  });
+
+  // WordPress Database Integration Routes
+  
+  // Obtener posts de lesiones personales desde WordPress
+  app.get("/api/wordpress/posts", async (req, res) => {
+    try {
+      if (!wpDb) {
+        return res.status(503).json({ error: 'WordPress database not configured' });
+      }
+
+      const limit = parseInt(req.query.limit as string) || 50;
+      const posts = await wpDb.getPersonalInjuryPosts(limit);
+      
+      res.json({ posts, count: posts.length });
+    } catch (error) {
+      console.error('WordPress posts fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch WordPress posts' });
+    }
+  });
+
+  // Obtener datos SEO de Yoast para un post
+  app.get("/api/wordpress/seo/:postId", async (req, res) => {
+    try {
+      if (!wpDb) {
+        return res.status(503).json({ error: 'WordPress database not configured' });
+      }
+
+      const postId = parseInt(req.params.postId);
+      const seoData = await wpDb.getYoastSEOData(postId);
+      
+      res.json(seoData);
+    } catch (error) {
+      console.error('Yoast SEO data fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch SEO data' });
+    }
+  });
+
+  // Crear nuevo post en WordPress
+  app.post("/api/wordpress/posts", async (req, res) => {
+    try {
+      if (!wpDb) {
+        return res.status(503).json({ error: 'WordPress database not configured' });
+      }
+
+      const { title, content, status, author, type } = req.body;
+      const postId = await wpDb.insertPost({ title, content, status, author, type });
+      
+      res.json({ success: true, postId });
+    } catch (error) {
+      console.error('WordPress post creation error:', error);
+      res.status(500).json({ error: 'Failed to create post' });
+    }
+  });
+
+  // Actualizar SEO de Yoast para un post
+  app.put("/api/wordpress/seo/:postId", async (req, res) => {
+    try {
+      if (!wpDb) {
+        return res.status(503).json({ error: 'WordPress database not configured' });
+      }
+
+      const postId = parseInt(req.params.postId);
+      const seoData = req.body;
+      
+      await wpDb.updateYoastSEO(postId, seoData);
+      
+      res.json({ success: true, message: 'SEO data updated' });
+    } catch (error) {
+      console.error('Yoast SEO update error:', error);
+      res.status(500).json({ error: 'Failed to update SEO data' });
+    }
+  });
+
+  // Obtener posts que necesitan optimización SEO
+  app.get("/api/wordpress/posts/needs-seo", async (req, res) => {
+    try {
+      if (!wpDb) {
+        return res.status(503).json({ error: 'WordPress database not configured' });
+      }
+
+      const limit = parseInt(req.query.limit as string) || 20;
+      const posts = await wpDb.getPostsNeedingSEO(limit);
+      
+      res.json({ posts, count: posts.length });
+    } catch (error) {
+      console.error('Posts needing SEO fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch posts' });
+    }
+  });
+
+  // Obtener categorías de lesiones personales
+  app.get("/api/wordpress/categories", async (req, res) => {
+    try {
+      if (!wpDb) {
+        return res.status(503).json({ error: 'WordPress database not configured' });
+      }
+
+      const categories = await wpDb.getPersonalInjuryCategories();
+      
+      res.json({ categories });
+    } catch (error) {
+      console.error('Categories fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch categories' });
+    }
+  });
+
+  // Analizar uso de keywords
+  app.get("/api/wordpress/analyze-keyword", async (req, res) => {
+    try {
+      if (!wpDb) {
+        return res.status(503).json({ error: 'WordPress database not configured' });
+      }
+
+      const keyword = req.query.keyword as string;
+      if (!keyword) {
+        return res.status(400).json({ error: 'Keyword parameter required' });
+      }
+
+      const analysis = await wpDb.analyzeKeywordUsage(keyword);
+      
+      res.json({ keyword, results: analysis });
+    } catch (error) {
+      console.error('Keyword analysis error:', error);
+      res.status(500).json({ error: 'Failed to analyze keyword' });
+    }
+  });
+
+  // Test de conexión a WordPress DB
+  app.get("/api/wordpress/health", async (req, res) => {
+    try {
+      if (!wpDb) {
+        return res.json({ 
+          connected: false, 
+          message: 'WordPress database not configured. Set WORDPRESS_DB_URL environment variable.' 
+        });
+      }
+
+      const isConnected = await wpDb.testConnection();
+      
+      res.json({ 
+        connected: isConnected,
+        message: isConnected ? 'WordPress database connected' : 'Connection failed'
+      });
+    } catch (error) {
+      console.error('WordPress DB health check error:', error);
+      res.status(500).json({ connected: false, error: 'Health check failed' });
     }
   });
 
