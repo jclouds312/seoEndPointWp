@@ -2,7 +2,7 @@ import SidebarLayout from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Play, MoreVertical, GitBranch, Settings2, FileJson, Zap, ArrowRight, Database, Mail } from "lucide-react";
+import { Plus, Play, MoreVertical, GitBranch, Settings2, FileJson, Zap, ArrowRight, Database, Mail, Search } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 

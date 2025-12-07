@@ -8,6 +8,8 @@ import Login from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
 import Workflows from "@/pages/workflow-editor";
 import Integrations from "@/pages/integrations";
+import DataSources from "@/pages/data-sources";
+import Settings from "@/pages/settings";
 
 function Router() {
   return (
@@ -16,6 +18,8 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/workflows" component={Workflows} />
       <Route path="/integrations" component={Integrations} />
+      <Route path="/data-sources" component={DataSources} />
+      <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );
