@@ -169,6 +169,76 @@ export async function registerRoutes(
     }
   });
 
+  // Content analysis endpoint
+  app.post("/api/content/analyze", async (req, res) => {
+    try {
+      const { content, keywords } = req.body;
+      const { analyzeContent } = await import('./openai');
+      const analysis = await analyzeContent(content, keywords.split(',').map((k: string) => k.trim()));
+      
+      res.json(analysis);
+    } catch (error) {
+      console.error('Content analysis error:', error);
+      res.status(500).json({ error: 'Failed to analyze content' });
+    }
+  });
+
+  // Keyword extraction endpoint
+  app.post("/api/content/extract-keywords", async (req, res) => {
+    try {
+      const { content, topN = 10 } = req.body;
+      const { extractKeywords } = await import('./openai');
+      const keywords = await extractKeywords(content, topN);
+      
+      res.json({ keywords });
+    } catch (error) {
+      console.error('Keyword extraction error:', error);
+      res.status(500).json({ error: 'Failed to extract keywords' });
+    }
+  });
+
+  // Content variations for A/B testing
+  app.post("/api/content/variations", async (req, res) => {
+    try {
+      const { prompt, keywords, variations = 3 } = req.body;
+      const { generateContentVariations } = await import('./openai');
+      const results = await generateContentVariations(prompt, keywords, variations);
+      
+      res.json({ variations: results });
+    } catch (error) {
+      console.error('Content variations error:', error);
+      res.status(500).json({ error: 'Failed to generate variations' });
+    }
+  });
+
+  // Content translation endpoint
+  app.post("/api/content/translate", async (req, res) => {
+    try {
+      const { content, targetLanguages } = req.body;
+      const { translateContent } = await import('./openai');
+      const translations = await translateContent(content, targetLanguages);
+      
+      res.json({ translations });
+    } catch (error) {
+      console.error('Translation error:', error);
+      res.status(500).json({ error: 'Failed to translate content' });
+    }
+  });
+
+  // Enhanced SEO optimization with detailed metrics
+  app.post("/api/content/seo-optimize", async (req, res) => {
+    try {
+      const { content, keywords } = req.body;
+      const { optimizeSEO } = await import('./openai');
+      const seoData = await optimizeSEO(content, keywords.split(',').map((k: string) => k.trim()));
+      
+      res.json(seoData);
+    } catch (error) {
+      console.error('SEO optimization error:', error);
+      res.status(500).json({ error: 'Failed to optimize SEO' });
+    }
+  });
+
   // Content publishing endpoint
   app.post("/api/content/publish", async (req, res) => {
     try {

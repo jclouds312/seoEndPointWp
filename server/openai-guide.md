@@ -1,7 +1,7 @@
 
-# Guía de Integración OpenAI
+# Guía Completa de Integración OpenAI
 
-Esta aplicación integra la biblioteca oficial de OpenAI para Node.js con funcionalidades avanzadas.
+Esta aplicación integra la biblioteca oficial de OpenAI con funcionalidades avanzadas de procesamiento de contenido, análisis SEO y NLP.
 
 ## Configuración
 
@@ -10,6 +10,16 @@ Asegúrate de tener tu API key configurada en las variables de entorno:
 ```bash
 OPENAI_API_KEY=sk-...
 ```
+
+## Librerías Integradas
+
+- **OpenAI**: Generación de contenido y GPT-4
+- **Natural**: Procesamiento de lenguaje natural (NLP)
+- **Cheerio**: Procesamiento y análisis de HTML
+- **Marked**: Conversión Markdown a HTML
+- **html-to-text**: Extracción de texto plano
+- **Sentiment**: Análisis de sentimiento
+- **Yoast SEO**: Análisis SEO avanzado
 
 ## Funciones Disponibles
 
