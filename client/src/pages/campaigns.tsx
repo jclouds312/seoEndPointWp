@@ -7,11 +7,41 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Copy, Check, Globe, Trash2, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Campaign } from "@/../../shared/schema";
+import type { Campaign } from "@shared/schema";
+
+// Mock data for frontend-only mode
+const MOCK_CAMPAIGNS: Campaign[] = [
+  {
+    id: 1,
+    name: "California Personal Injury",
+    blogUrl: "https://californiapersonalinjurylawyersblog.com",
+    description: "Primary SEO campaign for Los Angeles market",
+    embedCode: "<?php ... ?>",
+    status: "active",
+    posts: 145,
+    createdAt: new Date("2024-01-15"),
+    updatedAt: new Date("2024-03-20"),
+    userId: "user_1",
+    config: {}
+  },
+  {
+    id: 2,
+    name: "Texas Accident Lawyers",
+    blogUrl: "https://texasaccidentlawyers.com",
+    description: "Expansion campaign for Houston area",
+    embedCode: "<?php ... ?>",
+    status: "paused",
+    posts: 32,
+    createdAt: new Date("2024-02-10"),
+    updatedAt: new Date("2024-03-18"),
+    userId: "user_1",
+    config: {}
+  }
+];
 
 export default function Campaigns() {
   const queryClient = useQueryClient();
@@ -22,38 +52,46 @@ export default function Campaigns() {
   });
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Local state for campaigns to simulate database
+  const [localCampaigns, setLocalCampaigns] = useState<Campaign[]>(MOCK_CAMPAIGNS);
 
-  // Fetch campaigns
+  // Mock Fetch campaigns
   const { data: campaigns = [], isLoading } = useQuery<Campaign[]>({
     queryKey: ['campaigns'],
     queryFn: async () => {
-      const response = await fetch('/api/campaigns');
-      if (!response.ok) throw new Error('Failed to fetch campaigns');
-      return response.json();
-    }
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      return localCampaigns;
+    },
+    initialData: localCampaigns
   });
 
-  // Create campaign mutation
+  // Mock Create campaign mutation
   const createCampaignMutation = useMutation({
     mutationFn: async (data: { name: string; blogUrl: string; description: string }) => {
+      await new Promise(resolve => setTimeout(resolve, 1000));
       const blogIdentifier = data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       const embedCode = generateEmbedCode(blogIdentifier);
       
-      const response = await fetch('/api/campaigns', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: data.name,
-          blogUrl: data.blogUrl,
-          description: data.description,
-          embedCode,
-          status: 'active',
-          posts: 0
-        })
-      });
+      const newId = Math.max(0, ...localCampaigns.map(c => c.id)) + 1;
       
-      if (!response.ok) throw new Error('Failed to create campaign');
-      return response.json();
+      const newCampaignObj: Campaign = {
+        id: newId,
+        name: data.name,
+        blogUrl: data.blogUrl,
+        description: data.description,
+        embedCode,
+        status: 'active',
+        posts: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId: "user_1",
+        config: {}
+      };
+      
+      setLocalCampaigns(prev => [...prev, newCampaignObj]);
+      return newCampaignObj;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
@@ -73,17 +111,12 @@ export default function Campaigns() {
     }
   });
 
-  // Update campaign mutation
+  // Mock Update campaign mutation
   const updateCampaignMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const response = await fetch(`/api/campaigns/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      });
-      
-      if (!response.ok) throw new Error('Failed to update campaign');
-      return response.json();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setLocalCampaigns(prev => prev.map(c => c.id === id ? { ...c, status } : c));
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
@@ -94,14 +127,12 @@ export default function Campaigns() {
     }
   });
 
-  // Delete campaign mutation
+  // Mock Delete campaign mutation
   const deleteCampaignMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/campaigns/${id}`, {
-        method: 'DELETE'
-      });
-      
-      if (!response.ok) throw new Error('Failed to delete campaign');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setLocalCampaigns(prev => prev.filter(c => c.id !== id));
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
