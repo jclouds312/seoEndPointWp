@@ -17,6 +17,7 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
     { icon: MapPin, label: "Local SEO & Publish", href: "/local-seo" },
     { icon: Code, label: "Deployment", href: "/deployment" },
     { icon: Book, label: "Documentation", href: "/documentation" },
+    { icon: Zap, label: "Jetpack Features", href: "/jetpack" },
     { icon: Settings, label: "Settings", href: "/settings" },
     { icon: Megaphone, label: "Campañas", href: "/campaigns" },
     { icon: FileText, label: "Crear Contenido", href: "/content-creator" },

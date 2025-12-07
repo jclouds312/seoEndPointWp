@@ -18,6 +18,7 @@ import Campaigns from "@/pages/campaigns";
 import SeoAnalyzer from "@/pages/seo-analyzer";
 import ContentCreator from "@/pages/content-creator";
 import ContentPublisher from "@/pages/content-publisher";
+import JetpackIntegration from "@/pages/jetpack-integration";
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/workflows" component={Workflows} />
       <Route path="/integrations" component={Integrations} />
+      <Route path="/jetpack" component={JetpackIntegration} />
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/data-sources" component={DataSources} />
       <Route path="/local-seo" component={LocalSEO} />
