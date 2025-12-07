@@ -139,19 +139,25 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="border-slate-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = '/content-creator'}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+        <Card className="border-purple-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer bg-gradient-to-br from-purple-50 to-pink-50" onClick={() => window.location.href = '/content-creator'}>
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
                 <FileText className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <CardTitle className="text-base">AI Content Creator</CardTitle>
-                <CardDescription className="text-xs">Generate optimized content</CardDescription>
+                <CardTitle className="text-base flex items-center gap-2">
+                  AI Content Creator
+                  <Badge className="bg-purple-600 text-xs">Active</Badge>
+                </CardTitle>
+                <CardDescription className="text-xs">Generate optimized content with AI</CardDescription>
               </div>
             </div>
           </CardHeader>
+          <CardContent>
+            <p className="text-sm text-slate-600">Create up to 8 high-quality posts per month with AI-powered content generation</p>
+          </CardContent>
         </Card>
 
         <Card className="border-green-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-emerald-50" onClick={() => window.location.href = '/content-publisher'}>
@@ -169,6 +175,9 @@ export default function Dashboard() {
               </div>
             </div>
           </CardHeader>
+          <CardContent>
+            <p className="text-sm text-slate-600">Publish and distribute content across all integrated platforms</p>
+          </CardContent>
         </Card>
       </div>
     </SidebarLayout>

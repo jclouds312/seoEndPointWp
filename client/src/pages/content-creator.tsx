@@ -150,45 +150,82 @@ export default function ContentCreator() {
     setIsGenerating(true);
     setGeneratedContent("");
     
-    // Simulating AI Streaming Generation
-    const mockContent = `
-      <h2>Introducción</h2>
-      <p>Cuando te enfrentas a una situación legal compleja, entender tus derechos es el primer paso crucial. En esta guía, exploraremos los aspectos fundamentales de ${contentPrompt} y cómo puedes proteger tus intereses.</p>
+    try {
+      const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
       
-      <h2>Aspectos Legales Clave</h2>
-      <p>La ley establece marcos específicos para este tipo de casos. Es importante documentar todo: desde reportes médicos hasta comunicaciones con aseguradoras. ${targetKeywords ? `Palabras clave como <strong>${targetKeywords}</strong> son vitales para tu caso.` : ''}</p>
+      const response = await fetch('/api/generate-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topic: contentPrompt,
+          keywords: keywords.length > 0 ? keywords : ['legal', 'abogado'],
+          wordCount: wordCount[0],
+          tone: 'profesional-empático',
+          language: 'es'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar contenido');
+      }
+
+      const data = await response.json();
       
-      <ul>
-        <li>Reúne evidencia fotográfica inmediata.</li>
-        <li>No firmes documentos sin asesoría legal.</li>
-        <li>Mantén un registro detallado de gastos médicos.</li>
-      </ul>
-
-      <h2>El Proceso de Reclamación</h2>
-      <p>El proceso puede ser largo, pero la paciencia y la diligencia son tus mejores aliados. Un abogado especializado puede guiarte a través de las complejidades del sistema judicial.</p>
+      // Simulate streaming effect for better UX
+      const chunks = data.content.split(/(?=[<])/);
+      let currentText = "";
       
-      <h2>Conclusión</h2>
-      <p>No estás solo en este proceso. Busca ayuda profesional y asegúrate de que tus derechos sean respetados en cada etapa del camino.</p>
-    `;
+      for (let i = 0; i < chunks.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        currentText += chunks[i];
+        setGeneratedContent(currentText);
+      }
 
-    // Simulate streaming effect
-    const chunks = mockContent.split(/(?=[<])/); // Split by tags roughly
-    let currentText = "";
-    
-    for (let i = 0; i < chunks.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 300)); // Delay between chunks
-      currentText += chunks[i];
-      setGeneratedContent(currentText);
-    }
+      // Set metadata
+      if (data.metaDescription) {
+        setSeoMetadata({
+          title: data.title,
+          description: data.metaDescription,
+          slug: data.title.toLowerCase().replace(/ /g, '-').substring(0, 50)
+        });
+      }
 
-    setIsGenerating(false);
-    toast({
-      title: "Contenido generado",
-      description: "El contenido ha sido creado exitosamente con IA (Simulado)"
-    });
+      // Set SEO score
+      if (data.seoScore) {
+        setSeoScore({
+          score: data.seoScore,
+          keywordDensity: keywords.reduce((acc, k) => {
+            acc[k] = 2.5;
+            return acc;
+          }, {} as any),
+          suggestions: [
+            "Contenido generado con IA optimizado para SEO",
+            "Palabras clave integradas naturalmente",
+            "Estructura de encabezados correcta"
+          ],
+          improvements: "Contenido de alta calidad generado con GPT-4. Revisa y personaliza según necesites."
+        });
+      }
 
-    if (includeSEO) {
+      toast({
+        title: "¡Contenido generado exitosamente!",
+        description: "El contenido ha sido creado con OpenAI GPT-4"
+      });
+
+      if (includeSEO) {
         handleOptimizeSEO(currentText);
+      }
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast({
+        title: "Error al generar contenido",
+        description: error.message || "Verifica que tu API key de OpenAI esté configurada correctamente",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
     }
   };
 

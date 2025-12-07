@@ -16,8 +16,9 @@ import Documentation from "@/pages/documentation";
 import Marketplace from "@/pages/marketplace";
 import Campaigns from "@/pages/campaigns";
 import SeoAnalyzer from "@/pages/seo-analyzer";
-import ContentCreator from "@/pages/content-creator";
-import ContentPublisher from "@/pages/content-publisher";
+import ContentCreator from "./pages/content-creator";
+import ContentPublisher from "./pages/content-publisher";
+import BulkContentGenerator from "./pages/bulk-content-generator";
 import JetpackIntegration from "@/pages/jetpack-integration";
 
 function Router() {
@@ -36,7 +37,8 @@ function Router() {
       <Route path="/settings" component={Settings} />
       <Route path="/campaigns" component={Campaigns} />
       <Route path="/content-creator" component={ContentCreator} />
-      <Route path="/content-publisher" component={ContentPublisher} />
+      <Route path="/content-publisher" element={<ContentPublisher />} />
+      <Route path="/bulk-generator" element={<BulkContentGenerator />} />
       <Route path="/seo-analyzer" component={SeoAnalyzer} />
       <Route component={NotFound} />
     </Switch>

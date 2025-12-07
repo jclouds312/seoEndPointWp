@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Workflow, Zap, Settings, LogOut, Globe, Database, MapPin, Code, Book, ShoppingBag, Megaphone, SearchCheck, FileText, Send } from "lucide-react";
+import { LayoutDashboard, Workflow, Zap, Settings, LogOut, Globe, Database, MapPin, Code, Book, ShoppingBag, Megaphone, SearchCheck, FileText, Send, Sparkles, Calendar } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -51,6 +51,27 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
                 </Link>
               );
             })}
+            {/* Placeholder for SidebarMenuButton, assuming it's defined elsewhere and handles styling */}
+            <Link href="/content-creator">
+              <div className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-all cursor-pointer ${
+                location === "/content-creator"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
+                  : "hover:bg-slate-800 hover:text-white"
+              }`}>
+                <Sparkles className="w-4 h-4" />
+                <span className="text-sm font-medium">Crear Contenido</span>
+              </div>
+            </Link>
+            <Link href="/bulk-generator">
+              <div className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-all cursor-pointer ${
+                location === "/bulk-generator"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
+                  : "hover:bg-slate-800 hover:text-white"
+              }`}>
+                <Calendar className="w-4 h-4" />
+                <span className="text-sm font-medium">Generador Masivo (8/mes)</span>
+              </div>
+            </Link>
           </nav>
         </div>
 

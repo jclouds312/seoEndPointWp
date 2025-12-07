@@ -56,15 +56,35 @@ export default function ContentPublisher() {
     }
   });
 
-  // Generate AI content (Mocked)
+  // Generate AI content with OpenAI
   const generateContentMutation = useMutation({
     mutationFn: async () => {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const keywordList = keywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
+      
+      const response = await fetch('/api/generate-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topic: title,
+          keywords: keywordList.length > 0 ? keywordList : ['legal', 'abogado'],
+          wordCount: 1000,
+          tone: 'profesional-informativo',
+          language: 'es'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar contenido con OpenAI');
+      }
+
+      const data = await response.json();
       return {
-        content: `<h2>${title}</h2><p>Este es un contenido generado automáticamente sobre ${title}. Incluye términos clave como <strong>${keywords}</strong>.</p><p>El sistema analiza las mejores prácticas de SEO para asegurar un alto ranking.</p>`,
+        content: data.content,
         seo: {
-          title: `${title} - Guía Completa 2025`,
-          description: `Aprende todo sobre ${title} en esta guía detallada. Consejos de expertos y pasos legales a seguir.`
+          title: data.title,
+          description: data.metaDescription
         }
       };
     },
@@ -74,7 +94,17 @@ export default function ContentPublisher() {
         setSeoTitle(data.seo.title);
         setSeoDescription(data.seo.description);
       }
-      toast({ title: "Contenido generado", description: "Contenido creado con IA exitosamente (Simulado)" });
+      toast({ 
+        title: "¡Contenido generado!", 
+        description: "Contenido creado exitosamente con OpenAI GPT-4" 
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error al generar contenido",
+        description: error.message || "Verifica que tu API key de OpenAI esté configurada",
+        variant: "destructive"
+      });
     }
   });
 
