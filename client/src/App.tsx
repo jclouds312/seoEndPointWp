@@ -14,6 +14,7 @@ import LocalSEO from "@/pages/local-seo";
 import Deployment from "@/pages/deployment";
 import Documentation from "@/pages/documentation";
 import Marketplace from "@/pages/marketplace";
+import Campaigns from "@/pages/campaigns";
 
 function Router() {
   return (
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/deployment" component={Deployment} />
       <Route path="/documentation" component={Documentation} />
       <Route path="/settings" component={Settings} />
+      <Route path="/campaigns" component={Campaigns} />
       <Route component={NotFound} />
     </Switch>
   );

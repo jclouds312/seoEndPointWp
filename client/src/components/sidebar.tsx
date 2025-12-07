@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Workflow, Zap, Settings, LogOut, Globe, Database, MapPin, Code, Book, ShoppingBag } from "lucide-react";
+import { LayoutDashboard, Workflow, Zap, Settings, LogOut, Globe, Database, MapPin, Code, Book, ShoppingBag, Megaphone } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -17,6 +17,7 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
     { icon: Code, label: "Deployment", href: "/deployment" },
     { icon: Book, label: "Documentation", href: "/documentation" },
     { icon: Settings, label: "Settings", href: "/settings" },
+    { icon: Megaphone, label: "Campañas", href: "/campaigns" },
   ];
 
   return (
@@ -37,8 +38,8 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
               return (
                 <Link key={item.href} href={item.href}>
                   <div className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-all cursor-pointer ${
-                    isActive 
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20" 
+                    isActive
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
                       : "hover:bg-slate-800 hover:text-white"
                   }`}>
                     <item.icon className="w-4 h-4" />
@@ -60,7 +61,7 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
           </div>
 
           <Separator className="bg-slate-800 mb-4" />
-          
+
           <div className="flex items-center gap-3">
             <Avatar className="w-8 h-8 border border-slate-700">
               <AvatarFallback className="bg-slate-800 text-xs">WL</AvatarFallback>
