@@ -8,12 +8,19 @@ import { eq } from "drizzle-orm";
 import { generateContent, optimizeSEO, generateImageSuggestions } from "./openai";
 import WordPressDatabase from "./wordpress-db";
 import JetpackIntegration from "./jetpack-integration";
+import N8nIntegration from "./n8n-integration";
 
 // Inicializar conexión a WordPress y Jetpack
 const jetpack = new JetpackIntegration({
   siteUrl: 'https://www.californiapersonalinjurylawyersblog.com',
   wpUsername: process.env.WP_USERNAME || 'walchlaw4',
   wpPassword: process.env.WP_PASSWORD || ''
+});
+
+// Inicializar conexión a n8n
+const n8n = new N8nIntegration({
+  baseUrl: process.env.N8N_BASE_URL || 'http://localhost:5678',
+  apiKey: process.env.N8N_API_KEY || ''
 });
 
 // Inicializar conexión a WordPress DB
@@ -398,6 +405,161 @@ export async function registerRoutes(
     } catch (error) {
       console.error('WordPress DB health check error:', error);
       res.status(500).json({ connected: false, error: 'Health check failed' });
+    }
+  });
+
+  // n8n Integration Routes
+  
+  // Obtener todos los workflows
+  app.get("/api/n8n/workflows", async (req, res) => {
+    try {
+      const workflows = await n8n.getWorkflows();
+      res.json({ workflows });
+    } catch (error) {
+      console.error('n8n workflows fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch workflows' });
+    }
+  });
+
+  // Obtener un workflow específico
+  app.get("/api/n8n/workflows/:id", async (req, res) => {
+    try {
+      const workflow = await n8n.getWorkflow(req.params.id);
+      res.json(workflow);
+    } catch (error) {
+      console.error('n8n workflow fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch workflow' });
+    }
+  });
+
+  // Crear nuevo workflow
+  app.post("/api/n8n/workflows", async (req, res) => {
+    try {
+      const workflow = await n8n.createWorkflow(req.body);
+      res.json(workflow);
+    } catch (error) {
+      console.error('n8n workflow creation error:', error);
+      res.status(500).json({ error: 'Failed to create workflow' });
+    }
+  });
+
+  // Actualizar workflow
+  app.put("/api/n8n/workflows/:id", async (req, res) => {
+    try {
+      const workflow = await n8n.updateWorkflow(req.params.id, req.body);
+      res.json(workflow);
+    } catch (error) {
+      console.error('n8n workflow update error:', error);
+      res.status(500).json({ error: 'Failed to update workflow' });
+    }
+  });
+
+  // Eliminar workflow
+  app.delete("/api/n8n/workflows/:id", async (req, res) => {
+    try {
+      await n8n.deleteWorkflow(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('n8n workflow deletion error:', error);
+      res.status(500).json({ error: 'Failed to delete workflow' });
+    }
+  });
+
+  // Activar workflow
+  app.post("/api/n8n/workflows/:id/activate", async (req, res) => {
+    try {
+      const workflow = await n8n.activateWorkflow(req.params.id);
+      res.json(workflow);
+    } catch (error) {
+      console.error('n8n workflow activation error:', error);
+      res.status(500).json({ error: 'Failed to activate workflow' });
+    }
+  });
+
+  // Desactivar workflow
+  app.post("/api/n8n/workflows/:id/deactivate", async (req, res) => {
+    try {
+      const workflow = await n8n.deactivateWorkflow(req.params.id);
+      res.json(workflow);
+    } catch (error) {
+      console.error('n8n workflow deactivation error:', error);
+      res.status(500).json({ error: 'Failed to deactivate workflow' });
+    }
+  });
+
+  // Ejecutar workflow manualmente
+  app.post("/api/n8n/workflows/:id/execute", async (req, res) => {
+    try {
+      const execution = await n8n.executeWorkflow(req.params.id, req.body.data);
+      res.json(execution);
+    } catch (error) {
+      console.error('n8n workflow execution error:', error);
+      res.status(500).json({ error: 'Failed to execute workflow' });
+    }
+  });
+
+  // Obtener ejecuciones
+  app.get("/api/n8n/executions", async (req, res) => {
+    try {
+      const workflowId = req.query.workflowId as string | undefined;
+      const executions = await n8n.getExecutions(workflowId);
+      res.json({ executions });
+    } catch (error) {
+      console.error('n8n executions fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch executions' });
+    }
+  });
+
+  // Crear workflow de sincronización Yoast
+  app.post("/api/n8n/workflows/templates/yoast-sync", async (req, res) => {
+    try {
+      const { siteUrl } = req.body;
+      const workflow = await n8n.createYoastSyncWorkflow(
+        siteUrl || 'https://www.californiapersonalinjurylawyersblog.com'
+      );
+      res.json(workflow);
+    } catch (error) {
+      console.error('Yoast sync workflow creation error:', error);
+      res.status(500).json({ error: 'Failed to create Yoast sync workflow' });
+    }
+  });
+
+  // Crear workflow de generación de contenido
+  app.post("/api/n8n/workflows/templates/content-generation", async (req, res) => {
+    try {
+      const workflow = await n8n.createContentGenerationWorkflow(
+        process.env.OPENAI_API_KEY || ''
+      );
+      res.json(workflow);
+    } catch (error) {
+      console.error('Content generation workflow creation error:', error);
+      res.status(500).json({ error: 'Failed to create content generation workflow' });
+    }
+  });
+
+  // Crear workflow de análisis de keywords
+  app.post("/api/n8n/workflows/templates/keyword-analysis", async (req, res) => {
+    try {
+      const workflow = await n8n.createKeywordAnalysisWorkflow();
+      res.json(workflow);
+    } catch (error) {
+      console.error('Keyword analysis workflow creation error:', error);
+      res.status(500).json({ error: 'Failed to create keyword analysis workflow' });
+    }
+  });
+
+  // Health check de n8n
+  app.get("/api/n8n/health", async (req, res) => {
+    try {
+      const healthy = await n8n.checkHealth();
+      res.json({ 
+        healthy, 
+        message: healthy ? 'n8n is connected' : 'n8n connection failed',
+        baseUrl: process.env.N8N_BASE_URL || 'http://localhost:5678'
+      });
+    } catch (error) {
+      console.error('n8n health check error:', error);
+      res.status(500).json({ healthy: false, error: 'Health check failed' });
     }
   });
 

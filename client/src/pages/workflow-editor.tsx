@@ -1,92 +1,212 @@
+
 import SidebarLayout from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Play, MoreVertical, GitBranch, Settings2, FileJson, Zap, ArrowRight, Database, Mail, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Play, MoreVertical, GitBranch, Settings2, FileJson, Zap, RefreshCw, Trash2, Pause, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-const workflows = [
-  {
-    id: 1,
-    name: "Yoast Metadata Sync",
-    description: "Syncs metadata from California Personal Injury Blog to external SEO tools.",
-    status: "active",
-    lastRun: "5 mins ago",
-    nodes: 12
-  },
-  {
-    id: 2,
-    name: "Keyword Density Analyzer",
-    description: "Analyzes new posts for keyword density and suggests improvements via email.",
-    status: "active",
-    lastRun: "1 hour ago",
-    nodes: 8
-  },
-  {
-    id: 3,
-    name: "Internal Link Builder",
-    description: "Automatically suggests internal links based on content analysis.",
-    status: "paused",
-    lastRun: "2 days ago",
-    nodes: 15
-  },
-  {
-    id: 4,
-    name: "Competitor Analysis Cron",
-    description: "Daily check of competitor rankings for primary keywords.",
-    status: "active",
-    lastRun: "12 hours ago",
-    nodes: 6
-  }
-];
-
-function Node({ icon: Icon, label, type, x, y }: { icon: any, label: string, type: 'trigger' | 'action' | 'logic', x: number, y: number }) {
-  const colors = {
-    trigger: 'bg-emerald-500 border-emerald-600',
-    action: 'bg-blue-500 border-blue-600',
-    logic: 'bg-slate-500 border-slate-600'
-  };
-
-  return (
-    <div 
-      className={`absolute flex items-center gap-3 p-3 rounded-lg shadow-lg border-b-4 text-white w-48 transition-transform hover:scale-105 cursor-pointer ${colors[type]}`}
-      style={{ left: x, top: y }}
-    >
-      <div className="p-1.5 bg-white/20 rounded-md">
-        <Icon className="w-4 h-4" />
-      </div>
-      <span className="font-medium text-sm">{label}</span>
-      <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-slate-400 rounded-full" />
-      {type !== 'trigger' && (
-        <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-slate-400 rounded-full" />
-      )}
-    </div>
-  );
+interface N8nWorkflow {
+  id: string;
+  name: string;
+  active: boolean;
+  nodes: any[];
+  updatedAt?: string;
+  createdAt?: string;
 }
 
-function Connection({ x1, y1, x2, y2 }: { x1: number, y1: number, x2: number, y2: number }) {
-  // Simple SVG curve
-  const controlPointX = x1 + (x2 - x1) / 2;
+function WorkflowCard({ workflow, onActivate, onDeactivate, onExecute, onDelete }: {
+  workflow: N8nWorkflow;
+  onActivate: (id: string) => void;
+  onDeactivate: (id: string) => void;
+  onExecute: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
   return (
-    <svg className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-visible" style={{ zIndex: -1 }}>
-      <path 
-        d={`M ${x1} ${y1} C ${controlPointX} ${y1}, ${controlPointX} ${y2}, ${x2} ${y2}`} 
-        fill="none" 
-        stroke="#cbd5e1" 
-        strokeWidth="2" 
-        strokeDasharray="4 4"
-        className="animate-[dash_20s_linear_infinite]"
-      />
-    </svg>
+    <Card className="border-slate-100 shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
+      <CardContent className="p-6 flex items-center justify-between">
+        <div className="flex items-start gap-4 flex-1">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+            workflow.active ? 'bg-green-100 text-green-600 group-hover:bg-green-200' : 'bg-amber-100 text-amber-600 group-hover:bg-amber-200'
+          }`}>
+            <GitBranch className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <h3 className="font-semibold text-slate-900 text-lg group-hover:text-blue-600 transition-colors">{workflow.name}</h3>
+              <Badge variant={workflow.active ? 'default' : 'secondary'} className={`
+                ${workflow.active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-amber-100 text-amber-700'}
+              `}>
+                {workflow.active ? 'Active' : 'Paused'}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-4 mt-3 text-xs text-slate-400 font-medium">
+              <span className="flex items-center gap-1">
+                <Settings2 className="w-3 h-3" />
+                {workflow.nodes?.length || 0} Nodes
+              </span>
+              {workflow.updatedAt && (
+                <span className="flex items-center gap-1">
+                  <FileJson className="w-3 h-3" />
+                  Updated: {new Date(workflow.updatedAt).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-9 text-slate-600 border-slate-200"
+            onClick={() => onExecute(workflow.id)}
+          >
+            <Play className="w-4 h-4 mr-2" />
+            Run Now
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {workflow.active ? (
+                <DropdownMenuItem onClick={() => onDeactivate(workflow.id)}>
+                  <Pause className="w-4 h-4 mr-2" />
+                  Pause Workflow
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => onActivate(workflow.id)}>
+                  <Play className="w-4 h-4 mr-2" />
+                  Activate Workflow
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem className="text-red-600" onClick={() => onDelete(workflow.id)}>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
 export default function Workflows() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [n8nUrl, setN8nUrl] = useState('');
+
+  // Fetch workflows
+  const { data: workflowsData, isLoading } = useQuery({
+    queryKey: ['/api/n8n/workflows'],
+    refetchInterval: 10000, // Refresh every 10 seconds
+  });
+
+  // Fetch n8n health
+  const { data: healthData } = useQuery({
+    queryKey: ['/api/n8n/health'],
+  });
+
+  useEffect(() => {
+    if (healthData?.baseUrl) {
+      setN8nUrl(healthData.baseUrl);
+    }
+  }, [healthData]);
+
+  // Mutations
+  const activateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/n8n/workflows/${id}/activate`, { method: 'POST' });
+      if (!response.ok) throw new Error('Failed to activate workflow');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/n8n/workflows'] });
+      toast({ title: 'Workflow activated successfully' });
+    },
+  });
+
+  const deactivateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/n8n/workflows/${id}/deactivate`, { method: 'POST' });
+      if (!response.ok) throw new Error('Failed to deactivate workflow');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/n8n/workflows'] });
+      toast({ title: 'Workflow paused successfully' });
+    },
+  });
+
+  const executeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/n8n/workflows/${id}/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: {} }),
+      });
+      if (!response.ok) throw new Error('Failed to execute workflow');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Workflow executed successfully' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/n8n/workflows/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete workflow');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/n8n/workflows'] });
+      toast({ title: 'Workflow deleted successfully', variant: 'destructive' });
+    },
+  });
+
+  const createTemplateMutation = useMutation({
+    mutationFn: async (template: string) => {
+      const response = await fetch(`/api/n8n/workflows/templates/${template}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (!response.ok) throw new Error('Failed to create template');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/n8n/workflows'] });
+      setShowTemplateDialog(false);
+      toast({ title: 'Template workflow created successfully' });
+    },
+  });
+
+  const workflows = workflowsData?.workflows || [];
+
   return (
     <SidebarLayout>
       <div className="flex items-center justify-between mb-8">
@@ -94,97 +214,119 @@ export default function Workflows() {
           <h1 className="text-3xl font-bold text-slate-900">Workflows</h1>
           <p className="text-slate-500 mt-1">Manage your n8n automation pipelines</p>
         </div>
-        <Button className="gap-2 bg-primary hover:bg-blue-700">
-          <Plus className="w-4 h-4" />
-          New Workflow
-        </Button>
-      </div>
-
-      {/* Active Workflow Canvas Preview */}
-      <Card className="mb-8 border-slate-200 overflow-hidden">
-        <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <GitBranch className="w-5 h-5 text-blue-600" />
-              <CardTitle className="text-base">Yoast Metadata Sync (Preview)</CardTitle>
-            </div>
-            <Badge className="bg-green-100 text-green-700 hover:bg-green-200">Active</Badge>
-          </div>
-        </CardHeader>
-        <div className="relative h-[300px] bg-slate-50/50 w-full overflow-hidden">
-          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '20px 20px', opacity: 0.5 }} />
-          
-          <div className="relative w-full h-full p-8">
-             {/* Connections */}
-             <Connection x1={180} y1={50} x2={280} y2={50} />
-             <Connection x1={470} y1={50} x2={570} y2={50} />
-             <Connection x1={760} y1={50} x2={860} y2={120} />
-
-             {/* Nodes */}
-             <Node x={20} y={25} label="WordPress Trigger" type="trigger" icon={Zap} />
-             <Node x={300} y={25} label="Yoast API Fetch" type="action" icon={Search} />
-             <Node x={580} y={25} label="Analyze Keywords" type="action" icon={FileJson} />
-             
-             <Node x={880} y={95} label="Update Meta" type="action" icon={Database} />
-          </div>
+        <div className="flex items-center gap-3">
+          {healthData?.healthy ? (
+            <Badge className="bg-green-100 text-green-700 hover:bg-green-200">
+              <CheckCircle2 className="w-3 h-3 mr-1" />
+              n8n Connected
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-amber-700 border-amber-300">
+              <AlertCircle className="w-3 h-3 mr-1" />
+              n8n Disconnected
+            </Badge>
+          )}
+          <Button 
+            variant="outline" 
+            onClick={() => window.open(n8nUrl, '_blank')}
+            className="gap-2"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Open n8n Editor
+          </Button>
+          <Button 
+            className="gap-2 bg-primary hover:bg-blue-700"
+            onClick={() => setShowTemplateDialog(true)}
+          >
+            <Plus className="w-4 h-4" />
+            New from Template
+          </Button>
         </div>
-      </Card>
-
-      <div className="space-y-4">
-        {workflows.map((workflow) => (
-          <Card key={workflow.id} className="border-slate-100 shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
-            <CardContent className="p-6 flex items-center justify-between">
-              <div className="flex items-start gap-4">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                  workflow.status === 'active' ? 'bg-green-100 text-green-600 group-hover:bg-green-200' : 'bg-amber-100 text-amber-600 group-hover:bg-amber-200'
-                }`}>
-                  <GitBranch className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h3 className="font-semibold text-slate-900 text-lg group-hover:text-blue-600 transition-colors">{workflow.name}</h3>
-                    <Badge variant={workflow.status === 'active' ? 'default' : 'secondary'} className={`
-                      ${workflow.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-amber-100 text-amber-700'}
-                    `}>
-                      {workflow.status}
-                    </Badge>
-                  </div>
-                  <p className="text-slate-500 mt-1 text-sm max-w-xl">{workflow.description}</p>
-                  <div className="flex items-center gap-4 mt-3 text-xs text-slate-400 font-medium">
-                    <span className="flex items-center gap-1">
-                      <Settings2 className="w-3 h-3" />
-                      {workflow.nodes} Nodes
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <FileJson className="w-3 h-3" />
-                      Last run: {workflow.lastRun}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="h-9 text-slate-600 border-slate-200">
-                  <Play className="w-4 h-4 mr-2" />
-                  Run Now
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>Edit Workflow</DropdownMenuItem>
-                    <DropdownMenuItem>View Logs</DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
       </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <RefreshCw className="w-8 h-8 animate-spin text-slate-400" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {workflows.length === 0 ? (
+            <Card className="border-slate-100 shadow-sm">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <GitBranch className="w-12 h-12 text-slate-300 mb-4" />
+                <h3 className="text-lg font-medium text-slate-900 mb-2">No workflows yet</h3>
+                <p className="text-sm text-slate-500 mb-4">Create your first workflow from a template</p>
+                <Button onClick={() => setShowTemplateDialog(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Workflow
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            workflows.map((workflow: N8nWorkflow) => (
+              <WorkflowCard
+                key={workflow.id}
+                workflow={workflow}
+                onActivate={(id) => activateMutation.mutate(id)}
+                onDeactivate={(id) => deactivateMutation.mutate(id)}
+                onExecute={(id) => executeMutation.mutate(id)}
+                onDelete={(id) => deleteMutation.mutate(id)}
+              />
+            ))
+          )}
+        </div>
+      )}
+
+      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create Workflow from Template</DialogTitle>
+            <DialogDescription>
+              Choose a pre-built workflow template for common SEO automation tasks
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => createTemplateMutation.mutate('yoast-sync')}>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-blue-600" />
+                  Yoast Metadata Sync
+                </CardTitle>
+                <CardDescription>
+                  Automatically sync SEO metadata from WordPress to your database every 6 hours
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => createTemplateMutation.mutate('content-generation')}>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-purple-600" />
+                  AI Content Generation
+                </CardTitle>
+                <CardDescription>
+                  Generate blog posts with OpenAI GPT-4 and save as WordPress drafts
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => createTemplateMutation.mutate('keyword-analysis')}>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-green-600" />
+                  Keyword Density Analyzer
+                </CardTitle>
+                <CardDescription>
+                  Analyze keyword density via webhook and send email reports
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTemplateDialog(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarLayout>
   );
 }
