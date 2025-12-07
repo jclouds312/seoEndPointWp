@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowUpRight, CheckCircle2, RefreshCw, Link as LinkIcon, BarChart3, FileText, Search } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, RefreshCw, Link as LinkIcon, BarChart3, FileText, Search, Send } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 const data = [
@@ -136,6 +136,39 @@ export default function Dashboard() {
               ))}
             </div>
           </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card className="border-slate-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = '/content-creator'}>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                <FileText className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <CardTitle className="text-base">AI Content Creator</CardTitle>
+                <CardDescription className="text-xs">Generate optimized content</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        <Card className="border-green-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-emerald-50" onClick={() => window.location.href = '/content-publisher'}>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+                <Send className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <CardTitle className="text-base flex items-center gap-2">
+                  Content Publisher
+                  <Badge className="bg-green-600 text-xs">All-in-One</Badge>
+                </CardTitle>
+                <CardDescription className="text-xs">Unified publishing system</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
         </Card>
       </div>
     </SidebarLayout>

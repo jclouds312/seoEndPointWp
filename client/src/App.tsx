@@ -17,6 +17,7 @@ import Marketplace from "@/pages/marketplace";
 import Campaigns from "@/pages/campaigns";
 import SeoAnalyzer from "@/pages/seo-analyzer";
 import ContentCreator from "@/pages/content-creator";
+import ContentPublisher from "@/pages/content-publisher";
 
 function Router() {
   return (
@@ -32,8 +33,9 @@ function Router() {
       <Route path="/documentation" component={Documentation} />
       <Route path="/settings" component={Settings} />
       <Route path="/campaigns" component={Campaigns} />
-      <Route path="/seo-analyzer" component={SeoAnalyzer} />
-      <Route path="/content-creator" component={ContentCreator} />
+      <Route path="/content-creator" element={<ContentCreator />} />
+      <Route path="/content-publisher" element={<ContentPublisher />} />
+      <Route path="/seo-analyzer" element={<SeoAnalyzer />} />
       <Route component={NotFound} />
     </Switch>
   );

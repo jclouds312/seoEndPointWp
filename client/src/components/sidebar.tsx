@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Workflow, Zap, Settings, LogOut, Globe, Database, MapPin, Code, Book, ShoppingBag, Megaphone, SearchCheck, FileText } from "lucide-react";
+import { LayoutDashboard, Workflow, Zap, Settings, LogOut, Globe, Database, MapPin, Code, Book, ShoppingBag, Megaphone, SearchCheck, FileText, Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";

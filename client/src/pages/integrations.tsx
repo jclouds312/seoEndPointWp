@@ -36,7 +36,12 @@ export default function Integrations() {
     });
   };
 
-  const checkWpSeoConnection = async () => {
+  const [jetpackConnected, setJetpackConnected] = useState(false);
+  const [n8nConnected, setN8nConnected] = useState(false);
+  const [openaiConnected, setOpenaiConnected] = useState(false);
+
+  const checkConnections = async () => {
+    // WP-SEO
     try {
       const response = await fetch('/api/wp-seo/health');
       const data = await response.json();
@@ -44,10 +49,37 @@ export default function Integrations() {
     } catch (error) {
       setWpSeoConnected(false);
     }
+
+    // Jetpack
+    try {
+      const response = await fetch('/api/jetpack/status');
+      const data = await response.json();
+      setJetpackConnected(data.active);
+    } catch (error) {
+      setJetpackConnected(false);
+    }
+
+    // n8n
+    try {
+      const response = await fetch('/api/n8n/health');
+      const data = await response.json();
+      setN8nConnected(data.healthy);
+    } catch (error) {
+      setN8nConnected(false);
+    }
+
+    // OpenAI
+    try {
+      const response = await fetch('/api/openai/health');
+      const data = await response.json();
+      setOpenaiConnected(data.healthy);
+    } catch (error) {
+      setOpenaiConnected(false);
+    }
   };
 
   useState(() => {
-    checkWpSeoConnection();
+    checkConnections();
   });
 
   return (
@@ -59,7 +91,7 @@ export default function Integrations() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <Card className="border-slate-100 shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -68,8 +100,8 @@ export default function Integrations() {
                   <Search className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-base">WP-SEO Plugin</CardTitle>
-                  <CardDescription className="text-xs">Advanced SEO Management</CardDescription>
+                  <CardTitle className="text-base">WP-SEO</CardTitle>
+                  <CardDescription className="text-xs">SEO Plugin</CardDescription>
                 </div>
               </div>
               {wpSeoConnected ? (
@@ -80,14 +112,87 @@ export default function Integrations() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-600 mb-4">
-              Gestiona metadata SEO, genera schema.org y analiza rendimiento SEO con wp-seo de Alley Interactive.
-            </p>
-            <div className="flex gap-2">
-              <Badge variant={wpSeoConnected ? "default" : "secondary"} className={wpSeoConnected ? "bg-green-100 text-green-700" : ""}>
-                {wpSeoConnected ? "Connected" : "Not Installed"}
-              </Badge>
+            <Badge variant={wpSeoConnected ? "default" : "secondary"} className={wpSeoConnected ? "bg-green-100 text-green-700" : ""}>
+              {wpSeoConnected ? "Active" : "Disconnected"}
+            </Badge>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-100 shadow-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                  <Globe className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Jetpack</CardTitle>
+                  <CardDescription className="text-xs">Social & Stats</CardDescription>
+                </div>
+              </div>
+              {jetpackConnected ? (
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              ) : (
+                <XCircle className="w-5 h-5 text-slate-300" />
+              )}
             </div>
+          </CardHeader>
+          <CardContent>
+            <Badge variant={jetpackConnected ? "default" : "secondary"} className={jetpackConnected ? "bg-green-100 text-green-700" : ""}>
+              {jetpackConnected ? "Active" : "Disconnected"}
+            </Badge>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-100 shadow-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                  <RefreshCw className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">n8n</CardTitle>
+                  <CardDescription className="text-xs">Workflows</CardDescription>
+                </div>
+              </div>
+              {n8nConnected ? (
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              ) : (
+                <XCircle className="w-5 h-5 text-slate-300" />
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Badge variant={n8nConnected ? "default" : "secondary"} className={n8nConnected ? "bg-green-100 text-green-700" : ""}>
+              {n8nConnected ? "Active" : "Disconnected"}
+            </Badge>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-100 shadow-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-pink-100 flex items-center justify-center">
+                  <span className="text-pink-600 font-bold">AI</span>
+                </div>
+                <div>
+                  <CardTitle className="text-base">OpenAI</CardTitle>
+                  <CardDescription className="text-xs">GPT-4</CardDescription>
+                </div>
+              </div>
+              {openaiConnected ? (
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              ) : (
+                <XCircle className="w-5 h-5 text-slate-300" />
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Badge variant={openaiConnected ? "default" : "secondary"} className={openaiConnected ? "bg-green-100 text-green-700" : ""}>
+              {openaiConnected ? "Active" : "Disconnected"}
+            </Badge>
           </CardContent>
         </Card>
       </div>
