@@ -101,7 +101,7 @@ Requirements:
 }
 
 // Streaming content generation for real-time updates
-export async function* generateContentStream(params: ContentGenerationParams): AsyncGenerator<string> {
+export async function* generateContentStream(params: ContentGenerationParams): AsyncGenerator<string, void, unknown> {
   const {
     prompt,
     keywords,

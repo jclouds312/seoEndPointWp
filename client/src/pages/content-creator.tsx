@@ -79,6 +79,10 @@ export default function ContentCreator() {
   const [includeSEO, setIncludeSEO] = useState(true);
   const [generatedContent, setGeneratedContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+  const [seoMetadata, setSeoMetadata] = useState<any>(null);
+  const [seoScore, setSeoScore] = useState<any>(null);
+  const [isGeneratingImages, setIsGeneratingImages] = useState(false);
 
   // Fetch campaigns
   const { data: campaigns = [] } = useQuery<Campaign[]>({
@@ -150,7 +154,7 @@ export default function ContentCreator() {
     }
   });
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!selectedCampaign || !contentPrompt) {
       toast({
         title: "Campos requeridos",
@@ -161,17 +165,171 @@ export default function ContentCreator() {
     }
 
     setIsGenerating(true);
-    generateContentMutation.mutate({
-      campaignId: selectedCampaign,
-      template: selectedTemplate,
-      prompt: contentPrompt,
-      keywords: targetKeywords,
-      wordCount: wordCount[0],
-      creativity: creativity[0],
-      includeImages,
-      includeSEO
-    });
-    setIsGenerating(false);
+    setGeneratedContent("");
+    
+    try {
+      // Use streaming for better UX
+      const response = await fetch('/api/content/generate-stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaignId: selectedCampaign,
+          template: selectedTemplate,
+          prompt: contentPrompt,
+          keywords: targetKeywords,
+          wordCount: wordCount[0],
+          creativity: creativity[0],
+          includeImages,
+          includeSEO,
+          tone: CONTENT_TEMPLATES.find(t => t.id === selectedTemplate)?.tone || 'professional-empathetic',
+          language: 'es'
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to generate content');
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedContent = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') break;
+              
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.chunk) {
+                  accumulatedContent += parsed.chunk;
+                  setGeneratedContent(accumulatedContent);
+                }
+              } catch (e) {
+                // Ignore parse errors
+              }
+            }
+          }
+        }
+      }
+
+      toast({
+        title: "Contenido generado",
+        description: "El contenido ha sido creado exitosamente con IA"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo generar el contenido",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateImages = async () => {
+    if (!generatedContent) {
+      toast({
+        title: "Sin contenido",
+        description: "Genera contenido primero",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGeneratingImages(true);
+    try {
+      const response = await fetch('/api/images/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: `${contentPrompt}. Estilo profesional para artículo legal`,
+          size: '1024x1024',
+          quality: 'hd',
+          style: 'natural',
+          n: 2
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to generate images');
+      
+      const data = await response.json();
+      setGeneratedImages(data.images);
+      
+      toast({
+        title: "Imágenes generadas",
+        description: `Se generaron ${data.images.length} imágenes`
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudieron generar las imágenes",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingImages(false);
+    }
+  };
+
+  const handleGenerateMetadata = async () => {
+    if (!generatedContent) return;
+
+    try {
+      const keywords = targetKeywords.split(',').map(k => k.trim());
+      const response = await fetch('/api/content/metadata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: generatedContent,
+          keywords
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to generate metadata');
+      
+      const metadata = await response.json();
+      setSeoMetadata(metadata);
+    } catch (error) {
+      console.error('Metadata generation error:', error);
+    }
+  };
+
+  const handleOptimizeSEO = async () => {
+    if (!generatedContent || !targetKeywords) return;
+
+    try {
+      const keywords = targetKeywords.split(',').map(k => k.trim());
+      const seoData = {
+        content: generatedContent,
+        keywords
+      };
+
+      // Simular análisis SEO (en producción vendría del backend)
+      const mockScore = {
+        score: 85,
+        keywordDensity: keywords.reduce((acc, kw) => {
+          acc[kw] = Math.random() * 2;
+          return acc;
+        }, {} as Record<string, number>),
+        suggestions: [
+          "Densidad de keywords óptima",
+          "Estructura de encabezados correcta",
+          "Incluir más enlaces internos"
+        ],
+        improvements: "El contenido está bien optimizado. Considera agregar más ejemplos prácticos."
+      };
+
+      setSeoScore(mockScore);
+    } catch (error) {
+      console.error('SEO optimization error:', error);
+    }
   };
 
   const handlePublish = (status: 'draft' | 'published') => {
@@ -186,7 +344,7 @@ export default function ContentCreator() {
 
     publishContentMutation.mutate({
       campaignId: selectedCampaign,
-      title: contentPrompt.slice(0, 100),
+      title: seoMetadata?.title || contentPrompt.slice(0, 100),
       content: generatedContent,
       status
     });
@@ -387,9 +545,18 @@ export default function ContentCreator() {
                     Contenido Generado
                   </CardTitle>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={handleGenerate}>
-                      <RefreshCw className="w-4 h-4 mr-2" />
+                    <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating}>
+                      <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
                       Regenerar
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="sm" 
+                      onClick={handleGenerateImages}
+                      disabled={isGeneratingImages}
+                    >
+                      <ImageIcon className={`w-4 h-4 mr-2 ${isGeneratingImages ? 'animate-spin' : ''}`} />
+                      Generar Imágenes
                     </Button>
                     <Button 
                       size="sm" 
@@ -403,46 +570,178 @@ export default function ContentCreator() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue="content">
-                  <TabsList className="grid w-full grid-cols-3">
+                <Tabs defaultValue="content" onValueChange={(value) => {
+                  if (value === 'seo' && !seoScore) handleOptimizeSEO();
+                  if (value === 'meta' && !seoMetadata) handleGenerateMetadata();
+                }}>
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="content">Contenido</TabsTrigger>
+                    <TabsTrigger value="images">Imágenes</TabsTrigger>
                     <TabsTrigger value="seo">SEO</TabsTrigger>
                     <TabsTrigger value="meta">Metadata</TabsTrigger>
                   </TabsList>
                   <TabsContent value="content" className="mt-4">
-                    <div className="prose max-w-none bg-white p-6 rounded-lg border border-slate-200">
+                    <div className="prose max-w-none bg-white p-6 rounded-lg border border-slate-200 max-h-[600px] overflow-y-auto">
                       <div dangerouslySetInnerHTML={{ __html: generatedContent }} />
                     </div>
                   </TabsContent>
+                  <TabsContent value="images" className="mt-4">
+                    {generatedImages.length > 0 ? (
+                      <div className="grid grid-cols-2 gap-4">
+                        {generatedImages.map((img, idx) => (
+                          <Card key={idx}>
+                            <CardContent className="pt-6">
+                              <img 
+                                src={img} 
+                                alt={`Imagen generada ${idx + 1}`}
+                                className="w-full rounded-lg border border-slate-200"
+                              />
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="w-full mt-3"
+                                onClick={() => window.open(img, '_blank')}
+                              >
+                                <Link2 className="w-4 h-4 mr-2" />
+                                Abrir en nueva pestaña
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      <Card>
+                        <CardContent className="pt-6 text-center py-12">
+                          <ImageIcon className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                          <p className="text-slate-500 mb-4">No hay imágenes generadas</p>
+                          <Button onClick={handleGenerateImages} disabled={isGeneratingImages}>
+                            {isGeneratingImages ? (
+                              <>
+                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                Generando...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="w-4 h-4 mr-2" />
+                                Generar Imágenes con DALL-E
+                              </>
+                            )}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </TabsContent>
                   <TabsContent value="seo" className="mt-4 space-y-4">
-                    <Card>
-                      <CardContent className="pt-6 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Densidad de Keywords</span>
-                          <Badge className="bg-green-100 text-green-700">Óptimo</Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Legibilidad</span>
-                          <Badge className="bg-green-100 text-green-700">8.5/10</Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Enlaces Internos</span>
-                          <Badge className="bg-yellow-100 text-yellow-700">3 sugeridos</Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    {seoScore ? (
+                      <>
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2">
+                              <Target className="w-5 h-5 text-blue-600" />
+                              Puntuación SEO
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="flex items-center gap-4">
+                              <div className="text-4xl font-bold text-blue-600">
+                                {seoScore.score}
+                              </div>
+                              <div className="flex-1">
+                                <div className="w-full bg-slate-200 rounded-full h-3">
+                                  <div 
+                                    className="bg-gradient-to-r from-blue-600 to-green-600 h-3 rounded-full transition-all"
+                                    style={{ width: `${seoScore.score}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <Separator />
+                            
+                            <div className="space-y-2">
+                              <Label className="text-sm font-semibold">Densidad de Keywords</Label>
+                              {Object.entries(seoScore.keywordDensity).map(([keyword, density]: [string, any]) => (
+                                <div key={keyword} className="flex items-center justify-between text-sm">
+                                  <span className="text-slate-600">{keyword}</span>
+                                  <Badge variant={density > 3 ? 'destructive' : density < 0.5 ? 'secondary' : 'default'}>
+                                    {density.toFixed(2)}%
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                            
+                            <Separator />
+                            
+                            <div className="space-y-2">
+                              <Label className="text-sm font-semibold">Sugerencias de Mejora</Label>
+                              {seoScore.suggestions.map((suggestion: string, idx: number) => (
+                                <div key={idx} className="flex items-start gap-2 text-sm">
+                                  <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                  <span className="text-slate-700">{suggestion}</span>
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {seoScore.improvements && (
+                              <>
+                                <Separator />
+                                <div className="space-y-2">
+                                  <Label className="text-sm font-semibold">Análisis IA</Label>
+                                  <p className="text-sm text-slate-600">{seoScore.improvements}</p>
+                                </div>
+                              </>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </>
+                    ) : (
+                      <Card>
+                        <CardContent className="pt-6 text-center py-12">
+                          <TrendingUp className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                          <p className="text-slate-500">Cargando análisis SEO...</p>
+                        </CardContent>
+                      </Card>
+                    )}
                   </TabsContent>
                   <TabsContent value="meta" className="mt-4">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Meta Title</Label>
-                        <Input defaultValue="Auto-generated SEO title..." />
+                    {seoMetadata ? (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Meta Title</Label>
+                          <Input value={seoMetadata.title} readOnly />
+                          <p className="text-xs text-slate-500">{seoMetadata.title?.length || 0} caracteres</p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Meta Description</Label>
+                          <Textarea rows={3} value={seoMetadata.description} readOnly />
+                          <p className="text-xs text-slate-500">{seoMetadata.description?.length || 0} caracteres</p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Open Graph Title</Label>
+                          <Input value={seoMetadata.ogTitle} readOnly />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Open Graph Description</Label>
+                          <Textarea rows={2} value={seoMetadata.ogDescription} readOnly />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Schema.org JSON-LD</Label>
+                          <Textarea 
+                            rows={6} 
+                            value={seoMetadata.schema} 
+                            readOnly 
+                            className="font-mono text-xs"
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Meta Description</Label>
-                        <Textarea rows={3} defaultValue="Auto-generated meta description..." />
-                      </div>
-                    </div>
+                    ) : (
+                      <Card>
+                        <CardContent className="pt-6 text-center py-12">
+                          <Globe className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                          <p className="text-slate-500">Generando metadata SEO...</p>
+                        </CardContent>
+                      </Card>
+                    )}
                   </TabsContent>
                 </Tabs>
               </CardContent>
