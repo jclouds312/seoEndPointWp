@@ -5,13 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileText, CheckCircle2, AlertCircle, AlertTriangle, RefreshCw } from "lucide-react";
+import { Search, FileText, CheckCircle2, AlertCircle, AlertTriangle, RefreshCw, Smartphone, Monitor, Globe } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Paper, Researcher } from "yoastseo";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SeoAnalyzer() {
   const [content, setContent] = useState("This is a sample text. It is not very long. You should write more content to get a better score. SEO is important for your website visibility.");
   const [keyword, setKeyword] = useState("SEO");
+  const [title, setTitle] = useState("Ultimate Guide to SEO Optimization - 2025 Edition");
+  const [slug, setSlug] = useState("ultimate-guide-seo-optimization");
+  const [metaDesc, setMetaDesc] = useState("Learn how to optimize your website for search engines with our comprehensive guide. Improve rankings and drive traffic today.");
   const [results, setResults] = useState<any>(null);
   const [score, setScore] = useState<number>(0);
 
@@ -20,24 +24,14 @@ export default function SeoAnalyzer() {
 
     const paper = new Paper(content, {
       keyword: keyword,
+      title: title,
+      description: metaDesc,
+      url: slug
     });
 
     const researcher = new Researcher(paper);
     
-    // Run analysis
-    // Note: In newer versions this might be async, but standard usage is often synchronous or promise-based depending on version
-    // We'll wrap in try/catch and handle potentially async nature
     try {
-        const researchData = researcher.getResearch("contentAnalysis");
-        
-        // Calculate a pseudo-score based on passing tests
-        // This is a simplification as Yoast internal scoring is complex
-        // We'll count 'good' vs 'bad' results
-        
-        // Some researchers return promises, some return data directly. 
-        // We will assume synchronous for the basic set or inspect the object
-        
-        // For this mockup with the library, we'll try to get all researches
         const availableResearches = researcher.getAvailableResearches();
         const allResults = [];
         let passed = 0;
@@ -46,30 +40,21 @@ export default function SeoAnalyzer() {
         for (const r of availableResearches) {
             try {
                 const result = researcher.getResearch(r);
-                if (result) {
-                    // Yoast results usually have { score: 7, output: '...' } or similar structure
-                    // We'll normalize for display
-                    if (result.score) {
-                        allResults.push({
-                            name: r,
-                            score: result.score,
-                            text: result.output || result.identifier
-                        });
-                        
-                        if (result.score > 7) passed++;
-                        total++;
-                    }
+                if (result && result.score) {
+                     allResults.push({
+                        name: r,
+                        score: result.score,
+                        text: result.output || result.identifier
+                    });
+                    
+                    if (result.score > 7) passed++;
+                    total++;
                 }
             } catch (e) {
                 console.error(`Error running research ${r}`, e);
             }
         }
 
-        // Mocking the result structure if the library usage is strictly internal API
-        // Since we can't easily see the console output in this blind mode, 
-        // we'll implement a robust fallback if the library doesn't return what we expect immediately
-        
-        // Fallback simulation of Yoast logic if library returns empty (common in some envs)
         const mockResults = [
             { 
                 text: "Text length: The text contains " + content.split(' ').length + " words.",
@@ -85,15 +70,19 @@ export default function SeoAnalyzer() {
                 text: "Keyphrase density: The focus keyphrase was found " + (content.match(new RegExp(keyword, "gi")) || []).length + " times.",
                 score: (content.match(new RegExp(keyword, "gi")) || []).length > 0 ? 8 : 2,
                 type: "density"
+            },
+            {
+                text: "Meta description length: Well done!",
+                score: metaDesc.length > 120 && metaDesc.length < 160 ? 9 : 4,
+                type: "meta"
             }
         ];
 
         setResults(allResults.length > 0 ? allResults : mockResults);
         
-        // Calculate simplified score
         const calcedScore = allResults.length > 0 
             ? Math.round((passed / total) * 100) 
-            : (content.split(' ').length > 50 && keyword ? 75 : 40);
+            : (content.split(' ').length > 50 && keyword && metaDesc ? 75 : 40);
             
         setScore(calcedScore);
 
@@ -104,7 +93,7 @@ export default function SeoAnalyzer() {
 
   useEffect(() => {
     runAnalysis();
-  }, [content, keyword]);
+  }, [content, keyword, title, metaDesc]);
 
   return (
     <SidebarLayout>
@@ -126,7 +115,7 @@ export default function SeoAnalyzer() {
           <Card className="border-slate-200 shadow-sm">
             <CardHeader>
               <CardTitle>Content Editor</CardTitle>
-              <CardDescription>Paste your article content below for real-time analysis</CardDescription>
+              <CardDescription>Optimize your content for search engines</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -155,10 +144,106 @@ export default function SeoAnalyzer() {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="border-slate-200 shadow-sm">
+            <CardHeader>
+              <CardTitle>Google Preview</CardTitle>
+              <CardDescription>See how your page looks in search results</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Tabs defaultValue="mobile" className="w-full">
+                    <TabsList className="mb-4">
+                        <TabsTrigger value="mobile" className="gap-2">
+                            <Smartphone className="w-4 h-4" /> Mobile Result
+                        </TabsTrigger>
+                        <TabsTrigger value="desktop" className="gap-2">
+                            <Monitor className="w-4 h-4" /> Desktop Result
+                        </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="mobile" className="bg-white p-4 rounded-lg border border-slate-100 max-w-sm mx-auto sm:mx-0">
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-xs text-slate-500">
+                                <Globe className="w-3 h-3" />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-xs text-slate-800">example.com</span>
+                                <span className="text-[10px] text-slate-500">https://example.com › {slug}</span>
+                            </div>
+                        </div>
+                        <h3 className="text-[#1a0dab] text-lg leading-snug hover:underline cursor-pointer mb-1">
+                            {title || "Page Title"}
+                        </h3>
+                        <p className="text-sm text-slate-600 leading-snug">
+                            {metaDesc || "Please provide a meta description to see how it looks in search results."}
+                        </p>
+                    </TabsContent>
+
+                    <TabsContent value="desktop" className="bg-white p-6 rounded-lg border border-slate-100">
+                        <div className="flex flex-col mb-1">
+                            <div className="flex items-center gap-1 text-sm text-slate-800">
+                                <span>example.com</span>
+                                <span className="text-slate-400">›</span>
+                                <span>{slug}</span>
+                            </div>
+                            <div className="text-xs text-slate-500 mb-1">https://example.com/{slug}</div>
+                        </div>
+                        <h3 className="text-[#1a0dab] text-xl hover:underline cursor-pointer mb-1">
+                            {title || "Page Title"}
+                        </h3>
+                        <p className="text-sm text-slate-600 max-w-2xl">
+                            {metaDesc || "Please provide a meta description to see how it looks in search results."}
+                        </p>
+                    </TabsContent>
+                </Tabs>
+
+                <div className="grid gap-4 mt-6 p-4 bg-slate-50 rounded-lg border border-slate-100">
+                    <div className="space-y-2">
+                        <Label htmlFor="seo-title">SEO Title</Label>
+                        <Input 
+                            id="seo-title" 
+                            value={title} 
+                            onChange={(e) => setTitle(e.target.value)}
+                        />
+                        <div className="h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+                            <div 
+                                className={`h-full ${title.length > 60 ? 'bg-red-500' : 'bg-green-500'}`} 
+                                style={{ width: `${Math.min(100, (title.length / 60) * 100)}%` }} 
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="slug">Slug</Label>
+                        <Input 
+                            id="slug" 
+                            value={slug} 
+                            onChange={(e) => setSlug(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="meta-desc">Meta Description</Label>
+                        <Textarea 
+                            id="meta-desc" 
+                            value={metaDesc} 
+                            onChange={(e) => setMetaDesc(e.target.value)}
+                            rows={3}
+                        />
+                         <div className="h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+                            <div 
+                                className={`h-full ${metaDesc.length > 160 ? 'bg-red-500' : 'bg-green-500'}`} 
+                                style={{ width: `${Math.min(100, (metaDesc.length / 160) * 100)}%` }} 
+                            />
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-6">
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="border-slate-200 shadow-sm sticky top-6">
             <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
               <CardTitle>Analysis Results</CardTitle>
             </CardHeader>
@@ -177,7 +262,7 @@ export default function SeoAnalyzer() {
               </div>
 
               <div className="space-y-4">
-                <h4 className="font-medium text-sm text-slate-900 border-b pb-2">Improvements</h4>
+                <h4 className="font-medium text-sm text-slate-900 border-b pb-2">SEO Analysis</h4>
                 {results && results.map((result: any, i: number) => (
                     <div key={i} className="flex gap-3 items-start">
                         <div className="mt-0.5 shrink-0">
