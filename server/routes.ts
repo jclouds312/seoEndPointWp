@@ -43,6 +43,98 @@ export async function registerRoutes(
     }
   });
 
+  // Streaming content generation endpoint
+  app.post("/api/content/generate-stream", async (req, res) => {
+    try {
+      const params = req.body;
+
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      const { generateContentStream } = await import('./openai');
+      
+      for await (const chunk of generateContentStream(params)) {
+        res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+      }
+
+      res.write('data: [DONE]\n\n');
+      res.end();
+    } catch (error) {
+      console.error('Streaming generation error:', error);
+      res.status(500).json({ error: 'Failed to stream content' });
+    }
+  });
+
+  // Content refinement endpoint
+  app.post("/api/content/refine", async (req, res) => {
+    try {
+      const { content, instructions, history } = req.body;
+      const { refineContent } = await import('./openai');
+      const refined = await refineContent(content, instructions, history);
+      
+      res.json({ content: refined });
+    } catch (error) {
+      console.error('Content refinement error:', error);
+      res.status(500).json({ error: 'Failed to refine content' });
+    }
+  });
+
+  // Image generation endpoint
+  app.post("/api/images/generate", async (req, res) => {
+    try {
+      const params = req.body;
+      const { generateImages } = await import('./openai');
+      const imageUrls = await generateImages(params);
+      
+      res.json({ images: imageUrls });
+    } catch (error) {
+      console.error('Image generation error:', error);
+      res.status(500).json({ error: 'Failed to generate images' });
+    }
+  });
+
+  // Metadata generation endpoint
+  app.post("/api/content/metadata", async (req, res) => {
+    try {
+      const { content, keywords } = req.body;
+      const { generateMetadata } = await import('./openai');
+      const metadata = await generateMetadata(content, keywords);
+      
+      res.json(metadata);
+    } catch (error) {
+      console.error('Metadata generation error:', error);
+      res.status(500).json({ error: 'Failed to generate metadata' });
+    }
+  });
+
+  // Batch content generation endpoint
+  app.post("/api/content/batch-generate", async (req, res) => {
+    try {
+      const { topics, baseParams } = req.body;
+      const { batchGenerateContent } = await import('./openai');
+      const results = await batchGenerateContent(topics, baseParams);
+      
+      res.json({ results });
+    } catch (error) {
+      console.error('Batch generation error:', error);
+      res.status(500).json({ error: 'Failed to batch generate content' });
+    }
+  });
+
+  // API health check endpoint
+  app.get("/api/openai/health", async (req, res) => {
+    try {
+      const { checkAPIHealth } = await import('./openai');
+      const health = await checkAPIHealth();
+      
+      res.json(health);
+    } catch (error) {
+      console.error('Health check error:', error);
+      res.status(500).json({ healthy: false, error: 'Health check failed' });
+    }
+  });
+
   // Content publishing endpoint
   app.post("/api/content/publish", async (req, res) => {
     try {
