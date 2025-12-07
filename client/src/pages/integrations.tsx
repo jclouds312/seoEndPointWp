@@ -9,13 +9,13 @@ import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 
 export default function Integrations() {
-  const [yoastKey, setYoastKey] = useState("sk_live_eJs3M*LnfSSo68P!RtXC9lZ"); // Updated with provided credential part
+  const [yoastKey, setYoastKey] = useState("sk_live_eJs3M*LnfSSo68P!RtXC9lZ");
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
+  const [wpSeoConnected, setWpSeoConnected] = useState(false);
 
   const handleConnect = () => {
     setIsConnecting(true);
-    // Simulate API verification
     setTimeout(() => {
       setIsConnecting(false);
       setIsConnected(true);
@@ -36,6 +36,20 @@ export default function Integrations() {
     });
   };
 
+  const checkWpSeoConnection = async () => {
+    try {
+      const response = await fetch('/api/wp-seo/health');
+      const data = await response.json();
+      setWpSeoConnected(data.connected);
+    } catch (error) {
+      setWpSeoConnected(false);
+    }
+  };
+
+  useState(() => {
+    checkWpSeoConnection();
+  });
+
   return (
     <SidebarLayout>
       <div className="flex items-center justify-between mb-8">
@@ -43,6 +57,39 @@ export default function Integrations() {
           <h1 className="text-3xl font-bold text-slate-900">Integrations</h1>
           <p className="text-slate-500 mt-1">Manage connections to external services</p>
         </div>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        <Card className="border-slate-100 shadow-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                  <Search className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">WP-SEO Plugin</CardTitle>
+                  <CardDescription className="text-xs">Advanced SEO Management</CardDescription>
+                </div>
+              </div>
+              {wpSeoConnected ? (
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              ) : (
+                <XCircle className="w-5 h-5 text-slate-300" />
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-slate-600 mb-4">
+              Gestiona metadata SEO, genera schema.org y analiza rendimiento SEO con wp-seo de Alley Interactive.
+            </p>
+            <div className="flex gap-2">
+              <Badge variant={wpSeoConnected ? "default" : "secondary"} className={wpSeoConnected ? "bg-green-100 text-green-700" : ""}>
+                {wpSeoConnected ? "Connected" : "Not Installed"}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-6">

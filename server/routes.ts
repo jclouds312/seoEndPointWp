@@ -9,9 +9,17 @@ import { generateContent, optimizeSEO, generateImageSuggestions } from "./openai
 import WordPressDatabase from "./wordpress-db";
 import JetpackIntegration from "./jetpack-integration";
 import N8nIntegration from "./n8n-integration";
+import WpSeoIntegration from "./wp-seo-integration";
 
 // Inicializar conexión a WordPress y Jetpack
 const jetpack = new JetpackIntegration({
+  siteUrl: 'https://www.californiapersonalinjurylawyersblog.com',
+  wpUsername: process.env.WP_USERNAME || 'walchlaw4',
+  wpPassword: process.env.WP_PASSWORD || ''
+});
+
+// Inicializar conexión a wp-seo plugin
+const wpSeo = new WpSeoIntegration({
   siteUrl: 'https://www.californiapersonalinjurylawyersblog.com',
   wpUsername: process.env.WP_USERNAME || 'walchlaw4',
   wpPassword: process.env.WP_PASSWORD || ''
@@ -560,6 +568,129 @@ export async function registerRoutes(
     } catch (error) {
       console.error('n8n health check error:', error);
       res.status(500).json({ healthy: false, error: 'Health check failed' });
+    }
+  });
+
+  // wp-seo Integration Routes
+
+  // Obtener metadata SEO de un post
+  app.get("/api/wp-seo/posts/:postId/seo", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.postId);
+      const seoData = await wpSeo.getPostSEO(postId);
+      res.json(seoData);
+    } catch (error) {
+      console.error('wp-seo get post SEO error:', error);
+      res.status(500).json({ error: 'Failed to fetch post SEO data' });
+    }
+  });
+
+  // Actualizar metadata SEO de un post
+  app.put("/api/wp-seo/posts/:postId/seo", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.postId);
+      await wpSeo.updatePostSEO(postId, req.body);
+      res.json({ success: true, message: 'SEO data updated successfully' });
+    } catch (error) {
+      console.error('wp-seo update post SEO error:', error);
+      res.status(500).json({ error: 'Failed to update post SEO data' });
+    }
+  });
+
+  // Analizar SEO de un post
+  app.get("/api/wp-seo/posts/:postId/analyze", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.postId);
+      const analysis = await wpSeo.analyzeSEO(postId);
+      res.json(analysis);
+    } catch (error) {
+      console.error('wp-seo analyze error:', error);
+      res.status(500).json({ error: 'Failed to analyze post SEO' });
+    }
+  });
+
+  // Generar schema.org markup
+  app.post("/api/wp-seo/posts/:postId/schema", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.postId);
+      const { schemaType } = req.body;
+      const schema = await wpSeo.generateSchema(postId, schemaType);
+      res.json(schema);
+    } catch (error) {
+      console.error('wp-seo schema generation error:', error);
+      res.status(500).json({ error: 'Failed to generate schema' });
+    }
+  });
+
+  // Obtener posts con SEO incompleto
+  app.get("/api/wp-seo/posts/incomplete", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const posts = await wpSeo.getPostsWithIncompleteSEO(limit);
+      res.json({ posts, count: posts.length });
+    } catch (error) {
+      console.error('wp-seo incomplete posts error:', error);
+      res.status(500).json({ error: 'Failed to fetch posts with incomplete SEO' });
+    }
+  });
+
+  // Validar configuración SEO del sitio
+  app.get("/api/wp-seo/settings/validate", async (req, res) => {
+    try {
+      const validation = await wpSeo.validateSiteConfiguration();
+      res.json(validation);
+    } catch (error) {
+      console.error('wp-seo validation error:', error);
+      res.status(500).json({ error: 'Failed to validate site configuration' });
+    }
+  });
+
+  // Obtener sugerencias de mejora SEO
+  app.get("/api/wp-seo/posts/:postId/suggestions", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.postId);
+      const suggestions = await wpSeo.getSEOSuggestions(postId);
+      res.json({ suggestions });
+    } catch (error) {
+      console.error('wp-seo suggestions error:', error);
+      res.status(500).json({ error: 'Failed to get SEO suggestions' });
+    }
+  });
+
+  // Exportar datos SEO
+  app.get("/api/wp-seo/export", async (req, res) => {
+    try {
+      const data = await wpSeo.exportAllSEOData();
+      res.json({ data, count: data.length });
+    } catch (error) {
+      console.error('wp-seo export error:', error);
+      res.status(500).json({ error: 'Failed to export SEO data' });
+    }
+  });
+
+  // Importar datos SEO en batch
+  app.post("/api/wp-seo/import", async (req, res) => {
+    try {
+      const { posts } = req.body;
+      await wpSeo.importSEOData(posts);
+      res.json({ success: true, message: `Imported SEO data for ${posts.length} posts` });
+    } catch (error) {
+      console.error('wp-seo import error:', error);
+      res.status(500).json({ error: 'Failed to import SEO data' });
+    }
+  });
+
+  // Health check de wp-seo
+  app.get("/api/wp-seo/health", async (req, res) => {
+    try {
+      const connected = await wpSeo.checkConnection();
+      res.json({ 
+        connected, 
+        message: connected ? 'wp-seo plugin is accessible' : 'wp-seo connection failed'
+      });
+    } catch (error) {
+      console.error('wp-seo health check error:', error);
+      res.status(500).json({ connected: false, error: 'Health check failed' });
     }
   });
 
