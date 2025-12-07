@@ -28,6 +28,13 @@ import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
+// Mock Data
+const MOCK_WORKFLOWS = [
+  { id: "wf1", name: "Publicar y Compartir en LinkedIn" },
+  { id: "wf2", name: "Notificar al Equipo Legal" },
+  { id: "wf3", name: "Distribuir en Newsletter" },
+];
+
 export default function ContentPublisher() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -41,38 +48,25 @@ export default function ContentPublisher() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishStatus, setPublishStatus] = useState<any>(null);
 
-  // Fetch n8n workflows
-  const { data: workflows = [] } = useQuery({
+  // Fetch n8n workflows (Mocked)
+  const { data: workflows = MOCK_WORKFLOWS } = useQuery({
     queryKey: ['n8n-workflows'],
     queryFn: async () => {
-      const res = await fetch('/api/n8n/workflows');
-      if (!res.ok) return [];
-      const data = await res.json();
-      return data.workflows || [];
+      return MOCK_WORKFLOWS;
     }
   });
 
-  // Generate AI content
+  // Generate AI content (Mocked)
   const generateContentMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/content/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          campaignId: '1',
-          template: 'injury-guide',
-          prompt: title,
-          keywords,
-          wordCount: 1500,
-          creativity: 0.7,
-          includeImages: generateImages,
-          includeSEO: autoOptimizeSEO,
-          tone: 'professional-empathetic',
-          language: 'es'
-        })
-      });
-      if (!res.ok) throw new Error('Failed to generate content');
-      return res.json();
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return {
+        content: `<h2>${title}</h2><p>Este es un contenido generado automáticamente sobre ${title}. Incluye términos clave como <strong>${keywords}</strong>.</p><p>El sistema analiza las mejores prácticas de SEO para asegurar un alto ranking.</p>`,
+        seo: {
+          title: `${title} - Guía Completa 2025`,
+          description: `Aprende todo sobre ${title} en esta guía detallada. Consejos de expertos y pasos legales a seguir.`
+        }
+      };
     },
     onSuccess: (data) => {
       setContent(data.content);
@@ -80,75 +74,36 @@ export default function ContentPublisher() {
         setSeoTitle(data.seo.title);
         setSeoDescription(data.seo.description);
       }
-      toast({ title: "Contenido generado", description: "Contenido creado con IA exitosamente" });
+      toast({ title: "Contenido generado", description: "Contenido creado con IA exitosamente (Simulado)" });
     }
   });
 
-  // Publish complete workflow
+  // Publish complete workflow (Mocked)
   const publishMutation = useMutation({
     mutationFn: async (isDraft: boolean) => {
       setIsPublishing(true);
-      const publishData: any = {
-        title,
-        content,
-        status: isDraft ? 'draft' : 'publish'
-      };
+      setPublishStatus({}); // Reset status
 
-      // Step 1: Create WordPress post
-      const wpRes = await fetch('/api/wordpress/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(publishData)
-      });
-      
-      if (!wpRes.ok) throw new Error('Failed to create WordPress post');
-      const wpData = await wpRes.json();
-      const postId = wpData.postId;
-
+      // Step 1: Create WordPress post (Simulated)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const postId = Math.floor(Math.random() * 10000);
       setPublishStatus({ step: 'wordpress', status: 'success', postId });
 
-      // Step 2: Optimize SEO with wp-seo
+      // Step 2: Optimize SEO (Simulated)
       if (autoOptimizeSEO) {
-        const seoRes = await fetch(`/api/wp-seo/posts/${postId}/seo`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: seoTitle || title,
-            description: seoDescription,
-            keywords: keywords
-          })
-        });
-
-        if (seoRes.ok) {
-          setPublishStatus((prev: any) => ({ ...prev, seo: 'success' }));
-        }
+        await new Promise(resolve => setTimeout(resolve, 800));
+        setPublishStatus((prev: any) => ({ ...prev, seo: 'success' }));
       }
 
-      // Step 3: Share to social media via Jetpack
+      // Step 3: Share to social media (Simulated)
       if (publishToSocial && !isDraft) {
-        const socialRes = await fetch(`/api/jetpack/share/${postId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: `${title} - ${seoDescription || ''}`
-          })
-        });
-
-        if (socialRes.ok) {
-          setPublishStatus((prev: any) => ({ ...prev, social: 'success' }));
-        }
+        await new Promise(resolve => setTimeout(resolve, 800));
+        setPublishStatus((prev: any) => ({ ...prev, social: 'success' }));
       }
 
-      // Step 4: Execute n8n workflow if selected
+      // Step 4: Execute n8n workflow (Simulated)
       if (selectedWorkflow) {
-        await fetch(`/api/n8n/workflows/${selectedWorkflow}/execute`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            data: { postId, title, content }
-          })
-        });
-
+        await new Promise(resolve => setTimeout(resolve, 800));
         setPublishStatus((prev: any) => ({ ...prev, workflow: 'success' }));
       }
 
@@ -158,14 +113,14 @@ export default function ContentPublisher() {
       setIsPublishing(false);
       toast({
         title: data.isDraft ? "Borrador guardado" : "Publicado exitosamente",
-        description: `Post ID: ${data.postId}. Todas las integraciones completadas.`
+        description: `Post ID: ${data.postId}. Todas las integraciones completadas (Simulado).`
       });
     },
     onError: (error) => {
       setIsPublishing(false);
       toast({
         title: "Error al publicar",
-        description: error instanceof Error ? error.message : "Error desconocido",
+        description: "Error desconocido",
         variant: "destructive"
       });
     }

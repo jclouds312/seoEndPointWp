@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import { 
   FileText, 
   Wand2, 
@@ -26,7 +27,7 @@ import {
   Link2,
   CheckCircle2
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Campaign } from "@/lib/schema";
@@ -43,28 +44,71 @@ interface ContentTemplate {
 const CONTENT_TEMPLATES: ContentTemplate[] = [
   {
     id: "injury-guide",
-    name: "Personal Injury Guide",
-    description: "Complete guide for injury victims",
-    structure: ["Introduction", "Types of Injuries", "Legal Rights", "Compensation", "Next Steps", "FAQ"],
-    tone: "professional-empathetic",
-    keywords: ["personal injury", "compensation", "legal rights"]
+    name: "Guía de Lesiones Personales",
+    description: "Guía completa para víctimas de lesiones",
+    structure: ["Introducción", "Tipos de Lesiones", "Derechos Legales", "Compensación", "Próximos Pasos", "FAQ"],
+    tone: "profesional-empático",
+    keywords: ["lesión personal", "compensación", "derechos legales"]
   },
   {
     id: "accident-steps",
-    name: "Post-Accident Steps",
-    description: "What to do after an accident",
-    structure: ["Immediate Actions", "Documentation", "Medical Care", "Legal Consultation", "Insurance Claims"],
-    tone: "instructive-supportive",
-    keywords: ["car accident", "accident lawyer", "insurance claim"]
+    name: "Pasos Post-Accidente",
+    description: "Qué hacer después de un accidente",
+    structure: ["Acciones Inmediatas", "Documentación", "Atención Médica", "Consulta Legal", "Reclamos de Seguro"],
+    tone: "instructivo-apoyo",
+    keywords: ["accidente de auto", "abogado de accidentes", "reclamo de seguro"]
   },
   {
     id: "case-study",
-    name: "Case Study",
-    description: "Success story template",
-    structure: ["Client Situation", "Challenges", "Legal Strategy", "Results", "Takeaways"],
-    tone: "professional-persuasive",
-    keywords: ["case result", "settlement", "victory"]
+    name: "Estudio de Caso",
+    description: "Plantilla de historia de éxito",
+    structure: ["Situación del Cliente", "Desafíos", "Estrategia Legal", "Resultados", "Conclusiones"],
+    tone: "profesional-persuasivo",
+    keywords: ["resultado del caso", "acuerdo", "victoria"]
   }
+];
+
+// Mock Data
+const MOCK_CAMPAIGNS: Campaign[] = [
+  { 
+    id: 1, 
+    name: "Campaña de Accidentes de Auto", 
+    status: "active", 
+    blogUrl: "https://example.com/blog",
+    embedCode: "xyz",
+    description: "Campaña principal de accidentes",
+    posts: 12,
+    createdAt: new Date(), 
+    updatedAt: new Date(),
+    userId: "1",
+    config: {}
+  },
+  { 
+    id: 2, 
+    name: "Lesiones Laborales Q4", 
+    status: "active", 
+    blogUrl: "https://example.com/work-injury",
+    embedCode: "abc",
+    description: "Enfoque en lesiones de construcción",
+    posts: 5,
+    createdAt: new Date(), 
+    updatedAt: new Date(),
+    userId: "1",
+    config: {}
+  },
+  { 
+    id: 3, 
+    name: "Negligencia Médica", 
+    status: "draft", 
+    blogUrl: "https://example.com/med-mal",
+    embedCode: "def",
+    description: "Casos de negligencia y mala praxis",
+    posts: 0,
+    createdAt: new Date(), 
+    updatedAt: new Date(),
+    userId: "1",
+    config: {}
+  },
 ];
 
 export default function ContentCreator() {
@@ -84,73 +128,12 @@ export default function ContentCreator() {
   const [seoScore, setSeoScore] = useState<any>(null);
   const [isGeneratingImages, setIsGeneratingImages] = useState(false);
 
-  // Fetch campaigns
-  const { data: campaigns = [] } = useQuery<Campaign[]>({
+  // Fetch campaigns (Mocked)
+  const { data: campaigns = MOCK_CAMPAIGNS } = useQuery<Campaign[]>({
     queryKey: ['campaigns'],
     queryFn: async () => {
-      const res = await fetch('/api/campaigns');
-      if (!res.ok) throw new Error('Failed to fetch campaigns');
-      return res.json();
-    }
-  });
-
-  // Generate content mutation
-  const generateContentMutation = useMutation({
-    mutationFn: async (data: {
-      campaignId: string;
-      template: string;
-      prompt: string;
-      keywords: string;
-      wordCount: number;
-      creativity: number;
-      includeImages: boolean;
-      includeSEO: boolean;
-    }) => {
-      const res = await fetch('/api/content/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) throw new Error('Failed to generate content');
-      return res.json();
-    },
-    onSuccess: (data) => {
-      setGeneratedContent(data.content);
-      toast({
-        title: "Contenido generado",
-        description: "El contenido ha sido creado exitosamente con IA"
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "No se pudo generar el contenido",
-        variant: "destructive"
-      });
-    }
-  });
-
-  // Publish content mutation
-  const publishContentMutation = useMutation({
-    mutationFn: async (data: {
-      campaignId: string;
-      title: string;
-      content: string;
-      status: 'draft' | 'published';
-    }) => {
-      const res = await fetch('/api/content/publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) throw new Error('Failed to publish content');
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Contenido publicado",
-        description: "El contenido ha sido publicado exitosamente"
-      });
+      // Return mock data for prototype
+      return MOCK_CAMPAIGNS;
     }
   });
 
@@ -167,70 +150,45 @@ export default function ContentCreator() {
     setIsGenerating(true);
     setGeneratedContent("");
     
-    try {
-      // Use streaming for better UX
-      const response = await fetch('/api/content/generate-stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          campaignId: selectedCampaign,
-          template: selectedTemplate,
-          prompt: contentPrompt,
-          keywords: targetKeywords,
-          wordCount: wordCount[0],
-          creativity: creativity[0],
-          includeImages,
-          includeSEO,
-          tone: CONTENT_TEMPLATES.find(t => t.id === selectedTemplate)?.tone || 'professional-empathetic',
-          language: 'es'
-        })
-      });
+    // Simulating AI Streaming Generation
+    const mockContent = `
+      <h2>Introducción</h2>
+      <p>Cuando te enfrentas a una situación legal compleja, entender tus derechos es el primer paso crucial. En esta guía, exploraremos los aspectos fundamentales de ${contentPrompt} y cómo puedes proteger tus intereses.</p>
+      
+      <h2>Aspectos Legales Clave</h2>
+      <p>La ley establece marcos específicos para este tipo de casos. Es importante documentar todo: desde reportes médicos hasta comunicaciones con aseguradoras. ${targetKeywords ? `Palabras clave como <strong>${targetKeywords}</strong> son vitales para tu caso.` : ''}</p>
+      
+      <ul>
+        <li>Reúne evidencia fotográfica inmediata.</li>
+        <li>No firmes documentos sin asesoría legal.</li>
+        <li>Mantén un registro detallado de gastos médicos.</li>
+      </ul>
 
-      if (!response.ok) throw new Error('Failed to generate content');
+      <h2>El Proceso de Reclamación</h2>
+      <p>El proceso puede ser largo, pero la paciencia y la diligencia son tus mejores aliados. Un abogado especializado puede guiarte a través de las complejidades del sistema judicial.</p>
+      
+      <h2>Conclusión</h2>
+      <p>No estás solo en este proceso. Busca ayuda profesional y asegúrate de que tus derechos sean respetados en cada etapa del camino.</p>
+    `;
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let accumulatedContent = "";
+    // Simulate streaming effect
+    const chunks = mockContent.split(/(?=[<])/); // Split by tags roughly
+    let currentText = "";
+    
+    for (let i = 0; i < chunks.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 300)); // Delay between chunks
+      currentText += chunks[i];
+      setGeneratedContent(currentText);
+    }
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+    setIsGenerating(false);
+    toast({
+      title: "Contenido generado",
+      description: "El contenido ha sido creado exitosamente con IA (Simulado)"
+    });
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
-          
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') break;
-              
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.chunk) {
-                  accumulatedContent += parsed.chunk;
-                  setGeneratedContent(accumulatedContent);
-                }
-              } catch (e) {
-                // Ignore parse errors
-              }
-            }
-          }
-        }
-      }
-
-      toast({
-        title: "Contenido generado",
-        description: "El contenido ha sido creado exitosamente con IA"
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo generar el contenido",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGenerating(false);
+    if (includeSEO) {
+        handleOptimizeSEO(currentText);
     }
   };
 
@@ -245,91 +203,57 @@ export default function ContentCreator() {
     }
 
     setIsGeneratingImages(true);
-    try {
-      const response = await fetch('/api/images/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: `${contentPrompt}. Estilo profesional para artículo legal`,
-          size: '1024x1024',
-          quality: 'hd',
-          style: 'natural',
-          n: 2
-        })
-      });
+    
+    // Simulate image generation delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-      if (!response.ok) throw new Error('Failed to generate images');
+    // Mock images
+    const mockImages = [
+      "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=800&q=80"
+    ];
+    
+    setGeneratedImages(mockImages);
+    setIsGeneratingImages(false);
       
-      const data = await response.json();
-      setGeneratedImages(data.images);
-      
-      toast({
-        title: "Imágenes generadas",
-        description: `Se generaron ${data.images.length} imágenes`
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudieron generar las imágenes",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGeneratingImages(false);
-    }
+    toast({
+      title: "Imágenes generadas",
+      description: `Se generaron ${mockImages.length} imágenes (Simuladas)`
+    });
   };
 
   const handleGenerateMetadata = async () => {
     if (!generatedContent) return;
 
-    try {
-      const keywords = targetKeywords.split(',').map(k => k.trim());
-      const response = await fetch('/api/content/metadata', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: generatedContent,
-          keywords
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to generate metadata');
-      
-      const metadata = await response.json();
-      setSeoMetadata(metadata);
-    } catch (error) {
-      console.error('Metadata generation error:', error);
-    }
+    // Mock metadata generation
+    const mockMetadata = {
+        title: `Guía Completa: ${contentPrompt.substring(0, 30)}...`,
+        description: `Descubre todo lo que necesitas saber sobre ${contentPrompt}. Una guía experta para proteger tus derechos y maximizar tu compensación.`,
+        slug: contentPrompt.toLowerCase().replace(/ /g, '-').substring(0, 50)
+    };
+    
+    setSeoMetadata(mockMetadata);
+    toast({ title: "Metadata Generada", description: "Meta título y descripción creados." });
   };
 
-  const handleOptimizeSEO = async () => {
-    if (!generatedContent || !targetKeywords) return;
+  const handleOptimizeSEO = async (contentToAnalyze = generatedContent) => {
+    if (!contentToAnalyze) return;
 
-    try {
-      const keywords = targetKeywords.split(',').map(k => k.trim());
-      const seoData = {
-        content: generatedContent,
-        keywords
-      };
+    // Simular análisis SEO
+    const mockScore = {
+      score: 85,
+      keywordDensity: {
+        [targetKeywords || 'legal']: 2.5
+      },
+      suggestions: [
+        "Densidad de keywords óptima",
+        "Estructura de encabezados correcta",
+        "Incluir más enlaces internos"
+      ],
+      improvements: "El contenido está bien optimizado. Considera agregar más ejemplos prácticos."
+    };
 
-      // Simular análisis SEO (en producción vendría del backend)
-      const mockScore = {
-        score: 85,
-        keywordDensity: keywords.reduce((acc, kw) => {
-          acc[kw] = Math.random() * 2;
-          return acc;
-        }, {} as Record<string, number>),
-        suggestions: [
-          "Densidad de keywords óptima",
-          "Estructura de encabezados correcta",
-          "Incluir más enlaces internos"
-        ],
-        improvements: "El contenido está bien optimizado. Considera agregar más ejemplos prácticos."
-      };
-
-      setSeoScore(mockScore);
-    } catch (error) {
-      console.error('SEO optimization error:', error);
-    }
+    setSeoScore(mockScore);
   };
 
   const handlePublish = (status: 'draft' | 'published') => {
@@ -342,11 +266,10 @@ export default function ContentCreator() {
       return;
     }
 
-    publishContentMutation.mutate({
-      campaignId: selectedCampaign,
-      title: seoMetadata?.title || contentPrompt.slice(0, 100),
-      content: generatedContent,
-      status
+    toast({
+      title: status === 'draft' ? "Borrador Guardado" : "Publicado Exitosamente",
+      description: "El contenido ha sido procesado (Simulación)",
+      variant: "default"
     });
   };
 
