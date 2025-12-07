@@ -13,6 +13,7 @@ import Settings from "@/pages/settings";
 import LocalSEO from "@/pages/local-seo";
 import Deployment from "@/pages/deployment";
 import Documentation from "@/pages/documentation";
+import Marketplace from "@/pages/marketplace";
 
 function Router() {
   return (
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/workflows" component={Workflows} />
       <Route path="/integrations" component={Integrations} />
+      <Route path="/marketplace" component={Marketplace} />
       <Route path="/data-sources" component={DataSources} />
       <Route path="/local-seo" component={LocalSEO} />
       <Route path="/deployment" component={Deployment} />
