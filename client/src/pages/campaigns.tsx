@@ -6,44 +6,111 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Copy, Check, Globe, Code, Trash2, Edit, Eye } from "lucide-react";
+import { Plus, Copy, Check, Globe, Trash2, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-
-interface Campaign {
-  id: string;
-  name: string;
-  blogUrl: string;
-  description: string;
-  embedCode: string;
-  status: 'active' | 'paused';
-  posts: number;
-  createdAt: string;
-}
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Campaign } from "@/../../shared/schema";
 
 export default function Campaigns() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([
-    {
-      id: '1',
-      name: 'California Personal Injury',
-      blogUrl: 'https://www.californiapersonalinjurylawyersblog.com',
-      description: 'Main blog for California PI law content',
-      embedCode: generateEmbedCode('californiapersonalinjurylawyersblog'),
-      status: 'active',
-      posts: 1284,
-      createdAt: '2024-01-15'
-    }
-  ]);
-
+  const queryClient = useQueryClient();
   const [newCampaign, setNewCampaign] = useState({
     name: '',
     blogUrl: '',
     description: ''
   });
-
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Fetch campaigns
+  const { data: campaigns = [], isLoading } = useQuery<Campaign[]>({
+    queryKey: ['campaigns'],
+    queryFn: async () => {
+      const response = await fetch('/api/campaigns');
+      if (!response.ok) throw new Error('Failed to fetch campaigns');
+      return response.json();
+    }
+  });
+
+  // Create campaign mutation
+  const createCampaignMutation = useMutation({
+    mutationFn: async (data: { name: string; blogUrl: string; description: string }) => {
+      const blogIdentifier = data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const embedCode = generateEmbedCode(blogIdentifier);
+      
+      const response = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          blogUrl: data.blogUrl,
+          description: data.description,
+          embedCode,
+          status: 'active',
+          posts: 0
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to create campaign');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      setNewCampaign({ name: '', blogUrl: '', description: '' });
+      setIsDialogOpen(false);
+      toast({
+        title: "Campaña creada",
+        description: "La campaña ha sido creada exitosamente"
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo crear la campaña",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Update campaign mutation
+  const updateCampaignMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const response = await fetch(`/api/campaigns/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      
+      if (!response.ok) throw new Error('Failed to update campaign');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      toast({
+        title: "Campaña actualizada",
+        description: "El estado de la campaña ha sido actualizado"
+      });
+    }
+  });
+
+  // Delete campaign mutation
+  const deleteCampaignMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/campaigns/${id}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete campaign');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      toast({
+        title: "Campaña eliminada",
+        description: "La campaña ha sido eliminada"
+      });
+    }
+  });
 
   function generateEmbedCode(blogIdentifier: string): string {
     return `<?php
@@ -51,7 +118,7 @@ export default function Campaigns() {
  * Plugin Name: SEO Automation Hub - ${blogIdentifier}
  * Description: Embeds the Replit SEO Dashboard into WordPress Admin
  * Version: 1.0.0
- * Author: Replit Agent
+ * Author: SEO Hub
  */
 
 add_action('admin_menu', 'register_seo_hub_${blogIdentifier}');
@@ -90,9 +157,9 @@ function render_seo_hub_${blogIdentifier}() {
 ?>`;
   }
 
-  const handleCopy = (id: string, code: string) => {
+  const handleCopy = (id: number, code: string) => {
     navigator.clipboard.writeText(code);
-    setCopiedId(id);
+    setCopiedId(id.toString());
     setTimeout(() => setCopiedId(null), 2000);
     toast({
       title: "Código copiado",
@@ -110,41 +177,29 @@ function render_seo_hub_${blogIdentifier}() {
       return;
     }
 
-    const blogIdentifier = newCampaign.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    const campaign: Campaign = {
-      id: Date.now().toString(),
-      name: newCampaign.name,
-      blogUrl: newCampaign.blogUrl,
-      description: newCampaign.description,
-      embedCode: generateEmbedCode(blogIdentifier),
-      status: 'active',
-      posts: 0,
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-
-    setCampaigns([...campaigns, campaign]);
-    setNewCampaign({ name: '', blogUrl: '', description: '' });
-    setIsDialogOpen(false);
-    
-    toast({
-      title: "Campaña creada",
-      description: `La campaña "${campaign.name}" ha sido creada exitosamente`
-    });
+    createCampaignMutation.mutate(newCampaign);
   };
 
-  const handleDeleteCampaign = (id: string) => {
-    setCampaigns(campaigns.filter(c => c.id !== id));
-    toast({
-      title: "Campaña eliminada",
-      description: "La campaña ha sido eliminada"
-    });
+  const handleDeleteCampaign = (id: number) => {
+    if (confirm('¿Estás seguro de que deseas eliminar esta campaña?')) {
+      deleteCampaignMutation.mutate(id);
+    }
   };
 
-  const toggleCampaignStatus = (id: string) => {
-    setCampaigns(campaigns.map(c => 
-      c.id === id ? { ...c, status: c.status === 'active' ? 'paused' : 'active' } : c
-    ));
+  const toggleCampaignStatus = (id: number, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'paused' : 'active';
+    updateCampaignMutation.mutate({ id, status: newStatus });
   };
+
+  if (isLoading) {
+    return (
+      <SidebarLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
+      </SidebarLayout>
+    );
+  }
 
   return (
     <SidebarLayout>
@@ -201,103 +256,122 @@ function render_seo_hub_${blogIdentifier}() {
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleCreateCampaign}>
-                Crear Campaña
+              <Button 
+                onClick={handleCreateCampaign}
+                disabled={createCampaignMutation.isPending}
+              >
+                {createCampaignMutation.isPending ? 'Creando...' : 'Crear Campaña'}
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid gap-6">
-        {campaigns.map((campaign) => (
-          <Card key={campaign.id} className="border-slate-100 shadow-sm">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <Globe className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <CardTitle className="text-xl">{campaign.name}</CardTitle>
-                      <Badge 
-                        className={campaign.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-amber-100 text-amber-700'}
-                      >
-                        {campaign.status === 'active' ? 'Activa' : 'Pausada'}
-                      </Badge>
+      {campaigns.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <Globe className="w-16 h-16 text-slate-300 mb-4" />
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">No hay campañas aún</h3>
+            <p className="text-slate-500 mb-6">Crea tu primera campaña para comenzar</p>
+            <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Nueva Campaña
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-6">
+          {campaigns.map((campaign) => (
+            <Card key={campaign.id} className="border-slate-100 shadow-sm">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <Globe className="w-6 h-6 text-blue-600" />
                     </div>
-                    <CardDescription className="mb-3">{campaign.description}</CardDescription>
-                    <div className="flex items-center gap-4 text-sm text-slate-600">
-                      <span className="flex items-center gap-1">
-                        <Globe className="w-4 h-4" />
-                        {campaign.blogUrl}
-                      </span>
-                      <span>{campaign.posts} publicaciones</span>
-                      <span>Creada: {campaign.createdAt}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <CardTitle className="text-xl">{campaign.name}</CardTitle>
+                        <Badge 
+                          className={campaign.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-amber-100 text-amber-700'}
+                        >
+                          {campaign.status === 'active' ? 'Activa' : 'Pausada'}
+                        </Badge>
+                      </div>
+                      <CardDescription className="mb-3">{campaign.description || 'Sin descripción'}</CardDescription>
+                      <div className="flex items-center gap-4 text-sm text-slate-600">
+                        <span className="flex items-center gap-1">
+                          <Globe className="w-4 h-4" />
+                          {campaign.blogUrl}
+                        </span>
+                        <span>{campaign.posts} publicaciones</span>
+                        <span>Creada: {new Date(campaign.createdAt).toLocaleDateString()}</span>
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => toggleCampaignStatus(campaign.id, campaign.status)}
+                      disabled={updateCampaignMutation.isPending}
+                    >
+                      {campaign.status === 'active' ? 'Pausar' : 'Activar'}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDeleteCampaign(campaign.id)}
+                      className="text-red-600 hover:text-red-700"
+                      disabled={deleteCampaignMutation.isPending}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => toggleCampaignStatus(campaign.id)}
-                  >
-                    {campaign.status === 'active' ? 'Pausar' : 'Activar'}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleDeleteCampaign(campaign.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Script de Embed para WordPress</Label>
+                    <Button 
+                      size="sm" 
+                      variant="secondary" 
+                      onClick={() => handleCopy(campaign.id, campaign.embedCode)}
+                      className="h-8 gap-2"
+                    >
+                      {copiedId === campaign.id.toString() ? (
+                        <>
+                          <Check className="w-3 h-3 text-green-600" />
+                          ¡Copiado!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          Copiar Código
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <pre className="bg-slate-900 text-slate-50 p-4 rounded-lg overflow-x-auto text-xs font-mono leading-relaxed max-h-64">
+                    {campaign.embedCode}
+                  </pre>
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                    <h4 className="font-medium text-blue-900 text-sm mb-2">Instrucciones de Instalación</h4>
+                    <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800">
+                      <li>Copia el código de arriba</li>
+                      <li>Crea un archivo <code className="bg-white px-1 rounded">seo-hub-{campaign.name.toLowerCase().replace(/\s+/g, '-')}.php</code></li>
+                      <li>Sube el archivo a <code className="bg-white px-1 rounded">/wp-content/plugins/</code></li>
+                      <li>Activa el plugin en WordPress Admin</li>
+                      <li>Reemplaza <code className="bg-white px-1 rounded">[YOUR-REPLIT-URL]</code> con tu URL de Replit</li>
+                    </ol>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Script de Embed para WordPress</Label>
-                  <Button 
-                    size="sm" 
-                    variant="secondary" 
-                    onClick={() => handleCopy(campaign.id, campaign.embedCode)}
-                    className="h-8 gap-2"
-                  >
-                    {copiedId === campaign.id ? (
-                      <>
-                        <Check className="w-3 h-3 text-green-600" />
-                        ¡Copiado!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3 h-3" />
-                        Copiar Código
-                      </>
-                    )}
-                  </Button>
-                </div>
-                <pre className="bg-slate-900 text-slate-50 p-4 rounded-lg overflow-x-auto text-xs font-mono leading-relaxed max-h-64">
-                  {campaign.embedCode}
-                </pre>
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                  <h4 className="font-medium text-blue-900 text-sm mb-2">Instrucciones de Instalación</h4>
-                  <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800">
-                    <li>Copia el código de arriba</li>
-                    <li>Crea un archivo <code className="bg-white px-1 rounded">seo-hub-{campaign.name.toLowerCase().replace(/\s+/g, '-')}.php</code></li>
-                    <li>Sube el archivo a <code className="bg-white px-1 rounded">/wp-content/plugins/</code></li>
-                    <li>Activa el plugin en WordPress Admin</li>
-                    <li>Reemplaza <code className="bg-white px-1 rounded">[YOUR-REPLIT-URL]</code> con tu URL de Replit</li>
-                  </ol>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </SidebarLayout>
   );
 }

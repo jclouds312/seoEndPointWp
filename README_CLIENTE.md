@@ -1,7 +1,15 @@
+# SEO Automation Hub - Guía del Cliente
 
-# SEO Automation Hub - Guía de Usuario
+## 📋 Tabla de Contenidos
 
-## ¿Qué es SEO Automation Hub?
+1. [Introducción](#introducción)
+2. [Acceso al Dashboard](#acceso-al-dashboard)
+3. [Gestión de Campañas](#gestión-de-campañas)
+4. [Instalación en WordPress](#instalación-en-wordpress)
+5. [Publicación SEO Automatizada](#publicación-seo-automatizada)
+6. [Soporte](#soporte)
+
+## 🎯 Introducción
 
 SEO Automation Hub es una plataforma centralizada que te permite gestionar múltiples blogs de WordPress, generar contenido SEO automatizado, y monitorear el rendimiento de tus publicaciones desde un solo lugar.
 
@@ -81,3 +89,62 @@ No hay límite. Puedes crear tantas campañas como blogs tengas.
 
 **¿Es compatible con Yoast SEO?**
 Sí, está diseñado específicamente para funcionar con Yoast SEO Premium v25.7+.
+
+## 🚀 Gestión de Campañas
+
+### Crear una Nueva Campaña
+
+1. **Acceder a Campañas**
+   - Click en "Campañas" en el menú lateral
+   - Click en el botón "Nueva Campaña"
+
+2. **Completar Información**
+   - **Nombre**: Identificador único de la campaña (ej: "Texas Car Accident Lawyers")
+   - **URL del Blog**: Dirección completa del sitio WordPress (https://www.ejemplo.com)
+   - **Descripción**: Opcional, describe el propósito de la campaña
+
+3. **Generar Script de Embed**
+   - El sistema generará automáticamente un script PHP personalizado
+   - Este script permite integrar el dashboard dentro de WordPress Admin
+
+### Instalar en WordPress
+
+1. **Copiar el Script**
+   - Click en "Copiar Código" en la tarjeta de la campaña
+   - El script PHP quedará en tu portapapeles
+
+2. **Crear el Plugin**
+   - Crea un archivo nuevo llamado `seo-hub-[nombre-campaña].php`
+   - Pega el código copiado
+   - Guarda el archivo
+
+3. **Subir a WordPress**
+   - Accede a tu servidor vía FTP o File Manager
+   - Navega a `/wp-content/plugins/`
+   - Sube el archivo PHP creado
+
+4. **Activar el Plugin**
+   - En WordPress Admin, ve a **Plugins → Installed Plugins**
+   - Busca "SEO Automation Hub"
+   - Click en "Activate"
+
+5. **Configurar URL de Replit**
+   - Edita el archivo PHP en WordPress
+   - Reemplaza `[YOUR-REPLIT-URL]` con tu URL real de Replit
+   - Ejemplo: `https://tu-proyecto.replit.app`
+
+### Gestionar Campañas Existentes
+
+**Pausar/Activar Campaña**
+- Click en el botón "Pausar" para detener temporalmente
+- Click en "Activar" para reanudar operaciones
+
+**Eliminar Campaña**
+- Click en el icono de papelera
+- Confirma la eliminación (acción irreversible)
+
+**Ver Estadísticas**
+- Cada tarjeta muestra:
+  - Número de publicaciones generadas
+  - Estado actual (Activa/Pausada)
+  - Fecha de creación

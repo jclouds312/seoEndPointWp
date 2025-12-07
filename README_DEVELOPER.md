@@ -112,7 +112,28 @@ interface Campaign {
 }
 ```
 
-## Despliegue en Replit
+## 🚀 Despliegue
+
+### Opción 1: Despliegue en Replit (Recomendado)
+
+#### Configuración Inicial
+
+1. **Variables de Entorno**
+   - Click en "Secrets" (icono de candado) en Replit
+   - Agrega las siguientes variables:
+     ```
+     DATABASE_URL=postgresql://user:password@host:5432/database
+     SESSION_SECRET=tu-secreto-seguro-aleatorio
+     ```
+
+2. **Configurar Database**
+   - Usa Replit Database o PostgreSQL externo
+   - Ejecuta las migraciones:
+     ```bash
+     npm run db:migrate
+     ```
+
+#### Deploy Automático
 
 ### Método 1: Desde la UI
 
@@ -130,6 +151,51 @@ interface Campaign {
 2. Importa desde GitHub
 3. Replit auto-detectará la configuración
 4. Sigue el proceso de deploy
+
+### Opción 2: Despliegue en Vercel
+
+1. **Conectar Repositorio**
+   ```bash
+   npm install -g vercel
+   vercel login
+   vercel
+   ```
+
+2. **Configurar Variables de Entorno**
+   - En Vercel Dashboard → Settings → Environment Variables
+   - Agregar:
+     - `DATABASE_URL`: URL de PostgreSQL
+     - `NODE_ENV`: production
+
+3. **Deploy**
+   ```bash
+   vercel --prod
+   ```
+
+4. **Configuración Automática**
+   - Vercel detectará automáticamente el archivo `vercel.json`
+   - Build command: `npm run build`
+   - Output directory: `dist/public`
+
+### Opción 3: Despliegue en Firebase
+
+1. **Instalar Firebase CLI**
+   ```bash
+   npm install -g firebase-tools
+   firebase login
+   ```
+
+2. **Inicializar Proyecto**
+   ```bash
+   firebase init hosting
+   firebase init functions
+   ```
+
+3. **Deploy**
+   ```bash
+   npm run build
+   firebase deploy
+   ```
 
 ### Variables de Entorno Necesarias
 
