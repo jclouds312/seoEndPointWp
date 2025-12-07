@@ -1,3 +1,4 @@
+
 import SidebarLayout from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,8 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Search, FileText, CheckCircle2, AlertCircle, AlertTriangle, RefreshCw, Smartphone, Monitor, Globe } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Paper, Researcher } from "yoastseo";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+interface SEOResult {
+  text: string;
+  score: number;
+  type: string;
+}
 
 export default function SeoAnalyzer() {
   const [content, setContent] = useState("This is a sample text. It is not very long. You should write more content to get a better score. SEO is important for your website visibility.");
@@ -16,79 +22,129 @@ export default function SeoAnalyzer() {
   const [title, setTitle] = useState("Ultimate Guide to SEO Optimization - 2025 Edition");
   const [slug, setSlug] = useState("ultimate-guide-seo-optimization");
   const [metaDesc, setMetaDesc] = useState("Learn how to optimize your website for search engines with our comprehensive guide. Improve rankings and drive traffic today.");
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<SEOResult[]>([]);
   const [score, setScore] = useState<number>(0);
 
-  const runAnalysis = async () => {
+  const runAnalysis = () => {
     if (!content) return;
 
-    const paper = new Paper(content, {
-      keyword: keyword,
-      title: title,
-      description: metaDesc,
-      url: slug
+    const analysisResults: SEOResult[] = [];
+    let passed = 0;
+    let total = 0;
+
+    // Word count analysis
+    const wordCount = content.trim().split(/\s+/).length;
+    const wordCountScore = wordCount > 300 ? 9 : wordCount > 150 ? 6 : 3;
+    analysisResults.push({
+      text: `Text length: The text contains <strong>${wordCount} words</strong>. ${wordCount > 300 ? 'Good job!' : wordCount > 150 ? 'Consider adding more content.' : 'This is below the recommended minimum.'}`,
+      score: wordCountScore,
+      type: "length"
     });
+    if (wordCountScore >= 7) passed++;
+    total++;
 
-    const researcher = new Researcher(paper);
-    
-    try {
-        const availableResearches = researcher.getAvailableResearches();
-        const allResults = [];
-        let passed = 0;
-        let total = 0;
+    // Keyword in title
+    const keywordInTitle = title.toLowerCase().includes(keyword.toLowerCase());
+    const titleKeywordScore = keywordInTitle ? 9 : 2;
+    analysisResults.push({
+      text: keywordInTitle 
+        ? `Keyphrase in title: The focus keyphrase appears in the SEO title.` 
+        : `Keyphrase in title: The focus keyphrase does not appear in the SEO title.`,
+      score: titleKeywordScore,
+      type: "titleKeyword"
+    });
+    if (titleKeywordScore >= 7) passed++;
+    total++;
 
-        for (const r of availableResearches) {
-            try {
-                const result = researcher.getResearch(r);
-                if (result && result.score) {
-                     allResults.push({
-                        name: r,
-                        score: result.score,
-                        text: result.output || result.identifier
-                    });
-                    
-                    if (result.score > 7) passed++;
-                    total++;
-                }
-            } catch (e) {
-                console.error(`Error running research ${r}`, e);
-            }
-        }
+    // Keyphrase length
+    const keyphraseWords = keyword.split(' ').length;
+    const keyphraseLengthScore = keyphraseWords <= 4 ? 9 : 4;
+    analysisResults.push({
+      text: `Keyphrase length: ${keyphraseWords <= 4 ? 'Good job!' : 'Your keyphrase is rather long. Consider using a shorter keyphrase.'}`,
+      score: keyphraseLengthScore,
+      type: "keywordLength"
+    });
+    if (keyphraseLengthScore >= 7) passed++;
+    total++;
 
-        const mockResults = [
-            { 
-                text: "Text length: The text contains " + content.split(' ').length + " words.",
-                score: content.split(' ').length > 300 ? 9 : 3,
-                type: "length"
-            },
-            {
-                text: "Keyphrase length: Good job!",
-                score: keyword.split(' ').length < 5 ? 9 : 4,
-                type: "keywordLength"
-            },
-            {
-                text: "Keyphrase density: The focus keyphrase was found " + (content.match(new RegExp(keyword, "gi")) || []).length + " times.",
-                score: (content.match(new RegExp(keyword, "gi")) || []).length > 0 ? 8 : 2,
-                type: "density"
-            },
-            {
-                text: "Meta description length: Well done!",
-                score: metaDesc.length > 120 && metaDesc.length < 160 ? 9 : 4,
-                type: "meta"
-            }
-        ];
+    // Keyphrase density
+    const keywordRegex = new RegExp(keyword, "gi");
+    const keywordMatches = (content.match(keywordRegex) || []).length;
+    const density = (keywordMatches / wordCount) * 100;
+    const densityScore = density >= 0.5 && density <= 2.5 ? 9 : density > 0 ? 6 : 2;
+    analysisResults.push({
+      text: `Keyphrase density: The focus keyphrase was found <strong>${keywordMatches} times</strong>. That's a ${density.toFixed(2)}% density. ${densityScore >= 7 ? 'Good job!' : 'Consider using the keyphrase more often.'}`,
+      score: densityScore,
+      type: "density"
+    });
+    if (densityScore >= 7) passed++;
+    total++;
 
-        setResults(allResults.length > 0 ? allResults : mockResults);
-        
-        const calcedScore = allResults.length > 0 
-            ? Math.round((passed / total) * 100) 
-            : (content.split(' ').length > 50 && keyword && metaDesc ? 75 : 40);
-            
-        setScore(calcedScore);
+    // Meta description length
+    const metaLength = metaDesc.length;
+    const metaLengthScore = metaLength >= 120 && metaLength <= 160 ? 9 : metaLength > 0 ? 5 : 2;
+    analysisResults.push({
+      text: `Meta description length: ${metaLengthScore >= 7 ? 'Well done!' : metaLength < 120 ? 'The meta description is too short.' : 'The meta description is too long.'}`,
+      score: metaLengthScore,
+      type: "meta"
+    });
+    if (metaLengthScore >= 7) passed++;
+    total++;
 
-    } catch (error) {
-        console.error("Analysis failed", error);
-    }
+    // Keyphrase in meta description
+    const keywordInMeta = metaDesc.toLowerCase().includes(keyword.toLowerCase());
+    const metaKeywordScore = keywordInMeta ? 9 : 3;
+    analysisResults.push({
+      text: keywordInMeta 
+        ? `Keyphrase in meta description: The focus keyphrase appears in the meta description.` 
+        : `Keyphrase in meta description: The meta description doesn't contain the focus keyphrase.`,
+      score: metaKeywordScore,
+      type: "metaKeyword"
+    });
+    if (metaKeywordScore >= 7) passed++;
+    total++;
+
+    // Keyphrase in introduction
+    const intro = content.slice(0, Math.min(content.length, 200));
+    const keywordInIntro = intro.toLowerCase().includes(keyword.toLowerCase());
+    const introScore = keywordInIntro ? 9 : 3;
+    analysisResults.push({
+      text: keywordInIntro 
+        ? `Keyphrase in introduction: The focus keyphrase appears in the first paragraph.` 
+        : `Keyphrase in introduction: The focus keyphrase doesn't appear in the first paragraph.`,
+      score: introScore,
+      type: "intro"
+    });
+    if (introScore >= 7) passed++;
+    total++;
+
+    // Title length
+    const titleLength = title.length;
+    const titleLengthScore = titleLength >= 30 && titleLength <= 60 ? 9 : titleLength > 0 ? 5 : 2;
+    analysisResults.push({
+      text: `SEO title length: ${titleLengthScore >= 7 ? 'Good job!' : titleLength < 30 ? 'The SEO title is too short.' : 'The SEO title is too long.'}`,
+      score: titleLengthScore,
+      type: "titleLength"
+    });
+    if (titleLengthScore >= 7) passed++;
+    total++;
+
+    // Subheadings
+    const hasSubheadings = content.includes('\n\n') || content.split(/[.!?]/).length > 5;
+    const subheadingScore = hasSubheadings ? 7 : 4;
+    analysisResults.push({
+      text: hasSubheadings 
+        ? `Subheading distribution: Great! Your text structure looks good.` 
+        : `Subheading distribution: Consider adding subheadings to improve readability.`,
+      score: subheadingScore,
+      type: "subheadings"
+    });
+    if (subheadingScore >= 7) passed++;
+    total++;
+
+    setResults(analysisResults);
+    const calculatedScore = Math.round((passed / total) * 100);
+    setScore(calculatedScore);
   };
 
   useEffect(() => {
@@ -100,12 +156,12 @@ export default function SeoAnalyzer() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Real-time SEO Analyzer</h1>
-          <p className="text-slate-500 mt-1">Powered by Yoast SEO Engine</p>
+          <p className="text-slate-500 mt-1">Professional SEO analysis engine</p>
         </div>
         <div className="flex items-center gap-2">
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 px-3 py-1">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
-                Yoast Engine Active
+                Analysis Active
             </Badge>
         </div>
       </div>
@@ -263,7 +319,7 @@ export default function SeoAnalyzer() {
 
               <div className="space-y-4">
                 <h4 className="font-medium text-sm text-slate-900 border-b pb-2">SEO Analysis</h4>
-                {results && results.map((result: any, i: number) => (
+                {results && results.map((result: SEOResult, i: number) => (
                     <div key={i} className="flex gap-3 items-start">
                         <div className="mt-0.5 shrink-0">
                             {result.score >= 7 ? (
@@ -274,7 +330,7 @@ export default function SeoAnalyzer() {
                                 <div className="w-3 h-3 rounded-full bg-red-500" />
                             )}
                         </div>
-                        <p className="text-sm text-slate-600 leading-snug" dangerouslySetInnerHTML={{ __html: result.text || result.identifier }} />
+                        <p className="text-sm text-slate-600 leading-snug" dangerouslySetInnerHTML={{ __html: result.text }} />
                     </div>
                 ))}
                 
@@ -296,7 +352,7 @@ export default function SeoAnalyzer() {
                     <div>
                         <h4 className="font-medium text-blue-900 text-sm">Readability Check</h4>
                         <p className="text-xs text-blue-700 mt-1">
-                            Flesch Reading Ease: <strong>68.4</strong> (Standard)
+                            Content is {content.split(' ').length > 100 ? 'well-structured' : 'brief'} with {content.split('.').length} sentences
                         </p>
                     </div>
                 </div>
