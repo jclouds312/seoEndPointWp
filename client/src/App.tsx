@@ -15,6 +15,7 @@ import Deployment from "@/pages/deployment";
 import Documentation from "@/pages/documentation";
 import Marketplace from "@/pages/marketplace";
 import Campaigns from "@/pages/campaigns";
+import SeoAnalyzer from "@/pages/seo-analyzer";
 
 function Router() {
   return (
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/documentation" component={Documentation} />
       <Route path="/settings" component={Settings} />
       <Route path="/campaigns" component={Campaigns} />
+      <Route path="/seo-analyzer" component={SeoAnalyzer} />
       <Route component={NotFound} />
     </Switch>
   );

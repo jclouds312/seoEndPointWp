@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Workflow, Zap, Settings, LogOut, Globe, Database, MapPin, Code, Book, ShoppingBag, Megaphone } from "lucide-react";
+import { LayoutDashboard, Workflow, Zap, Settings, LogOut, Globe, Database, MapPin, Code, Book, ShoppingBag, Megaphone, SearchCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -9,6 +9,7 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+    { icon: SearchCheck, label: "SEO Analyzer", href: "/seo-analyzer" },
     { icon: Workflow, label: "Workflows", href: "/workflows" },
     { icon: Zap, label: "Integrations", href: "/integrations" },
     { icon: ShoppingBag, label: "Marketplace", href: "/marketplace" },
