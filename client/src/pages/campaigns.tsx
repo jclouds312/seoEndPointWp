@@ -17,9 +17,9 @@ import type { Campaign } from "@/lib/schema";
 const MOCK_CAMPAIGNS: Campaign[] = [
   {
     id: 1,
-    name: "California Personal Injury",
-    blogUrl: "https://californiapersonalinjurylawyersblog.com",
-    description: "Primary SEO campaign for Los Angeles market",
+    name: "California Personal Injury Lawyers Blog",
+    blogUrl: "https://www.californiapersonalinjurylawyersblog.com",
+    description: "Primary SEO campaign for California personal injury niche",
     embedCode: "<?php ... ?>",
     status: "active",
     posts: 145,
@@ -38,6 +38,19 @@ const MOCK_CAMPAIGNS: Campaign[] = [
     posts: 32,
     createdAt: new Date("2024-02-10"),
     updatedAt: new Date("2024-03-18"),
+    userId: "user_1",
+    config: {}
+  },
+  {
+    id: 3,
+    name: "Tech Startup Legal Guide",
+    blogUrl: "https://techlegalguide.com",
+    description: "Legal resources for tech startups",
+    embedCode: "<?php ... ?>",
+    status: "draft",
+    posts: 5,
+    createdAt: new Date("2024-04-01"),
+    updatedAt: new Date("2024-04-05"),
     userId: "user_1",
     config: {}
   }

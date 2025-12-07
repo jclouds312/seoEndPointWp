@@ -109,14 +109,14 @@ export default function Dashboard() {
         </Card>
 
         <Card className="border-slate-100 shadow-sm">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500">Recent Activity</CardTitle>
             <CardDescription>Latest automated actions</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
               {[
-                { title: "Updated Meta Tags", desc: "Personal Injury California", time: "2m ago", icon: RefreshCw },
+                { title: "Updated Meta Tags", desc: "California Personal Injury", time: "2m ago", icon: RefreshCw },
                 { title: "Keyword Injection", desc: "Car Accident Lawyer Post", time: "15m ago", icon: Search },
                 { title: "Internal Linking", desc: "Blog: Safety Tips", time: "1h ago", icon: LinkIcon },
                 { title: "Schema Markup", desc: "About Us Page", time: "3h ago", icon: FileText },
