@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Workflow, Zap, Settings, LogOut, Globe, Database, MapPin, Code } from "lucide-react";
+import { LayoutDashboard, Workflow, Zap, Settings, LogOut, Globe, Database, MapPin, Code, Book } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -14,6 +14,7 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
     { icon: Database, label: "Data Sources", href: "/data-sources" },
     { icon: MapPin, label: "Local SEO & Publish", href: "/local-seo" },
     { icon: Code, label: "Deployment", href: "/deployment" },
+    { icon: Book, label: "Documentation", href: "/documentation" },
     { icon: Settings, label: "Settings", href: "/settings" },
   ];
 
