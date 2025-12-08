@@ -1,5 +1,8 @@
 import { type User, type InsertUser } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "../shared/db";
+import { campaigns, generatedContent } from "../shared/schema";
+import { eq } from "drizzle-orm";
 
 interface GeneratedContent {
   id: string;
@@ -32,6 +35,17 @@ export interface IStorage {
   getGeneratedContent(id: string): Promise<GeneratedContent | undefined>;
   deleteGeneratedContent(id: string): Promise<void>;
   publishGeneratedContent(id: string): Promise<GeneratedContent>;
+  saveGeneratedContent(data: {
+    title: string;
+    content: string;
+    metaDescription: string;
+    seoScore: number;
+    status: 'draft' | 'published';
+    keywords: string;
+    featuredImage?: string;
+    provider?: string;
+    campaignId?: number;
+  }): Promise<GeneratedContent>;
 }
 
 export class MemStorage implements IStorage {
@@ -60,10 +74,20 @@ export class MemStorage implements IStorage {
     return user;
   }
 
-  async createGeneratedContent(insertContent: InsertGeneratedContent): Promise<GeneratedContent> {
+  async createGeneratedContent(data: {
+    title: string;
+    content: string;
+    metaDescription: string;
+    seoScore: number;
+    keywords: string;
+    status: 'draft' | 'published';
+    featuredImage?: string;
+    provider?: string;
+    campaignId?: number;
+  }): Promise<GeneratedContent> {
     const id = randomUUID();
     const content: GeneratedContent = {
-      ...insertContent,
+      ...data,
       id,
       createdAt: new Date()
     };
@@ -92,6 +116,33 @@ export class MemStorage implements IStorage {
     content.status = 'published';
     this.generatedContent.set(id, content);
     return content;
+  }
+
+  async saveGeneratedContent(data: {
+    title: string;
+    content: string;
+    metaDescription: string;
+    seoScore: number;
+    status: 'draft' | 'published';
+    keywords: string;
+    featuredImage?: string;
+    provider?: string;
+    campaignId?: number;
+  }) {
+    const result = await db.insert(generatedContent).values({
+      title: data.title,
+      content: data.content,
+      metaDescription: data.metaDescription,
+      seoScore: data.seoScore,
+      status: data.status,
+      keywords: data.keywords,
+      featuredImage: data.featuredImage,
+      provider: data.provider || 'free',
+      campaignId: data.campaignId,
+      slug: data.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
+    }).returning();
+
+    return result[0];
   }
 }
 

@@ -63,12 +63,12 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
           </div>
 
           <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-12 w-4 h-4 text-slate-500" />
             <Input 
               placeholder="Search modules..." 
               className="bg-slate-900 border-slate-800 text-slate-300 pl-9 h-10 text-sm focus:border-blue-600 focus:ring-blue-600/20 rounded-lg"
             />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 border border-slate-700 rounded px-1.5 py-0.5 text-[10px] text-slate-500 font-mono">
+            <div className="absolute right-3 top-1/2 -translate-y-12 border border-slate-700 rounded px-1.5 py-0.5 text-[10px] text-slate-500 font-mono">
               ⌘K
             </div>
           </div>
