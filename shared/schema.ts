@@ -42,6 +42,23 @@ export const generatedContent = pgTable("generated_content", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   userId: varchar("user_id").references(() => users.id),
   campaignId: integer("campaign_id").references(() => campaigns.id),
+  batchId: text("batch_id"), // For bulk generation tracking
+  bulkType: text("bulk_type"), // 'standard' or 'massive'
+  metadata: jsonb("metadata"),
+});
+
+export const bulkGenerationBatches = pgTable("bulk_generation_batches", {
+  id: serial("id").primaryKey(),
+  batchId: text("batch_id").notNull().unique(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  mainKeyword: text("main_keyword").notNull(),
+  targetSite: text("target_site"),
+  bulkType: text("bulk_type").notNull(), // 'standard' or 'massive'
+  totalPosts: integer("total_posts").notNull(),
+  completedPosts: integer("completed_posts").default(0),
+  status: text("status").notNull().default("processing"), // processing, completed, failed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
   metadata: jsonb("metadata"),
 });
 

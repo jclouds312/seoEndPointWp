@@ -1,8 +1,8 @@
 import { type User, type InsertUser } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "../shared/db";
-import { campaigns, generatedContent } from "../shared/schema";
-import { eq } from "drizzle-orm";
+import { campaigns, generatedContent, bulkGenerationBatches } from "../shared/schema";
+import { eq, desc } from "drizzle-orm";
 
 interface GeneratedContent {
   id: string;
@@ -46,6 +46,9 @@ export interface IStorage {
     provider?: string;
     campaignId?: number;
   }): Promise<GeneratedContent>;
+  createBulkBatch(data: any): Promise<any>;
+  updateBulkBatch(batchId: string, data: any): Promise<any>;
+  getBulkBatches(userId?: string): Promise<any[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -144,6 +147,34 @@ export class MemStorage implements IStorage {
 
     return result[0];
   }
+
+  async createBulkBatch(data: any) {
+    const result = await db.insert(bulkGenerationBatches).values({
+      ...data,
+      createdAt: new Date()
+    }).returning();
+    return result[0];
+  },
+
+  async updateBulkBatch(batchId: string, data: any) {
+    const result = await db.update(bulkGenerationBatches)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(bulkGenerationBatches.batchId, batchId))
+      .returning();
+    return result[0];
+  },
+
+  async getBulkBatches(userId?: string) {
+    if (userId) {
+      return await db.select()
+        .from(bulkGenerationBatches)
+        .where(eq(bulkGenerationBatches.userId, userId))
+        .orderBy(desc(bulkGenerationBatches.createdAt));
+    }
+    return await db.select()
+      .from(bulkGenerationBatches)
+      .orderBy(desc(bulkGenerationBatches.createdAt));
+  },
 }
 
 export const storage = new MemStorage();

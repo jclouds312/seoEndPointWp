@@ -43,11 +43,12 @@ function AppRoutes() {
       <Route path="/campaigns" component={Campaigns} />
       <Route path="/content-creator" component={ContentCreator} />
       <Route path="/content-publisher" component={ContentPublisher} />
-      <Route path="/bulk-content-generator" component={BulkContentGenerator} />
-      <Route path="/bulk-generator" component={BulkGenerator} />
-      <Route path="/bulk-massive" component={BulkMassive} />
       <Route path="/content-manager" component={ContentManager} />
       <Route path="/sites" component={Sites} />
+      
+      {/* Bulk Generator Routes - All within dashboard */}
+      <Route path="/bulk-content-generator" component={BulkContentGenerator} />
+      <Route path="/bulk-massive" component={BulkMassive} />
       <Route path="/seo-analyzer" component={SeoAnalyzer} />
       <Route component={NotFound} />
     </Switch>

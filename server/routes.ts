@@ -16,6 +16,8 @@ export async function registerRoutes(
         return res.status(400).json({ error: 'mainKeyword is required' });
       }
 
+      const batchId = `massive_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
       const subTopics = [
         `${mainKeyword} - Complete Guide`,
         `How to Handle ${mainKeyword}`,
@@ -90,6 +92,17 @@ For more information or personalized assistance, consider consulting with a prof
     } catch (error: any) {
       console.error('Bulk massive generation error:', error);
       res.status(500).json({ error: error.message || 'Error generating content' });
+    }
+  });
+
+  // Get bulk generation batches
+  app.get('/api/bulk-batches', async (req, res) => {
+    try {
+      const batches = await storage.getBulkBatches();
+      res.json(batches);
+    } catch (error: any) {
+      console.error('Error fetching bulk batches:', error);
+      res.status(500).json({ error: error.message || 'Error fetching batches' });
     }
   });
 
