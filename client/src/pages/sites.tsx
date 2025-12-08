@@ -2,10 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, ExternalLink, RefreshCw, MoreHorizontal, Globe } from "lucide-react";
+import SidebarLayout from "@/components/sidebar";
 
 export default function Sites() {
   return (
-    <div className="space-y-6">
+    <SidebarLayout>
+      <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Connected Sites</h2>
@@ -81,5 +83,6 @@ export default function Sites() {
         </Card>
       </div>
     </div>
+    </SidebarLayout>
   );
 }

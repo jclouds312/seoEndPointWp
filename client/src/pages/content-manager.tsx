@@ -21,6 +21,7 @@ import {
   Clock,
   AlertCircle
 } from "lucide-react";
+import SidebarLayout from "@/components/sidebar";
 
 const contents = [
   { id: 1, title: "10 AI Trends in 2025", category: "Technology", status: "Published", score: 98, date: "2 mins ago" },
@@ -34,7 +35,8 @@ const contents = [
 
 export default function ContentManager() {
   return (
-    <div className="space-y-6">
+    <SidebarLayout>
+      <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Content Manager</h2>
@@ -126,5 +128,6 @@ export default function ContentManager() {
         </CardContent>
       </Card>
     </div>
+    </SidebarLayout>
   );
 }

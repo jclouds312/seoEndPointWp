@@ -1,173 +1,342 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Sparkles, Zap } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Sparkles, Zap, History, Globe, CheckCircle2, AlertCircle, ArrowRight, LayoutTemplate } from "lucide-react";
 import { cn } from "@/lib/utils";
+import SidebarLayout from "@/components/sidebar";
 
 export default function BulkMassive() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [step, setStep] = useState(1);
+  const [targetSite, setTargetSite] = useState("techblog");
 
   const handleGenerate = () => {
     setIsGenerating(true);
-    // Simulate generation
+    // Simulate generation process
     setTimeout(() => {
       setIsGenerating(false);
       setStep(3); // Success state
-    }, 3000);
+    }, 4000);
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold tracking-tight">Bulk Massive Module</h2>
-        <p className="text-muted-foreground mt-2">
-          Generate 8 optimized content pieces simultaneously using the Super Version engine.
-        </p>
-      </div>
+    <SidebarLayout>
+      <div className="max-w-6xl mx-auto space-y-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider">
+                Enterprise Module
+              </Badge>
+              <Badge variant="outline" className="text-slate-500">v2.1.0</Badge>
+            </div>
+            <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white">Bulk Massive Generator</h1>
+            <p className="text-slate-500 mt-2 max-w-2xl">
+              Deploy high-velocity content clusters. Generate 8 interconnected, SEO-optimized articles simultaneously using the Super Version engine.
+            </p>
+          </div>
+          <div className="flex gap-3">
+             <Button variant="outline" className="gap-2">
+                <History className="h-4 w-4" />
+                History
+             </Button>
+             <Button variant="secondary" className="gap-2">
+                <LayoutTemplate className="h-4 w-4" />
+                Templates
+             </Button>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Configuration Panel */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                Core Configuration
-              </CardTitle>
-              <CardDescription>
-                Configure the seed parameters for the massive generation.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>Main Keyword / Topic</Label>
-                <Input placeholder="e.g. Artificial Intelligence in Healthcare" className="text-lg" />
-                <p className="text-xs text-muted-foreground">
-                  This will be the root for all 8 generated variations.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Language</Label>
-                  <Select defaultValue="en">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="en">English (US)</SelectItem>
-                      <SelectItem value="es">Spanish</SelectItem>
-                      <SelectItem value="fr">French</SelectItem>
-                      <SelectItem value="de">German</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Tone of Voice</Label>
-                  <Select defaultValue="pro">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select tone" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pro">Professional</SelectItem>
-                      <SelectItem value="cas">Casual</SelectItem>
-                      <SelectItem value="aca">Academic</SelectItem>
-                      <SelectItem value="per">Persuasive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-4 border-t border-border">
-                <Label>Advanced SEO Parameters</Label>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Main Configuration Panel */}
+          <div className="lg:col-span-8 space-y-6">
+            <Card className="border-slate-200 shadow-sm overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600" />
+              <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Sparkles className="h-5 w-5 text-indigo-600" />
+                  Core Configuration
+                </CardTitle>
+                <CardDescription>
+                  Define the seed parameters for your 8-post content cluster.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8 pt-6">
                 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Auto-Internal Linking</Label>
-                    <p className="text-xs text-muted-foreground">Smartly link to existing content</p>
+                {/* Topic & Site Selection */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold text-slate-700">Target Website</Label>
+                    <Select value={targetSite} onValueChange={setTargetSite}>
+                      <SelectTrigger className="h-11 bg-slate-50 border-slate-200">
+                        <SelectValue placeholder="Select destination" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="techblog">
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-slate-400" />
+                            <span>TechBlog Main (WordPress)</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="finance">
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-slate-400" />
+                            <span>Finance Daily (Ghost)</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Switch defaultChecked />
+                  
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold text-slate-700">Content Language</Label>
+                    <Select defaultValue="en">
+                      <SelectTrigger className="h-11 bg-slate-50 border-slate-200">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en">English (United States)</SelectItem>
+                        <SelectItem value="es">Spanish (Spain)</SelectItem>
+                        <SelectItem value="fr">French (France)</SelectItem>
+                        <SelectItem value="de">German (Germany)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Schema Markup</Label>
-                    <p className="text-xs text-muted-foreground">Generate JSON-LD for all posts</p>
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold text-slate-700">Main Keyword / Topic Cluster</Label>
+                  <div className="relative">
+                    <Input 
+                      placeholder="e.g. 'Future of Artificial Intelligence in Healthcare'" 
+                      className="h-12 text-lg pl-4 pr-12 border-slate-200 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" 
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded">
+                      Seed
+                    </div>
                   </div>
-                  <Switch defaultChecked />
+                  <p className="text-xs text-slate-500">
+                    This seed will generate 8 distinct sub-topics covering different search intents (Informational, Commercial, etc).
+                  </p>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Image Generation</Label>
-                    <p className="text-xs text-muted-foreground">Create AI hero images for each</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className="space-y-3">
+                    <Label className="text-sm font-semibold text-slate-700">Tone of Voice</Label>
+                    <Select defaultValue="pro">
+                      <SelectTrigger className="h-11 border-slate-200">
+                        <SelectValue placeholder="Select tone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pro">Professional & Authoritative</SelectItem>
+                        <SelectItem value="cas">Casual & Conversational</SelectItem>
+                        <SelectItem value="aca">Academic & Technical</SelectItem>
+                        <SelectItem value="per">Persuasive & Sales-oriented</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Switch />
+                  
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold text-slate-700">Target Audience</Label>
+                     <Select defaultValue="gen">
+                      <SelectTrigger className="h-11 border-slate-200">
+                        <SelectValue placeholder="Select audience" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="gen">General Public</SelectItem>
+                        <SelectItem value="exp">Industry Experts</SelectItem>
+                        <SelectItem value="beg">Beginners / Students</SelectItem>
+                        <SelectItem value="dec">Decision Makers (B2B)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              </div>
 
-              <div className="pt-6">
-                <Button 
-                  className="w-full h-12 text-lg gap-2" 
-                  onClick={handleGenerate}
-                  disabled={isGenerating}
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Generating 8 Variations...
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="h-5 w-5" />
-                      Execute Bulk Massive (8x)
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                {/* Advanced Toggles */}
+                <div className="bg-slate-50 rounded-xl p-5 border border-slate-100 space-y-5">
+                  <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-amber-500" />
+                    Advanced Enhancements
+                  </h3>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base font-medium text-slate-700">Semantic Internal Linking</Label>
+                      <p className="text-xs text-slate-500">Automatically link between the 8 generated posts to build a silo.</p>
+                    </div>
+                    <Switch defaultChecked className="data-[state=checked]:bg-indigo-600" />
+                  </div>
+                  
+                  <div className="h-px bg-slate-200/60" />
 
-        {/* Live Preview / Status Panel */}
-        <div className="space-y-6">
-          <Card className="border-border bg-muted/30">
-            <CardHeader>
-              <CardTitle>Generation Queue</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div 
-                    key={i} 
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base font-medium text-slate-700">Schema.org Structured Data</Label>
+                      <p className="text-xs text-slate-500">Inject JSON-LD for Article, FAQ, and Breadcrumbs.</p>
+                    </div>
+                    <Switch defaultChecked className="data-[state=checked]:bg-indigo-600" />
+                  </div>
+
+                  <div className="h-px bg-slate-200/60" />
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base font-medium text-slate-700">AI Image Generation</Label>
+                      <p className="text-xs text-slate-500">Generate a unique hero image for each post using DALL-E 3.</p>
+                    </div>
+                    <Switch className="data-[state=checked]:bg-indigo-600" />
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <Button 
                     className={cn(
-                      "flex items-center gap-3 p-3 rounded-lg border border-border bg-card transition-all duration-500",
-                      isGenerating ? "opacity-100" : "opacity-50 grayscale",
-                      isGenerating && i === 2 && "border-primary ring-1 ring-primary/20"
+                      "w-full h-14 text-lg font-medium shadow-lg transition-all duration-300",
+                      isGenerating 
+                        ? "bg-slate-100 text-slate-400 shadow-none cursor-not-allowed" 
+                        : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200"
                     )}
+                    onClick={handleGenerate}
+                    disabled={isGenerating}
                   >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-bold">
-                      {i + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="h-2 w-24 bg-muted rounded mb-1.5" />
-                      <div className="h-1.5 w-16 bg-muted/50 rounded" />
-                    </div>
-                    {isGenerating && (
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    {isGenerating ? (
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Orchestrating Content Cluster...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-5 w-5 fill-current" />
+                        <span>Execute Bulk Massive (8 Posts)</span>
+                        <ArrowRight className="h-5 w-5 ml-1 opacity-60" />
+                      </div>
                     )}
+                  </Button>
+                  <p className="text-center text-xs text-slate-400 mt-3">
+                    Estimated time: ~2.5 minutes • Consumes 8 credits
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Panel: Status & Preview */}
+          <div className="lg:col-span-4 space-y-6">
+            
+            {/* Live Status Card */}
+            <Card className={cn(
+              "border shadow-sm transition-all duration-500",
+              isGenerating ? "border-indigo-200 shadow-indigo-100 ring-2 ring-indigo-500/10" : "border-slate-200"
+            )}>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex justify-between items-center">
+                  Generation Queue
+                  {isGenerating && (
+                    <Badge variant="secondary" className="bg-indigo-50 text-indigo-600 animate-pulse">
+                      Processing
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg border transition-all duration-500",
+                        isGenerating && i === 2 
+                          ? "bg-indigo-50 border-indigo-200 scale-[1.02] shadow-sm" 
+                          : "bg-white border-slate-100"
+                      )}
+                    >
+                      <div className={cn(
+                        "flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-colors",
+                        isGenerating && i < 2 ? "bg-green-100 text-green-700" :
+                        isGenerating && i === 2 ? "bg-indigo-100 text-indigo-700 animate-pulse" :
+                        "bg-slate-100 text-slate-500"
+                      )}>
+                        {isGenerating && i < 2 ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        {isGenerating && i === 2 ? (
+                           <div className="space-y-1.5">
+                             <div className="h-2.5 bg-indigo-200 rounded w-24 animate-pulse" />
+                             <div className="h-2 bg-indigo-100 rounded w-16" />
+                           </div>
+                        ) : (
+                          <div className="space-y-1.5">
+                            <div className="h-2.5 bg-slate-200 rounded w-20" />
+                            <div className="h-2 bg-slate-100 rounded w-12" />
+                          </div>
+                        )}
+                      </div>
+
+                      {isGenerating && i === 2 && (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-500" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+              {isGenerating && (
+                <CardFooter className="bg-slate-50 border-t border-slate-100 py-3">
+                  <div className="w-full space-y-2">
+                    <div className="flex justify-between text-xs font-medium text-slate-500">
+                      <span>Overall Progress</span>
+                      <span>32%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-600 w-[32%] rounded-full transition-all duration-500" />
+                    </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                </CardFooter>
+              )}
+            </Card>
+
+            {/* Recent Batches (Mock) */}
+            <Card className="border-slate-200 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Recent Batches</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[
+                    { topic: "Crypto Wallets 2025", date: "2 hrs ago", status: "Completed" },
+                    { topic: "Sustainable Living Guide", date: "Yesterday", status: "Published" },
+                    { topic: "React vs Vue Performance", date: "3 days ago", status: "Drafts" }
+                  ].map((batch, i) => (
+                    <div key={i} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                      <div>
+                        <p className="text-sm font-medium text-slate-900 truncate max-w-[150px]">{batch.topic}</p>
+                        <p className="text-xs text-slate-500">{batch.date}</p>
+                      </div>
+                      <Badge variant="outline" className={cn(
+                        "text-[10px] px-1.5 py-0 h-5",
+                        batch.status === "Published" ? "bg-green-50 text-green-600 border-green-200" :
+                        batch.status === "Completed" ? "bg-blue-50 text-blue-600 border-blue-200" :
+                        "bg-slate-50 text-slate-600 border-slate-200"
+                      )}>
+                        {batch.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+                <Button variant="ghost" className="w-full mt-4 text-xs h-8 text-slate-500 hover:text-slate-900">
+                  View All History
+                </Button>
+              </CardContent>
+            </Card>
+
+          </div>
         </div>
       </div>
-    </div>
+    </SidebarLayout>
   );
 }
