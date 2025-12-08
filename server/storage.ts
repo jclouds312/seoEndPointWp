@@ -1,4 +1,3 @@
-
 import { type User, type InsertUser, type GeneratedContent, type MonthlyContentQuota, type Campaign, type ApiKey } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -6,19 +5,19 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Content operations
   saveGeneratedContent(content: any): Promise<GeneratedContent>;
   getGeneratedContent(userId: string, limit?: number): Promise<GeneratedContent[]>;
   updateContentStatus(id: number, status: string): Promise<void>;
-  
+
   // Quota operations
   getMonthlyQuota(userId: string, month: string): Promise<MonthlyContentQuota | undefined>;
   updateMonthlyQuota(userId: string, month: string): Promise<void>;
-  
+
   // Campaign operations
   getCampaigns(userId: string): Promise<Campaign[]>;
-  
+
   // API Keys
   getApiKey(userId: string, provider: string): Promise<ApiKey | undefined>;
   saveApiKey(userId: string, provider: string, keyValue: string): Promise<ApiKey>;
@@ -108,7 +107,7 @@ export class MemStorage implements IStorage {
   async updateMonthlyQuota(userId: string, month: string): Promise<void> {
     const key = `${userId}-${month}`;
     let quota = this.monthlyQuotas.get(key);
-    
+
     if (!quota) {
       quota = {
         id: this.quotaIdCounter++,
@@ -123,7 +122,7 @@ export class MemStorage implements IStorage {
       quota.contentGenerated = (quota.contentGenerated || 0) + 1;
       quota.updatedAt = new Date();
     }
-    
+
     this.monthlyQuotas.set(key, quota);
   }
 

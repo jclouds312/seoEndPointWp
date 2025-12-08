@@ -124,8 +124,61 @@ export async function registerRoutes(
 
       if (remaining < count) {
         return res.status(429).json({
-          error: `Monthly quota exceeded. You have ${remaining} posts remaining this month.`
+          error: `Cuota mensual excedida. Tienes ${remaining} posts disponibles este mes.`
         });
+      }
+
+      const savedContent = [];
+      
+      for (let i = 0; i < Math.min(count, topics.length); i++) {
+        let endpoint = '/api/generate-content';
+        if (provider === 'claude') endpoint = '/api/generate-content-claude';
+        if (provider === 'free') endpoint = '/api/generate-content-free';
+
+        try {
+          const response = await fetch(`http://localhost:${process.env.PORT || 5000}${endpoint}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              topic: topics[i],
+              keywords: keywords || ['legal', 'abogado'],
+              wordCount: 1200,
+              tone: tone || 'profesional-empático',
+              language: 'es'
+            })
+          });
+
+          if (response.ok) {
+            const contentData = await response.json();
+            const saved = await storage.saveGeneratedContent({
+              userId,
+              title: contentData.title,
+              content: contentData.content,
+              metaDescription: contentData.metaDescription,
+              seoScore: contentData.seoScore,
+              keywords: keywords,
+              status: 'draft'
+            });
+            savedContent.push(saved);
+          }
+
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+          console.error(`Error generating content ${i + 1}:`, error);
+        }
+      }
+
+      // Update monthly quota
+      await storage.updateMonthlyQuota(userId, currentMonth, savedContent.length);
+
+      res.json({
+        success: true,
+        generated: savedContent.length,
+        content: savedContent,
+        remaining: remaining - savedContent.length
+      });
       }
 
       const promises = Array.from({ length: count }).map(async (_, i) => {
@@ -176,6 +229,58 @@ export async function registerRoutes(
       console.error("Error generating bulk content:", error);
       res.status(500).json({
         error: "Failed to generate bulk content",
+        message: error.message
+      });
+    }
+  });
+
+  // Suggest prompt for content generation
+  router.post("/api/content/suggest-prompt", async (req, res) => {
+    try {
+      const { existingTopics, keywords, count } = req.body;
+
+      const prompt = `Basado en estos temas existentes: "${existingTopics}"
+      Y estas palabras clave: "${keywords.join(', ')}"
+      
+      Sugiere ${count} nuevos temas relevantes y complementarios para generar contenido de blog sobre lesiones personales y servicios legales.
+      
+      Retorna solo una lista de temas separados por coma, sin numeración ni explicaciones adicionales.`;
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'Eres un experto en marketing de contenidos legal y SEO. Genera sugerencias de temas precisas y relevantes.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 500
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error calling OpenAI API');
+      }
+
+      const data = await response.json();
+      const suggestion = data.choices[0].message.content.trim();
+
+      res.json({ suggestion });
+    } catch (error: any) {
+      console.error("Error suggesting prompt:", error);
+      res.status(500).json({
+        error: "Failed to suggest prompt",
         message: error.message
       });
     }

@@ -66,6 +66,8 @@ export default function BulkContentGenerator() {
   const [progress, setProgress] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentGenerating, setCurrentGenerating] = useState(0);
+  const [promptSuggestion, setPromptSuggestion] = useState("");
+  const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
 
   // Fetch saved content history
   const { data: savedContents = [], refetch: refetchSaved } = useQuery<GeneratedPost[]>({
@@ -275,6 +277,53 @@ export default function BulkContentGenerator() {
     }
   });
 
+  const suggestPrompt = async () => {
+    setIsLoadingSuggestion(true);
+    try {
+      const response = await fetch('/api/content/suggest-prompt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          existingTopics: baseTopics,
+          keywords: keywords.split(',').map(k => k.trim()).filter(k => k.length > 0),
+          count: postsCount
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar sugerencia');
+      }
+
+      const data = await response.json();
+      setPromptSuggestion(data.suggestion);
+      toast({
+        title: "Sugerencia generada",
+        description: "Se generó una sugerencia de prompt basada en tus temas"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingSuggestion(false);
+    }
+  };
+
+  const applyPromptSuggestion = () => {
+    if (promptSuggestion) {
+      setBaseTopics(promptSuggestion);
+      setPromptSuggestion("");
+      toast({
+        title: "Sugerencia aplicada",
+        description: "Los temas fueron actualizados con la sugerencia"
+      });
+    }
+  };
+
   const handleGenerate = () => {
     setProgress(0);
     setCurrentGenerating(0);
@@ -346,7 +395,27 @@ export default function BulkContentGenerator() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Temas Base (separados por coma)</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Temas Base (separados por coma)</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={suggestPrompt}
+                      disabled={isLoadingSuggestion}
+                    >
+                      {isLoadingSuggestion ? (
+                        <>
+                          <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                          Generando...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          Sugerir Prompt
+                        </>
+                      )}
+                    </Button>
+                  </div>
                   <Textarea
                     value={baseTopics}
                     onChange={(e) => setBaseTopics(e.target.value)}
@@ -357,6 +426,24 @@ export default function BulkContentGenerator() {
                     {baseTopics.split(',').filter(t => t.trim().length > 0).length} temas definidos
                   </p>
                 </div>
+
+                {promptSuggestion && (
+                  <Card className="border-blue-200 bg-blue-50">
+                    <CardContent className="pt-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <Label className="text-blue-900">Sugerencia de IA</Label>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={applyPromptSuggestion}
+                        >
+                          Aplicar
+                        </Button>
+                      </div>
+                      <p className="text-sm text-blue-800">{promptSuggestion}</p>
+                    </CardContent>
+                  </Card>
+                )}
 
                 <div className="space-y-2">
                   <Label>Palabras Clave</Label>
