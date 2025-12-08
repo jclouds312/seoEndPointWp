@@ -25,7 +25,9 @@ import {
   TrendingUp,
   Image as ImageIcon,
   Link2,
-  CheckCircle2
+  CheckCircle2,
+  Palette,
+  Download
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -130,6 +132,7 @@ export default function ContentCreator() {
   const [seoScore, setSeoScore] = useState<any>(null);
   const [isGeneratingImages, setIsGeneratingImages] = useState(false);
   const [isSuggestingPrompt, setIsSuggestingPrompt] = useState(false);
+  const [imageStyle, setImageStyle] = useState("photorealistic");
 
   // Fetch campaigns (Mocked)
   const { data: campaigns = MOCK_CAMPAIGNS } = useQuery<Campaign[]>({
@@ -209,6 +212,7 @@ Tono: Profesional, empático y educativo. Enfocado en ayudar a la víctima a ent
       const mockContent = `
         <h1>Guía Completa sobre ${keywords[0] || 'el tema'}</h1>
         <p>Esta es una introducción generada por IA sobre ${keywords.join(', ')}. El contenido está diseñado para ser informativo y útil para el lector.</p>
+        <img src="https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=800&auto=format&fit=crop&q=60" alt="Legal office environment" class="w-full rounded-lg my-4" />
         <h2>1. Introducción</h2>
         <p>En el complejo mundo legal de hoy, entender tus derechos es fundamental. Este artículo explora en profundidad los aspectos clave de ${keywords[0] || 'este tema'}.</p>
         <h2>2. Aspectos Legales Importantes</h2>
@@ -270,6 +274,10 @@ Tono: Profesional, empático y educativo. Enfocado en ayudar a la víctima a ent
         title: "¡Contenido generado exitosamente!",
         description: "Contenido creado simulando IA avanzada."
       });
+      
+      if (includeImages) {
+          handleGenerateImages();
+      }
 
       if (includeSEO) {
         handleOptimizeSEO(currentText);
@@ -287,26 +295,23 @@ Tono: Profesional, empático y educativo. Enfocado en ayudar a la víctima a ent
   };
 
   const handleGenerateImages = async () => {
-    if (!generatedContent) {
-      toast({
-        title: "Sin contenido",
-        description: "Genera contenido primero",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsGeneratingImages(true);
     
     try {
-      // Simulate API call
+      // Simulate API call to image generation service
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      setGeneratedImages(["https://picsum.photos/800/400"]);
+      // In a real app, this would come from the backend or the generate_image_tool
+      const newImages = [
+        "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=800&auto=format&fit=crop&q=60",
+        "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&auto=format&fit=crop&q=60"
+      ];
+      
+      setGeneratedImages(newImages);
       
       toast({
-        title: "¡Imagen generada!",
-        description: "Imagen de cabecera creada con IA (Simulada)"
+        title: "¡Imágenes generadas!",
+        description: `Se han creado 2 imágenes estilo ${imageStyle}`
       });
     } catch (error: any) {
       console.error('Error:', error);
@@ -475,7 +480,27 @@ Tono: Profesional, empático y educativo. Enfocado en ayudar a la víctima a ent
                 </p>
               </div>
 
+              <Separator />
+
               <div className="space-y-3">
+                  <Label>Configuración de Imágenes</Label>
+                  <div className="space-y-2">
+                      <Label className="text-xs text-slate-500">Estilo de Imagen</Label>
+                      <Select value={imageStyle} onValueChange={setImageStyle}>
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="photorealistic">Fotorealista</SelectItem>
+                            <SelectItem value="minimalist">Minimalista</SelectItem>
+                            <SelectItem value="abstract">Abstracto</SelectItem>
+                            <SelectItem value="corporate">Corporativo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                  </div>
+              </div>
+
+              <div className="space-y-3 pt-2">
                 <div className="space-y-2">
                   <Label>Proveedor de IA</Label>
                   <RadioGroup value={aiProvider} onValueChange={(value: any) => setAiProvider(value)}>
@@ -496,41 +521,6 @@ Tono: Profesional, empático y educativo. Enfocado en ayudar a la víctima a ent
                     </div>
                   </RadioGroup>
                 </div>
-                <div className="flex items-center justify-between">
-                  <Label>Sugerir imágenes</Label>
-                  <Switch checked={includeImages} onCheckedChange={setIncludeImages} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>Optimización SEO</Label>
-                  <Switch checked={includeSEO} onCheckedChange={setIncludeSEO} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-blue-200 bg-blue-50/50">
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-blue-600" />
-                Características AI
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex items-center gap-2 text-slate-700">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
-                Optimización SEO automática
-              </div>
-              <div className="flex items-center gap-2 text-slate-700">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
-                Estructura de contenido inteligente
-              </div>
-              <div className="flex items-center gap-2 text-slate-700">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
-                Densidad de keywords optimizada
-              </div>
-              <div className="flex items-center gap-2 text-slate-700">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
-                Enlaces internos sugeridos
               </div>
             </CardContent>
           </Card>
@@ -580,9 +570,6 @@ Tono: Profesional, empático y educativo. Enfocado en ayudar a la víctima a ent
                   rows={6}
                   className="font-mono text-sm"
                 />
-                <p className="text-xs text-slate-500">
-                  Tip: Agrega palabras clave objetivo arriba y usa "Sugerir Prompt" para obtener ideas de IA
-                </p>
               </div>
 
               <Button 
@@ -655,50 +642,61 @@ Tono: Profesional, empático y educativo. Enfocado en ayudar a la víctima a ent
                     </div>
                   </TabsContent>
                   <TabsContent value="images" className="mt-4">
-                    {generatedImages.length > 0 ? (
-                      <div className="grid grid-cols-2 gap-4">
-                        {generatedImages.map((img, idx) => (
-                          <Card key={idx}>
-                            <CardContent className="pt-6">
-                              <img 
-                                src={img} 
-                                alt={`Imagen generada ${idx + 1}`}
-                                className="w-full rounded-lg border border-slate-200"
-                              />
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="w-full mt-3"
-                                onClick={() => window.open(img, '_blank')}
-                              >
-                                <Link2 className="w-4 h-4 mr-2" />
-                                Abrir en nueva pestaña
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    ) : (
-                      <Card>
-                        <CardContent className="pt-6 text-center py-12">
-                          <ImageIcon className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                          <p className="text-slate-500 mb-4">No hay imágenes generadas</p>
-                          <Button onClick={handleGenerateImages} disabled={isGeneratingImages}>
-                            {isGeneratingImages ? (
-                              <>
-                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                Generando...
-                              </>
-                            ) : (
-                              <>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-medium">Imágenes Generadas ({generatedImages.length})</h3>
+                            <Button size="sm" variant="outline" onClick={handleGenerateImages} disabled={isGeneratingImages}>
+                                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingImages ? 'animate-spin' : ''}`} />
+                                Generar Nuevas
+                            </Button>
+                        </div>
+                        
+                        {generatedImages.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-4">
+                            {generatedImages.map((img, idx) => (
+                            <Card key={idx}>
+                                <CardContent className="pt-6">
+                                <img 
+                                    src={img} 
+                                    alt={`Imagen generada ${idx + 1}`}
+                                    className="w-full h-48 object-cover rounded-lg border border-slate-200"
+                                />
+                                <div className="flex gap-2 mt-3">
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="flex-1"
+                                        onClick={() => window.open(img, '_blank')}
+                                    >
+                                        <Link2 className="w-4 h-4 mr-2" />
+                                        Ver
+                                    </Button>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="flex-1"
+                                    >
+                                        <Download className="w-4 h-4 mr-2" />
+                                        Guardar
+                                    </Button>
+                                </div>
+                                </CardContent>
+                            </Card>
+                            ))}
+                        </div>
+                        ) : (
+                        <Card className="border-dashed">
+                            <CardContent className="pt-6 text-center py-12">
+                            <ImageIcon className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                            <p className="text-slate-500 mb-4">No hay imágenes generadas</p>
+                            <Button onClick={handleGenerateImages} disabled={isGeneratingImages}>
                                 <Sparkles className="w-4 h-4 mr-2" />
                                 Generar Imágenes con DALL-E
-                              </>
-                            )}
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    )}
+                            </Button>
+                            </CardContent>
+                        </Card>
+                        )}
+                    </div>
                   </TabsContent>
                   <TabsContent value="seo" className="mt-4 space-y-4">
                     {seoScore ? (

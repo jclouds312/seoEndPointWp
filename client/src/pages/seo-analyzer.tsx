@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileText, CheckCircle2, AlertCircle, AlertTriangle, RefreshCw, Smartphone, Monitor, Globe } from "lucide-react";
+import { Search, FileText, CheckCircle2, AlertCircle, AlertTriangle, RefreshCw, Smartphone, Monitor, Globe, Wand2, Share2, Twitter, Facebook } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/hooks/use-toast";
 
 interface SEOResult {
   text: string;
@@ -24,6 +25,7 @@ export default function SeoAnalyzer() {
   const [metaDesc, setMetaDesc] = useState("Learn how to optimize your website for search engines with our comprehensive guide. Improve rankings and drive traffic today.");
   const [results, setResults] = useState<SEOResult[]>([]);
   const [score, setScore] = useState<number>(0);
+  const [isFixing, setIsFixing] = useState(false);
 
   const runAnalysis = () => {
     if (!content) return;
@@ -151,14 +153,45 @@ export default function SeoAnalyzer() {
     runAnalysis();
   }, [content, keyword, title, metaDesc]);
 
+  const handleFixWithAI = () => {
+    setIsFixing(true);
+    setTimeout(() => {
+      setContent(prev => prev + "\n\nAlso, keep in mind that " + keyword + " is crucial for modern digital strategies. This additional paragraph helps improve the word count and keyword density naturally.");
+      setMetaDesc(prev => prev.includes(keyword) ? prev : prev + " Learn more about " + keyword + " here.");
+      setIsFixing(false);
+      toast({
+        title: "Optimized!",
+        description: "AI has improved your content density and meta description."
+      });
+    }, 1500);
+  };
+
   return (
     <SidebarLayout>
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Real-time SEO Analyzer</h1>
-          <p className="text-slate-500 mt-1">Professional SEO analysis engine</p>
+          <p className="text-slate-500 mt-1">Professional SEO analysis engine with Google Preview</p>
         </div>
         <div className="flex items-center gap-2">
+            <Button 
+                variant="outline" 
+                onClick={handleFixWithAI} 
+                disabled={isFixing || score > 90}
+                className="gap-2 bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
+            >
+                {isFixing ? (
+                    <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Fixing...
+                    </>
+                ) : (
+                    <>
+                        <Wand2 className="w-4 h-4" />
+                        Fix with AI
+                    </>
+                )}
+            </Button>
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 px-3 py-1">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
                 Analysis Active
@@ -203,17 +236,20 @@ export default function SeoAnalyzer() {
 
           <Card className="border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Google Preview</CardTitle>
-              <CardDescription>See how your page looks in search results</CardDescription>
+              <CardTitle>Search & Social Previews</CardTitle>
+              <CardDescription>See how your page looks on different platforms</CardDescription>
             </CardHeader>
             <CardContent>
                 <Tabs defaultValue="mobile" className="w-full">
                     <TabsList className="mb-4">
                         <TabsTrigger value="mobile" className="gap-2">
-                            <Smartphone className="w-4 h-4" /> Mobile Result
+                            <Smartphone className="w-4 h-4" /> Mobile
                         </TabsTrigger>
                         <TabsTrigger value="desktop" className="gap-2">
-                            <Monitor className="w-4 h-4" /> Desktop Result
+                            <Monitor className="w-4 h-4" /> Desktop
+                        </TabsTrigger>
+                        <TabsTrigger value="social" className="gap-2">
+                            <Share2 className="w-4 h-4" /> Social
                         </TabsTrigger>
                     </TabsList>
                     
@@ -250,6 +286,19 @@ export default function SeoAnalyzer() {
                         <p className="text-sm text-slate-600 max-w-2xl">
                             {metaDesc || "Please provide a meta description to see how it looks in search results."}
                         </p>
+                    </TabsContent>
+
+                    <TabsContent value="social" className="space-y-6">
+                        <div className="border rounded-lg overflow-hidden bg-white max-w-md">
+                            <div className="bg-slate-100 h-48 w-full flex items-center justify-center text-slate-400">
+                                <FileText className="w-12 h-12" />
+                            </div>
+                            <div className="p-4 bg-slate-50 border-t">
+                                <div className="uppercase text-xs text-slate-500 font-semibold mb-1">EXAMPLE.COM</div>
+                                <div className="font-bold text-slate-900 mb-1 leading-tight">{title}</div>
+                                <div className="text-sm text-slate-600 line-clamp-2">{metaDesc}</div>
+                            </div>
+                        </div>
                     </TabsContent>
                 </Tabs>
 

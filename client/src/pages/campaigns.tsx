@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Copy, Check, Globe, Trash2, RefreshCw } from "lucide-react";
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Copy, Check, Globe, Trash2, RefreshCw, BarChart2, MoreHorizontal, Settings } from "lucide-react";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Campaign } from "@/lib/schema";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 // Mock data for frontend-only mode
 const MOCK_CAMPAIGNS: Campaign[] = [
@@ -26,7 +28,7 @@ const MOCK_CAMPAIGNS: Campaign[] = [
     createdAt: new Date("2024-01-15"),
     updatedAt: new Date("2024-03-20"),
     userId: "user_1",
-    config: {}
+    config: { niche: "Legal", language: "English" }
   },
   {
     id: 2,
@@ -39,7 +41,7 @@ const MOCK_CAMPAIGNS: Campaign[] = [
     createdAt: new Date("2024-02-10"),
     updatedAt: new Date("2024-03-18"),
     userId: "user_1",
-    config: {}
+    config: { niche: "Legal", language: "Spanish" }
   },
   {
     id: 3,
@@ -52,7 +54,20 @@ const MOCK_CAMPAIGNS: Campaign[] = [
     createdAt: new Date("2024-04-01"),
     updatedAt: new Date("2024-04-05"),
     userId: "user_1",
-    config: {}
+    config: { niche: "Tech", language: "English" }
+  },
+  {
+    id: 4,
+    name: "Medical Malpractice Insights",
+    blogUrl: "https://medicalmalpractice.com",
+    description: "Expert insights on medical negligence cases",
+    embedCode: "<?php ... ?>",
+    status: "active",
+    posts: 89,
+    createdAt: new Date("2024-03-15"),
+    updatedAt: new Date("2024-04-10"),
+    userId: "user_1",
+    config: { niche: "Medical", language: "English" }
   }
 ];
 
@@ -61,19 +76,18 @@ export default function Campaigns() {
   const [newCampaign, setNewCampaign] = useState({
     name: '',
     blogUrl: '',
-    description: ''
+    description: '',
+    niche: '',
+    language: 'English'
   });
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  
-  // Local state for campaigns to simulate database
   const [localCampaigns, setLocalCampaigns] = useState<Campaign[]>(MOCK_CAMPAIGNS);
 
   // Mock Fetch campaigns
   const { data: campaigns = [], isLoading } = useQuery<Campaign[]>({
     queryKey: ['campaigns'],
     queryFn: async () => {
-      // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 800));
       return localCampaigns;
     },
@@ -82,7 +96,7 @@ export default function Campaigns() {
 
   // Mock Create campaign mutation
   const createCampaignMutation = useMutation({
-    mutationFn: async (data: { name: string; blogUrl: string; description: string }) => {
+    mutationFn: async (data: typeof newCampaign) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       const blogIdentifier = data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       const embedCode = generateEmbedCode(blogIdentifier);
@@ -100,7 +114,7 @@ export default function Campaigns() {
         createdAt: new Date(),
         updatedAt: new Date(),
         userId: "user_1",
-        config: {}
+        config: { niche: data.niche, language: data.language }
       };
       
       setLocalCampaigns(prev => [...prev, newCampaignObj]);
@@ -108,34 +122,18 @@ export default function Campaigns() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      setNewCampaign({ name: '', blogUrl: '', description: '' });
+      setNewCampaign({ name: '', blogUrl: '', description: '', niche: '', language: 'English' });
       setIsDialogOpen(false);
       toast({
-        title: "Campaña creada",
-        description: "La campaña ha sido creada exitosamente"
+        title: "Success",
+        description: "New campaign initialized successfully."
       });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "No se pudo crear la campaña",
+        description: "Failed to create campaign.",
         variant: "destructive"
-      });
-    }
-  });
-
-  // Mock Update campaign mutation
-  const updateCampaignMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setLocalCampaigns(prev => prev.map(c => c.id === id ? { ...c, status } : c));
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      toast({
-        title: "Campaña actualizada",
-        description: "El estado de la campaña ha sido actualizado"
       });
     }
   });
@@ -150,8 +148,8 @@ export default function Campaigns() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
       toast({
-        title: "Campaña eliminada",
-        description: "La campaña ha sido eliminada"
+        title: "Deleted",
+        description: "Campaign removed successfully."
       });
     }
   });
@@ -161,7 +159,7 @@ export default function Campaigns() {
 /**
  * Plugin Name: SEO Automation Hub - ${blogIdentifier}
  * Description: Embeds the Replit SEO Dashboard into WordPress Admin
- * Version: 1.0.0
+ * Version: 2.0.0
  * Author: SEO Hub
  */
 
@@ -206,33 +204,27 @@ function render_seo_hub_${blogIdentifier}() {
     setCopiedId(id.toString());
     setTimeout(() => setCopiedId(null), 2000);
     toast({
-      title: "Código copiado",
-      description: "El script de embed ha sido copiado al portapapeles"
+      title: "Copied!",
+      description: "Embed code copied to clipboard."
     });
   };
 
   const handleCreateCampaign = () => {
     if (!newCampaign.name || !newCampaign.blogUrl) {
       toast({
-        title: "Error",
-        description: "Por favor completa todos los campos requeridos",
+        title: "Required Fields Missing",
+        description: "Please fill in Name and Blog URL.",
         variant: "destructive"
       });
       return;
     }
-
     createCampaignMutation.mutate(newCampaign);
   };
 
   const handleDeleteCampaign = (id: number) => {
-    if (confirm('¿Estás seguro de que deseas eliminar esta campaña?')) {
+    if (confirm('Are you sure you want to delete this campaign? This action cannot be undone.')) {
       deleteCampaignMutation.mutate(id);
     }
-  };
-
-  const toggleCampaignStatus = (id: number, currentStatus: string) => {
-    const newStatus = currentStatus === 'active' ? 'paused' : 'active';
-    updateCampaignMutation.mutate({ id, status: newStatus });
   };
 
   if (isLoading) {
@@ -249,173 +241,191 @@ function render_seo_hub_${blogIdentifier}() {
     <SidebarLayout>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Gestión de Campañas</h1>
-          <p className="text-slate-500 mt-1">Administra múltiples blogs y genera scripts de embed personalizados</p>
+          <h1 className="text-3xl font-bold text-slate-900">Campaign Management</h1>
+          <p className="text-slate-500 mt-1">Manage multiple WordPress sites and automation pipelines</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2 bg-primary hover:bg-blue-700">
+            <Button className="gap-2 bg-blue-600 hover:bg-blue-700 shadow-md">
               <Plus className="w-4 h-4" />
-              Nueva Campaña
+              New Campaign
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>Crear Nueva Campaña</DialogTitle>
+              <DialogTitle>Create New Campaign</DialogTitle>
               <DialogDescription>
-                Configura un nuevo blog para gestión SEO automatizada
+                Configure a new WordPress site for automated SEO content.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="campaign-name">Nombre de la Campaña *</Label>
-                <Input 
-                  id="campaign-name"
-                  placeholder="Ej: Texas Car Accident Lawyers"
-                  value={newCampaign.name}
-                  onChange={(e) => setNewCampaign({ ...newCampaign, name: e.target.value })}
-                />
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Campaign Name *</Label>
+                  <Input 
+                    id="name"
+                    placeholder="e.g. Legal Blog West"
+                    value={newCampaign.name}
+                    onChange={(e) => setNewCampaign({ ...newCampaign, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="niche">Niche / Industry</Label>
+                  <Input 
+                    id="niche"
+                    placeholder="e.g. Legal, Health, Tech"
+                    value={newCampaign.niche}
+                    onChange={(e) => setNewCampaign({ ...newCampaign, niche: e.target.value })}
+                  />
+                </div>
               </div>
+              
               <div className="space-y-2">
-                <Label htmlFor="blog-url">URL del Blog *</Label>
+                <Label htmlFor="url">WordPress Site URL *</Label>
                 <Input 
-                  id="blog-url"
-                  placeholder="https://www.example.com"
+                  id="url"
+                  placeholder="https://mysite.com"
                   value={newCampaign.blogUrl}
                   onChange={(e) => setNewCampaign({ ...newCampaign, blogUrl: e.target.value })}
                 />
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="description">Descripción</Label>
+                <Label htmlFor="desc">Description & Goals</Label>
                 <Textarea 
-                  id="description"
-                  placeholder="Describe el propósito de esta campaña..."
+                  id="desc"
+                  placeholder="Describe the content strategy for this site..."
                   value={newCampaign.description}
                   onChange={(e) => setNewCampaign({ ...newCampaign, description: e.target.value })}
                   rows={3}
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="lang">Content Language</Label>
+                <Select 
+                  value={newCampaign.language} 
+                  onValueChange={(val) => setNewCampaign({...newCampaign, language: val})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="Spanish">Spanish</SelectItem>
+                    <SelectItem value="French">French</SelectItem>
+                    <SelectItem value="German">German</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancelar
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleCreateCampaign} disabled={createCampaignMutation.isPending}>
+                {createCampaignMutation.isPending ? 'Creating...' : 'Create Campaign'}
               </Button>
-              <Button 
-                onClick={handleCreateCampaign}
-                disabled={createCampaignMutation.isPending}
-              >
-                {createCampaignMutation.isPending ? 'Creando...' : 'Crear Campaña'}
-              </Button>
-            </div>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {campaigns.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Globe className="w-16 h-16 text-slate-300 mb-4" />
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">No hay campañas aún</h3>
-            <p className="text-slate-500 mb-6">Crea tu primera campaña para comenzar</p>
-            <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Nueva Campaña
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6">
-          {campaigns.map((campaign) => (
-            <Card key={campaign.id} className="border-slate-100 shadow-sm">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                      <Globe className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <CardTitle className="text-xl">{campaign.name}</CardTitle>
-                        <Badge 
-                          className={campaign.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-amber-100 text-amber-700'}
-                        >
-                          {campaign.status === 'active' ? 'Activa' : 'Pausada'}
-                        </Badge>
-                      </div>
-                      <CardDescription className="mb-3">{campaign.description || 'Sin descripción'}</CardDescription>
-                      <div className="flex items-center gap-4 text-sm text-slate-600">
-                        <span className="flex items-center gap-1">
-                          <Globe className="w-4 h-4" />
-                          {campaign.blogUrl}
-                        </span>
-                        <span>{campaign.posts} publicaciones</span>
-                        <span>Creada: {new Date(campaign.createdAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
+      <div className="grid gap-6">
+        {campaigns.map((campaign) => (
+          <Card key={campaign.id} className="border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+                    <Globe className="w-6 h-6 text-white" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => toggleCampaignStatus(campaign.id, campaign.status)}
-                      disabled={updateCampaignMutation.isPending}
-                    >
-                      {campaign.status === 'active' ? 'Pausar' : 'Activar'}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleDeleteCampaign(campaign.id)}
-                      className="text-red-600 hover:text-red-700"
-                      disabled={deleteCampaignMutation.isPending}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <CardTitle className="text-xl">{campaign.name}</CardTitle>
+                      <Badge 
+                        variant={campaign.status === 'active' ? 'default' : 'secondary'}
+                        className={campaign.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200' : ''}
+                      >
+                        {campaign.status === 'active' ? 'Active' : campaign.status}
+                      </Badge>
+                      {(campaign.config as any)?.language && (
+                        <Badge variant="outline" className="text-slate-500">
+                          {(campaign.config as any).language}
+                        </Badge>
+                      )}
+                    </div>
+                    <CardDescription className="mb-3">{campaign.description || 'No description provided.'}</CardDescription>
+                    <div className="flex items-center gap-6 text-sm text-slate-600">
+                      <span className="flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-slate-400" />
+                        <a href={campaign.blogUrl} target="_blank" rel="noreferrer" className="hover:underline hover:text-blue-600">
+                          {campaign.blogUrl.replace('https://', '')}
+                        </a>
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <BarChart2 className="w-4 h-4 text-slate-400" />
+                        {campaign.posts} posts generated
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium">Script de Embed para WordPress</Label>
-                    <Button 
-                      size="sm" 
-                      variant="secondary" 
-                      onClick={() => handleCopy(campaign.id, campaign.embedCode)}
-                      className="h-8 gap-2"
-                    >
-                      {copiedId === campaign.id.toString() ? (
-                        <>
-                          <Check className="w-3 h-3 text-green-600" />
-                          ¡Copiado!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" />
-                          Copiar Código
-                        </>
-                      )}
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="w-4 h-4" />
                     </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem className="gap-2">
+                      <Settings className="w-4 h-4" /> Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="gap-2 text-red-600 focus:text-red-600 focus:bg-red-50"
+                      onClick={() => handleDeleteCampaign(campaign.id)}
+                    >
+                      <Trash2 className="w-4 h-4" /> Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </CardHeader>
+            <CardContent className="bg-slate-50/50 border-t border-slate-100 pt-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-semibold text-slate-900">WordPress Plugin Code</Label>
+                    <p className="text-xs text-slate-500">Install this code in your WordPress site to enable connection</p>
                   </div>
-                  <pre className="bg-slate-900 text-slate-50 p-4 rounded-lg overflow-x-auto text-xs font-mono leading-relaxed max-h-64">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => handleCopy(campaign.id, campaign.embedCode)}
+                    className="h-8 gap-2 border-slate-200 hover:bg-white hover:text-blue-600"
+                  >
+                    {copiedId === campaign.id.toString() ? (
+                      <>
+                        <Check className="w-3 h-3 text-green-600" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3" />
+                        Copy Code
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <div className="relative group">
+                  <pre className="bg-slate-900 text-slate-50 p-4 rounded-lg overflow-x-auto text-xs font-mono leading-relaxed max-h-32 group-hover:max-h-64 transition-all duration-300">
                     {campaign.embedCode}
                   </pre>
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                    <h4 className="font-medium text-blue-900 text-sm mb-2">Instrucciones de Instalación</h4>
-                    <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800">
-                      <li>Copia el código de arriba</li>
-                      <li>Crea un archivo <code className="bg-white px-1 rounded">seo-hub-{campaign.name.toLowerCase().replace(/\s+/g, '-')}.php</code></li>
-                      <li>Sube el archivo a <code className="bg-white px-1 rounded">/wp-content/plugins/</code></li>
-                      <li>Activa el plugin en WordPress Admin</li>
-                      <li>Reemplaza <code className="bg-white px-1 rounded">[YOUR-REPLIT-URL]</code> con tu URL de Replit</li>
-                    </ol>
-                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-900/10 pointer-events-none group-hover:hidden" />
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </SidebarLayout>
   );
 }
