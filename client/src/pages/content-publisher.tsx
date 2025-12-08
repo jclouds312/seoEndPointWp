@@ -22,7 +22,8 @@ import {
   Eye,
   Image as ImageIcon,
   Workflow,
-  Search
+  Search,
+  Clock as ClockIcon
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -242,7 +243,7 @@ El sistema ha optimizado este texto para lectura profesional.`;
                 <p className="text-3xl font-bold text-purple-900 mt-1">2.3s</p>
                 <p className="text-xs text-purple-600 mt-1">Por publicación</p>
               </div>
-              <Clock className="w-10 h-10 text-purple-600 opacity-50" />
+              <ClockIcon className="w-10 h-10 text-purple-600 opacity-50" />
             </div>
           </CardContent>
         </Card>

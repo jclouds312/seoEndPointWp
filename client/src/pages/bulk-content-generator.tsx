@@ -13,7 +13,7 @@ import {
   Download,
   RefreshCw,
   CheckCircle2,
-  Clock,
+  Clock as ClockIcon,
   TrendingUp,
   FileText,
   Save,
@@ -451,7 +451,7 @@ export default function BulkContentGenerator() {
                 <p className="text-xs text-amber-600 mt-1">Pendientes de revisión</p>
               </div>
               <div className="w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center">
-                <Clock className="w-6 h-6 text-white" />
+                <ClockIcon className="w-6 h-6 text-white" />
               </div>
             </div>
           </CardContent>
@@ -925,7 +925,7 @@ export default function BulkContentGenerator() {
                         </div>
                         <div className="flex items-center gap-4 text-xs text-slate-500">
                           <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
+                            <ClockIcon className="w-3 h-3" />
                             {content.createdAt ? new Date(content.createdAt).toLocaleDateString() : 'N/A'}
                           </span>
                           <span className="flex items-center gap-1">
