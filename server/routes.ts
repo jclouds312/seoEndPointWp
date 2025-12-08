@@ -1,7 +1,19 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import OpenAI from "openai";
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: { id: string };
+    }
+  }
+}
+
+function getUserId(req: Request): string {
+  return (req as any).user?.id || "default-user";
+}
 
 function getCurrentMonth(): string {
   const now = new Date();
@@ -44,7 +56,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.get("/api/campaigns", async (req, res) => {
     try {
-      const userId = req.user?.id || "default-user";
+      const userId = getUserId(req);
       const campaigns = await storage.getCampaigns(userId);
       res.json(campaigns);
     } catch (error: any) {
@@ -54,7 +66,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.post("/api/campaigns", async (req, res) => {
     try {
-      const userId = req.user?.id || "default-user";
+      const userId = getUserId(req);
       const campaign = await storage.createCampaign({ ...req.body, userId });
       res.json(campaign);
     } catch (error: any) {
@@ -64,13 +76,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.post("/api/generate-content", async (req, res) => {
     try {
-      const userId = req.user?.id || "default-user";
+      const userId = getUserId(req);
       const { campaignId, prompt, keywords, wordCount, aiProvider } = req.body;
       if (!prompt) return res.status(400).json({ error: "Prompt requerido" });
 
       const currentMonth = getCurrentMonth();
       const quota = await storage.getMonthlyQuota(userId, currentMonth);
-      if (quota && quota.contentGenerated >= quota.maxContent) {
+      if (quota && (quota.contentGenerated ?? 0) >= (quota.maxContent ?? 8)) {
         return res.status(403).json({ error: "Límite mensual alcanzado" });
       }
 
@@ -102,7 +114,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.post("/api/bulk-generate", async (req, res) => {
     try {
-      const userId = req.user?.id || "default-user";
+      const userId = getUserId(req);
       const { topics, keywords, wordCount, aiProvider, campaignId } = req.body;
       if (!topics || !Array.isArray(topics)) return res.status(400).json({ error: "Topics requerido" });
 
@@ -143,7 +155,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.get("/api/generated-content", async (req, res) => {
     try {
-      const userId = req.user?.id || "default-user";
+      const userId = getUserId(req);
       const contents = await storage.getGeneratedContents(userId);
       res.json(contents);
     } catch (error: any) {
@@ -180,7 +192,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.get("/api/quota", async (req, res) => {
     try {
-      const userId = req.user?.id || "default-user";
+      const userId = getUserId(req);
       const quota = await storage.getMonthlyQuota(userId, getCurrentMonth());
       res.json({ used: quota?.contentGenerated || 0, max: quota?.maxContent || 8 });
     } catch (error: any) {
@@ -190,7 +202,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.post("/api/api-keys", async (req, res) => {
     try {
-      const userId = req.user?.id || "default-user";
+      const userId = getUserId(req);
       const { provider, keyValue } = req.body;
       if (!provider || !keyValue) return res.status(400).json({ error: "Provider y keyValue requeridos" });
       const apiKey = await storage.createApiKey({ userId, provider, keyValue, isActive: true });

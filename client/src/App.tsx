@@ -37,8 +37,8 @@ function Router() {
       <Route path="/settings" component={Settings} />
       <Route path="/campaigns" component={Campaigns} />
       <Route path="/content-creator" component={ContentCreator} />
-      <Route path="/content-publisher" element={<ContentPublisher />} />
-      <Route path="/bulk-generator" element={<BulkContentGenerator />} />
+      <Route path="/content-publisher" component={ContentPublisher} />
+      <Route path="/bulk-generator" component={BulkContentGenerator} />
       <Route path="/seo-analyzer" component={SeoAnalyzer} />
       <Route component={NotFound} />
     </Switch>
