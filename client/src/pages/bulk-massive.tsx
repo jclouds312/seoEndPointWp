@@ -13,7 +13,7 @@ import SidebarLayout from "@/components/sidebar";
 export default function BulkMassive() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [step, setStep] = useState(1);
-  const [targetSite, setTargetSite] = useState("techblog");
+  const [targetSite, setTargetSite] = useState("calinjurylaw");
 
   const handleGenerate = () => {
     setIsGenerating(true);
@@ -37,7 +37,7 @@ export default function BulkMassive() {
             </div>
             <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white">Bulk Massive Generator</h1>
             <p className="text-slate-500 mt-2 max-w-2xl">
-              Deploy high-velocity content clusters. Generate 8 interconnected, SEO-optimized articles simultaneously using the Super Version engine.
+              Deploy high-velocity content clusters. Generate 8 interconnected, SEO-optimized legal articles simultaneously using the Super Version engine.
             </p>
           </div>
           <div className="flex gap-3">
@@ -77,6 +77,12 @@ export default function BulkMassive() {
                         <SelectValue placeholder="Select destination" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="calinjurylaw">
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-slate-400" />
+                            <span>California Personal Injury Lawyers Blog</span>
+                          </div>
+                        </SelectItem>
                         <SelectItem value="techblog">
                           <div className="flex items-center gap-2">
                             <Globe className="h-4 w-4 text-slate-400" />
@@ -113,7 +119,7 @@ export default function BulkMassive() {
                   <Label className="text-sm font-semibold text-slate-700">Main Keyword / Topic Cluster</Label>
                   <div className="relative">
                     <Input 
-                      placeholder="e.g. 'Future of Artificial Intelligence in Healthcare'" 
+                      placeholder="e.g. 'Car Accident Settlements in California'" 
                       className="h-12 text-lg pl-4 pr-12 border-slate-200 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" 
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded">
@@ -308,9 +314,9 @@ export default function BulkMassive() {
               <CardContent>
                 <div className="space-y-4">
                   {[
-                    { topic: "Crypto Wallets 2025", date: "2 hrs ago", status: "Completed" },
-                    { topic: "Sustainable Living Guide", date: "Yesterday", status: "Published" },
-                    { topic: "React vs Vue Performance", date: "3 days ago", status: "Drafts" }
+                    { topic: "Truck Accident Liability", date: "2 hrs ago", status: "Completed" },
+                    { topic: "Wrongful Death Claims", date: "Yesterday", status: "Published" },
+                    { topic: "Slip and Fall Settlements", date: "3 days ago", status: "Drafts" }
                   ].map((batch, i) => (
                     <div key={i} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                       <div>
