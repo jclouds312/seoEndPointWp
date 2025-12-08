@@ -39,6 +39,7 @@ export const generatedContent = pgTable("generated_content", {
   seoScore: integer("seo_score"),
   status: text("status").notNull().default("draft"), // draft, published, scheduled
   provider: text("provider"), // openai, claude, no-cost-ai
+  featuredImage: text("featured_image"), // AI-generated featured image URL
   publishedAt: timestamp("published_at"),
   scheduledFor: timestamp("scheduled_for"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -74,6 +74,7 @@
     "react-resizable-panels": "^2.1.9",
     "readability-scores": "^1.0.8",
     "recharts": "^2.15.4",
+    "replicate": "^1.4.0",
     "sentiment": "^5.0.2",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",

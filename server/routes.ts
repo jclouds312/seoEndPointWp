@@ -6,6 +6,13 @@ import { z } from "zod";
 import { generateContent, generateBulkContent, type ContentGenerationRequest } from "./openai";
 import { generateContentWithClaude, generateWithClaude } from "./claude";
 import { generateContentWithNoCostAI, generateWithNoCostAI } from "./no-cost-ai";
+import { 
+  generateImages, 
+  generateCampaignImages, 
+  generateBlogHeaderImage,
+  generateSocialMediaImages,
+  type ImageGenerationRequest 
+} from "./maverick-images";
 
 // In-memory storage for generated content (replace with database in production)
 interface StoredContent {
@@ -422,6 +429,112 @@ export async function registerRoutes(
       console.error("Error deleting content:", error);
       res.status(500).json({
         error: "Failed to delete content",
+        message: error.message
+      });
+    }
+  });
+
+  // AI Image Generation Routes
+  router.post("/api/images/generate", async (req, res) => {
+    try {
+      const schema = z.object({
+        prompt: z.string().min(1),
+        negativePrompt: z.string().optional(),
+        width: z.number().optional(),
+        height: z.number().optional(),
+        numOutputs: z.number().min(1).max(4).optional(),
+        guidanceScale: z.number().optional(),
+        numInferenceSteps: z.number().optional(),
+      });
+
+      const data = schema.parse(req.body);
+      const images = await generateImages(data as ImageGenerationRequest);
+
+      res.json({
+        success: true,
+        images
+      });
+    } catch (error: any) {
+      console.error("Error generating images:", error);
+      res.status(500).json({
+        error: "Failed to generate images",
+        message: error.message
+      });
+    }
+  });
+
+  router.post("/api/images/campaign", async (req, res) => {
+    try {
+      const schema = z.object({
+        campaignTheme: z.string().min(1),
+        keywords: z.array(z.string()),
+        imageCount: z.number().min(1).max(5).optional(),
+      });
+
+      const data = schema.parse(req.body);
+      const images = await generateCampaignImages(
+        data.campaignTheme,
+        data.keywords,
+        data.imageCount
+      );
+
+      res.json({
+        success: true,
+        images
+      });
+    } catch (error: any) {
+      console.error("Error generating campaign images:", error);
+      res.status(500).json({
+        error: "Failed to generate campaign images",
+        message: error.message
+      });
+    }
+  });
+
+  router.post("/api/images/blog-header", async (req, res) => {
+    try {
+      const schema = z.object({
+        title: z.string().min(1),
+        keywords: z.array(z.string()),
+      });
+
+      const data = schema.parse(req.body);
+      const imageUrl = await generateBlogHeaderImage(data.title, data.keywords);
+
+      res.json({
+        success: true,
+        imageUrl
+      });
+    } catch (error: any) {
+      console.error("Error generating blog header image:", error);
+      res.status(500).json({
+        error: "Failed to generate blog header image",
+        message: error.message
+      });
+    }
+  });
+
+  router.post("/api/images/social-media", async (req, res) => {
+    try {
+      const schema = z.object({
+        contentTitle: z.string().min(1),
+        keywords: z.array(z.string()),
+      });
+
+      const data = schema.parse(req.body);
+      const images = await generateSocialMediaImages(
+        data.contentTitle,
+        data.keywords
+      );
+
+      res.json({
+        success: true,
+        images
+      });
+    } catch (error: any) {
+      console.error("Error generating social media images:", error);
+      res.status(500).json({
+        error: "Failed to generate social media images",
         message: error.message
       });
     }

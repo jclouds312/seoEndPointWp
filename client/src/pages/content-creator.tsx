@@ -322,22 +322,41 @@ Solo responde con el prompt sugerido, sin explicaciones adicionales.`
 
     setIsGeneratingImages(true);
     
-    // Simulate image generation delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Mock images
-    const mockImages = [
-      "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=800&q=80"
-    ];
-    
-    setGeneratedImages(mockImages);
-    setIsGeneratingImages(false);
+    try {
+      const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
       
-    toast({
-      title: "Imágenes generadas",
-      description: `Se generaron ${mockImages.length} imágenes (Simuladas)`
-    });
+      const response = await fetch('/api/images/blog-header', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: seoMetadata?.title || contentPrompt,
+          keywords: keywords.length > 0 ? keywords : ['legal', 'abogado']
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar imagen');
+      }
+
+      const data = await response.json();
+      setGeneratedImages([data.imageUrl]);
+      
+      toast({
+        title: "¡Imagen generada!",
+        description: "Imagen de cabecera creada con IA"
+      });
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast({
+        title: "Error al generar imagen",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingImages(false);
+    }
   };
 
   const handleGenerateMetadata = async () => {

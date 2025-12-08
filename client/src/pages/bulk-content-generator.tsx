@@ -1,4 +1,3 @@
-
 import SidebarLayout from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { 
+import {
   Calendar,
   Sparkles,
   Download,
@@ -38,7 +37,23 @@ interface GeneratedPost {
   keywords?: string[];
   status?: 'draft' | 'published';
   createdAt?: Date;
+  featuredImage?: string; // Added for featured image
 }
+
+// Mock function for content generation (replace with actual API call)
+async function generateContent({ topic, keywords, wordCount, tone, language }: any): Promise<GeneratedPost> {
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return {
+    title: `Generated Title for ${topic}`,
+    content: `This is the generated content for ${topic} with ${wordCount} words. Keywords: ${keywords.join(', ')}. Tone: ${tone}. Language: ${language}.`,
+    metaDescription: `Meta description for ${topic}`,
+    seoScore: Math.floor(Math.random() * 100),
+    keywords: keywords,
+    featuredImage: undefined // Initialize featuredImage
+  };
+}
+
 
 export default function BulkContentGenerator() {
   const queryClient = useQueryClient();
@@ -67,25 +82,25 @@ export default function BulkContentGenerator() {
     mutationFn: async () => {
       const topics = baseTopics.split(',').map(t => t.trim()).filter(t => t.length > 0);
       const keywordList = keywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
-      
+
       if (topics.length === 0) {
         throw new Error('Debes proporcionar al menos un tema');
       }
 
       const postsToGenerate = Math.min(postsCount, topics.length);
       const selectedTopics = topics.slice(0, postsToGenerate);
-      
+
       const results: GeneratedPost[] = [];
-      
+
       // Generate content one by one to show progress
       for (let i = 0; i < selectedTopics.length; i++) {
         setCurrentGenerating(i + 1);
         setProgress(((i + 1) / selectedTopics.length) * 100);
-        
+
         let endpoint = '/api/generate-content';
         if (aiProvider === 'claude') endpoint = '/api/generate-content-claude';
         if (aiProvider === 'free') endpoint = '/api/generate-content-free';
-        
+
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
@@ -106,20 +121,44 @@ export default function BulkContentGenerator() {
         }
 
         const data = await response.json();
-        results.push({
+        const generatedPost: GeneratedPost = {
           title: data.title,
           content: data.content,
           metaDescription: data.metaDescription,
           seoScore: data.seoScore,
-          keywords: keywordList
-        });
-        
+          keywords: keywordList,
+          featuredImage: undefined // Initialize featuredImage
+        };
+
+        // Generate featured image for each post
+        try {
+          const imageResponse = await fetch('/api/images/blog-header', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: generatedPost.title,
+              keywords: keywordList.length > 0 ? keywordList : ['legal']
+            })
+          });
+
+          if (imageResponse.ok) {
+            const imageData = await imageResponse.json();
+            generatedPost.featuredImage = imageData.imageUrl;
+          } else {
+             console.error('Error generating image:', imageResponse.statusText);
+          }
+        } catch (err) {
+          console.error('Error generating image:', err);
+        }
+
+        results.push(generatedPost);
+
         // Small delay to avoid rate limits
         if (i < selectedTopics.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
-      
+
       return results;
     },
     onSuccess: (data) => {
@@ -129,8 +168,8 @@ export default function BulkContentGenerator() {
       toast({
         title: "¡Contenido generado exitosamente!",
         description: `Se generaron ${data.length} posts de alta calidad con ${
-          aiProvider === 'claude' ? 'Claude 3.5 Sonnet' : 
-          aiProvider === 'free' ? 'no-cost-ai (GRATIS)' : 
+          aiProvider === 'claude' ? 'Claude 3.5 Sonnet' :
+          aiProvider === 'free' ? 'no-cost-ai (GRATIS)' :
           'OpenAI GPT-4'
         }`
       });
@@ -248,7 +287,7 @@ export default function BulkContentGenerator() {
     const dataStr = JSON.stringify(generatedPosts, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
     const exportFileDefaultName = `content-${new Date().toISOString().split('T')[0]}.json`;
-    
+
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
@@ -308,7 +347,7 @@ export default function BulkContentGenerator() {
 
                 <div className="space-y-2">
                   <Label>Temas Base (separados por coma)</Label>
-                  <Textarea 
+                  <Textarea
                     value={baseTopics}
                     onChange={(e) => setBaseTopics(e.target.value)}
                     rows={5}
@@ -321,7 +360,7 @@ export default function BulkContentGenerator() {
 
                 <div className="space-y-2">
                   <Label>Palabras Clave</Label>
-                  <Input 
+                  <Input
                     value={keywords}
                     onChange={(e) => setKeywords(e.target.value)}
                     placeholder="abogado, lesiones, compensación..."
@@ -365,7 +404,7 @@ export default function BulkContentGenerator() {
 
                 <Separator />
 
-                <Button 
+                <Button
                   className="w-full h-12 gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                   onClick={handleGenerate}
                   disabled={isGenerating}
@@ -410,15 +449,15 @@ export default function BulkContentGenerator() {
                         </CardDescription>
                       </div>
                       <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={downloadAsJSON}
                         >
                           <Download className="w-4 h-4 mr-2" />
                           Exportar JSON
                         </Button>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => saveAllMutation.mutate()}
                           disabled={saveAllMutation.isPending}
@@ -447,8 +486,8 @@ export default function BulkContentGenerator() {
                                   </Badge>
                                 </div>
                               </div>
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => saveMutation.mutate(post)}
                                 disabled={saveMutation.isPending}
@@ -458,6 +497,11 @@ export default function BulkContentGenerator() {
                             </div>
                           </CardHeader>
                           <CardContent>
+                            {post.featuredImage && (
+                              <div className="mb-4">
+                                <img src={post.featuredImage} alt="Featured Image" className="w-full h-auto rounded-md" />
+                              </div>
+                            )}
                             <p className="text-sm text-slate-600 line-clamp-2">
                               {post.metaDescription}
                             </p>
@@ -517,8 +561,8 @@ export default function BulkContentGenerator() {
                       </div>
                       <div className="flex gap-2">
                         {content.status === 'draft' && (
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => content.id && publishMutation.mutate(content.id)}
                           >
@@ -526,8 +570,8 @@ export default function BulkContentGenerator() {
                             Publicar
                           </Button>
                         )}
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => content.id && deleteMutation.mutate(content.id)}
                         >
@@ -537,6 +581,11 @@ export default function BulkContentGenerator() {
                     </div>
                   </CardHeader>
                   <CardContent>
+                    {content.featuredImage && (
+                      <div className="mb-4">
+                        <img src={content.featuredImage} alt="Featured Image" className="w-full h-auto rounded-md" />
+                      </div>
+                    )}
                     <p className="text-sm text-slate-600">{content.metaDescription}</p>
                   </CardContent>
                 </Card>
