@@ -136,20 +136,30 @@ export default function BulkContentGenerator() {
     }
   ];
 
-  // Fetch saved content history
-  const { data: savedContents = MOCK_SAVED_CONTENTS, refetch: refetchSaved } = useQuery<GeneratedPost[]>({
+  // Fetch saved content history from real API
+  const { data: savedContents = [], refetch: refetchSaved } = useQuery<GeneratedPost[]>({
     queryKey: ['saved-contents'],
     queryFn: async () => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return MOCK_SAVED_CONTENTS;
+      const response = await fetch('/api/generated-content');
+      if (!response.ok) throw new Error('Error al cargar contenido');
+      const data = await response.json();
+      return data.map((item: any) => ({
+        id: String(item.id),
+        title: item.title,
+        content: item.content,
+        metaDescription: item.metaDescription || '',
+        seoScore: item.seoScore || 0,
+        status: item.status as 'draft' | 'published',
+        createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
+        keywords: item.keywords?.split(',').map((k: string) => k.trim()) || [],
+        featuredImage: item.featuredImage
+      }));
     }
   });
 
   const generateBulkMutation = useMutation({
     mutationFn: async () => {
       const topics = baseTopics.split(',').map(t => t.trim()).filter(t => t.length > 0);
-      const keywordList = keywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
 
       if (topics.length === 0) {
         throw new Error('Debes proporcionar al menos un tema');
@@ -158,27 +168,39 @@ export default function BulkContentGenerator() {
       const postsToGenerate = Math.min(postsCount, topics.length);
       const selectedTopics = topics.slice(0, postsToGenerate);
 
-      const results: GeneratedPost[] = [];
+      setCurrentGenerating(1);
+      setProgress(10);
 
-      // Generate content one by one to show progress
-      for (let i = 0; i < selectedTopics.length; i++) {
-        setCurrentGenerating(i + 1);
-        setProgress(((i + 1) / selectedTopics.length) * 100);
+      const response = await fetch('/api/bulk-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topics: selectedTopics,
+          keywords: keywords || '',
+          wordCount,
+          aiProvider,
+          campaignId: null
+        })
+      });
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        const generatedPost: GeneratedPost = {
-          title: `${selectedTopics[i]} - Guía Completa`,
-          content: `Este es un contenido generado automáticamente sobre ${selectedTopics[i]}. Incluye palabras clave como ${keywordList.join(', ')}. El tono es ${i % 2 === 0 ? 'profesional-empático' : 'profesional-informativo'}.`,
-          metaDescription: `Descubre todo sobre ${selectedTopics[i]} en esta guía detallada.`,
-          seoScore: Math.floor(Math.random() * (100 - 80) + 80), // Random score between 80-100
-          keywords: keywordList,
-          featuredImage: `https://picsum.photos/seed/${i}/800/400` // Mock image
-        };
-
-        results.push(generatedPost);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al generar contenido masivo');
       }
+
+      const data = await response.json();
+      
+      const results: GeneratedPost[] = data.contents.map((item: any) => ({
+        id: String(item.id),
+        title: item.title,
+        content: item.content,
+        metaDescription: item.metaDescription || '',
+        seoScore: item.seoScore || 85,
+        status: item.status as 'draft' | 'published',
+        createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
+        keywords: item.keywords?.split(',').map((k: string) => k.trim()) || [],
+        featuredImage: item.featuredImage
+      }));
 
       return results;
     },
@@ -186,6 +208,7 @@ export default function BulkContentGenerator() {
       setGeneratedPosts(data);
       setProgress(100);
       setCurrentGenerating(0);
+      refetchSaved();
       toast({
         title: "¡Contenido generado exitosamente!",
         description: `Se generaron ${data.length} posts de alta calidad con ${
@@ -239,8 +262,8 @@ export default function BulkContentGenerator() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await fetch(`/api/content/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Error al eliminar');
       return { success: true };
     },
     onSuccess: () => {
@@ -254,25 +277,18 @@ export default function BulkContentGenerator() {
 
   const publishMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Simulate API call to publish content
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Find the content to publish
-      const content = savedContents.find(c => c.id === id);
-      if (!content) {
-        throw new Error('Contenido no encontrado');
+      const response = await fetch(`/api/content/${id}/publish`, { method: 'POST' });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al publicar');
       }
-
-      // Simulate WordPress publication
-      const postId = Math.floor(Math.random() * 10000);
-      
-      return { success: true, postId, contentId: id };
+      return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       refetchSaved();
       toast({
         title: "Contenido publicado",
-        description: `Post publicado en WordPress (ID: ${data.postId})`
+        description: "El contenido se ha publicado exitosamente"
       });
     },
     onError: (error: any) => {
@@ -288,21 +304,42 @@ export default function BulkContentGenerator() {
     mutationFn: async () => {
       const drafts = savedContents.filter(c => c.status === 'draft');
       const results = [];
+      const errors = [];
       
       for (const draft of drafts) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const postId = Math.floor(Math.random() * 10000);
-        results.push({ contentId: draft.id, postId });
+        try {
+          const response = await fetch(`/api/content/${draft.id}/publish`, { method: 'POST' });
+          if (response.ok) {
+            results.push({ contentId: draft.id });
+          } else {
+            const error = await response.json();
+            errors.push({ contentId: draft.id, error: error.error || 'Error desconocido' });
+          }
+        } catch (err: any) {
+          errors.push({ contentId: draft.id, error: err.message });
+        }
       }
       
-      return results;
+      if (errors.length > 0 && results.length === 0) {
+        throw new Error(`Falló la publicación de ${errors.length} contenidos`);
+      }
+      
+      return { results, errors };
     },
     onSuccess: (data) => {
       refetchSaved();
-      toast({
-        title: "Publicación masiva completada",
-        description: `${data.length} posts publicados exitosamente`
-      });
+      if (data.errors.length > 0) {
+        toast({
+          title: "Publicación parcialmente completada",
+          description: `${data.results.length} publicados, ${data.errors.length} fallidos`,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Publicación masiva completada",
+          description: `${data.results.length} posts publicados exitosamente`
+        });
+      }
     },
     onError: (error: any) => {
       toast({

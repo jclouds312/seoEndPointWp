@@ -134,12 +134,13 @@ export default function ContentCreator() {
   const [isSuggestingPrompt, setIsSuggestingPrompt] = useState(false);
   const [imageStyle, setImageStyle] = useState("photorealistic");
 
-  // Fetch campaigns (Mocked)
-  const { data: campaigns = MOCK_CAMPAIGNS } = useQuery<Campaign[]>({
+  // Fetch campaigns from real API
+  const { data: campaigns = [] } = useQuery<Campaign[]>({
     queryKey: ['campaigns'],
     queryFn: async () => {
-      // Return mock data for prototype
-      return MOCK_CAMPAIGNS;
+      const response = await fetch('/api/campaigns');
+      if (!response.ok) throw new Error('Error al cargar campañas');
+      return response.json();
     }
   });
 
@@ -191,10 +192,10 @@ Tono: Profesional, empático y educativo. Enfocado en ayudar a la víctima a ent
   };
 
   const handleGenerate = async () => {
-    if (!selectedCampaign || !contentPrompt) {
+    if (!contentPrompt) {
       toast({
         title: "Campos requeridos",
-        description: "Por favor selecciona una campaña y escribe un prompt",
+        description: "Por favor escribe un prompt para generar contenido",
         variant: "destructive"
       });
       return;
@@ -204,50 +205,48 @@ Tono: Profesional, empático y educativo. Enfocado en ayudar a la víctima a ent
     setGeneratedContent("");
     
     try {
-      const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const mockContent = `
-        <h1>Guía Completa sobre ${keywords[0] || 'el tema'}</h1>
-        <p>Esta es una introducción generada por IA sobre ${keywords.join(', ')}. El contenido está diseñado para ser informativo y útil para el lector.</p>
-        <img src="https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=800&auto=format&fit=crop&q=60" alt="Legal office environment" class="w-full rounded-lg my-4" />
-        <h2>1. Introducción</h2>
-        <p>En el complejo mundo legal de hoy, entender tus derechos es fundamental. Este artículo explora en profundidad los aspectos clave de ${keywords[0] || 'este tema'}.</p>
-        <h2>2. Aspectos Legales Importantes</h2>
-        <p>Es crucial considerar la normativa vigente. Según las leyes recientes, las víctimas tienen derecho a compensación justa.</p>
-        <ul>
-            <li>Documentación precisa del incidente.</li>
-            <li>Consulta temprana con expertos.</li>
-            <li>Seguimiento médico riguroso.</li>
-        </ul>
-        <h2>3. Conclusión</h2>
-        <p>Esperamos que esta guía haya sido de utilidad. Recuerda siempre buscar asesoría profesional personalizada.</p>
-      `;
+      const response = await fetch('/api/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaignId: selectedCampaign ? parseInt(selectedCampaign) : null,
+          prompt: contentPrompt,
+          keywords: targetKeywords || '',
+          wordCount: wordCount[0],
+          aiProvider
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al generar contenido');
+      }
+
+      const data = await response.json();
+      const generatedHtml = data.content.content;
 
       // Simulate streaming effect for better UX
-      const chunks = mockContent.split(/(?=[<])/);
+      const chunks = generatedHtml.split(/(?=[<])/);
       let currentText = "";
       
       for (let i = 0; i < chunks.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise(resolve => setTimeout(resolve, 30));
         currentText += chunks[i];
         setGeneratedContent(currentText);
       }
 
-      // Set metadata
+      // Set metadata from API response
       setSeoMetadata({
-        title: `Guía Definitiva sobre ${keywords[0] || 'el tema'}`,
-        description: `Descubre todo lo que necesitas saber sobre ${keywords[0] || 'el tema'}. Guía experta actualizada 2024.`,
-        slug: (keywords[0] || 'tema').toLowerCase().replace(/ /g, '-'),
-        ogTitle: `Guía Definitiva sobre ${keywords[0] || 'el tema'}`,
-        ogDescription: `Descubre todo lo que necesitas saber sobre ${keywords[0] || 'el tema'}.`,
+        title: data.content.title,
+        description: data.seoMetadata.metaDescription,
+        slug: data.seoMetadata.slug,
+        ogTitle: data.content.title,
+        ogDescription: data.seoMetadata.metaDescription,
         schema: `{
   "@context": "https://schema.org",
   "@type": "Article",
-  "headline": "Guía Definitiva sobre ${keywords[0] || 'el tema'}",
-  "description": "Descubre todo lo que necesitas saber sobre ${keywords[0] || 'el tema'}.",
+  "headline": "${data.content.title}",
+  "description": "${data.seoMetadata.metaDescription}",
   "author": {
     "@type": "Person",
     "name": "Legal Expert AI"
@@ -255,9 +254,10 @@ Tono: Profesional, empático y educativo. Enfocado en ayudar a la víctima a ent
 }`
       });
 
-      // Set SEO score
+      // Set SEO score from API
+      const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
       setSeoScore({
-        score: 85,
+        score: data.seoMetadata.seoScore,
         keywordDensity: keywords.reduce((acc, k) => {
           acc[k] = 2.5;
           return acc;
@@ -270,9 +270,11 @@ Tono: Profesional, empático y educativo. Enfocado en ayudar a la víctima a ent
         improvements: "Contenido de alta calidad generado. Revisa y personaliza según necesites."
       });
 
+      queryClient.invalidateQueries({ queryKey: ['generated-content'] });
+
       toast({
         title: "¡Contenido generado exitosamente!",
-        description: "Contenido creado simulando IA avanzada."
+        description: `Contenido creado con ${aiProvider === 'free' ? 'no-cost-ai' : aiProvider}.`
       });
       
       if (includeImages) {
