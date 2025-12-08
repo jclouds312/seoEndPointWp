@@ -805,12 +805,13 @@ export default function BulkContentGenerator() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="2">2 posts</SelectItem>
+                      <SelectItem value="3">3 posts</SelectItem>
                       <SelectItem value="4">4 posts</SelectItem>
                       <SelectItem value="6">6 posts</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-slate-500">
-                    Genera contenido de alta calidad en grupos de 2, 4 o 6 posts
+                    Genera contenido de alta calidad en grupos de 2, 3, 4 o 6 posts
                   </p>
                 </div>
 
