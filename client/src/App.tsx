@@ -22,10 +22,11 @@ import ContentPublisher from "./pages/content-publisher";
 import BulkContentGenerator from "./pages/bulk-content-generator";
 import JetpackIntegration from "@/pages/jetpack-integration";
 import BulkMassive from "@/pages/bulk-massive";
+import BulkGenerator from "@/pages/bulk-content-generator";
 import ContentManager from "@/pages/content-manager";
 import Sites from "@/pages/sites";
 
-function Router() {
+function AppRoutes() {
   return (
     <Switch>
       <Route path="/" component={Login} />
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/content-creator" component={ContentCreator} />
       <Route path="/content-publisher" component={ContentPublisher} />
       <Route path="/bulk-content-generator" component={BulkContentGenerator} />
+      <Route path="/bulk-generator" component={BulkGenerator} />
       <Route path="/bulk-massive" component={BulkMassive} />
       <Route path="/content-manager" component={ContentManager} />
       <Route path="/sites" component={Sites} />
@@ -56,8 +58,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router />
+        <Router hook={useHashLocation}>
+          <Toaster />
+          <AppRoutes />
+        </Router>
       </TooltipProvider>
     </QueryClientProvider>
   );
