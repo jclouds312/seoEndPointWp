@@ -1,8 +1,24 @@
+
 import { type User, type InsertUser, type GeneratedContent as DBGeneratedContent } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "@shared/db";
 import { users, generatedContent, bulkGenerationBatches } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
+
+// Define la estructura de los datos para guardar contenido
+interface SaveContentData {
+  title: string;
+  content: string;
+  metaDescription: string;
+  seoScore: number;
+  status: 'draft' | 'published';
+  keywords: string;
+  featuredImage?: string;
+  provider?: string;
+  campaignId?: number;
+  batchId?: string; // Para agrupar posts de una misma tanda
+  bulkType?: string; // Para identificar la fuente ('standard', 'massive', 'single')
+}
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -12,17 +28,7 @@ export interface IStorage {
   getGeneratedContent(id: number): Promise<DBGeneratedContent | undefined>;
   deleteGeneratedContent(id: number): Promise<void>;
   publishGeneratedContent(id: number): Promise<DBGeneratedContent>;
-  saveGeneratedContent(data: {
-    title: string;
-    content: string;
-    metaDescription: string;
-    seoScore: number;
-    status: 'draft' | 'published';
-    keywords: string;
-    featuredImage?: string;
-    provider?: string;
-    campaignId?: number;
-  }): Promise<DBGeneratedContent>;
+  saveGeneratedContent(data: SaveContentData): Promise<DBGeneratedContent>;
   createBulkBatch(data: any): Promise<any>;
   updateBulkBatch(batchId: string, data: any): Promise<any>;
   getBulkBatches(userId?: string): Promise<any[]>;
@@ -73,17 +79,9 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async saveGeneratedContent(data: {
-    title: string;
-    content: string;
-    metaDescription: string;
-    seoScore: number;
-    status: 'draft' | 'published';
-    keywords: string;
-    featuredImage?: string;
-    provider?: string;
-    campaignId?: number;
-  }): Promise<DBGeneratedContent> {
+  async saveGeneratedContent(data: SaveContentData): Promise<DBGeneratedContent> {
+    const slug = data.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+    
     const result = await db.insert(generatedContent).values({
       title: data.title,
       content: data.content,
@@ -94,8 +92,14 @@ export class DatabaseStorage implements IStorage {
       featuredImage: data.featuredImage,
       provider: data.provider || 'free',
       campaignId: data.campaignId,
-      slug: data.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
+      batchId: data.batchId,
+      bulkType: data.bulkType,
+      slug: slug,
     }).returning();
+
+    if (!result[0]) {
+        throw new Error("Failed to save content to database.");
+    }
 
     return result[0];
   }
