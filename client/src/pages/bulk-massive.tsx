@@ -51,46 +51,57 @@ export default function BulkMassive() {
     setIsGenerating(true);
     setCurrentPost(0);
     setGeneratedPosts([]);
-    
-    // Simulate progress for better UX
-    let progress = 0;
-    const progressInterval = setInterval(() => {
-      progress += 1;
-      setCurrentPost(prev => {
-        if (prev < 8) return prev + 1;
-        return prev;
+
+    try {
+      const response = await fetch('/api/bulk-massive/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mainKeyword: mainKeyword,
+          targetSite: targetSite,
+          count: 8
+        })
       });
+
+      if (!response.ok) {
+        throw new Error('Error generating content');
+      }
+
+      const data = await response.json();
       
-      // Simulate adding a post result
-      setGeneratedPosts(prev => [
-        ...prev,
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          title: `${mainKeyword} - Part ${progress}: Detailed Analysis`,
-          content: "Lorem ipsum content...",
-          metaDescription: `Comprehensive guide about ${mainKeyword}...`,
-          seoScore: Math.floor(Math.random() * (100 - 85) + 85),
-          status: "Draft"
+      // Animate the results coming in
+      if (data.contents && Array.isArray(data.contents)) {
+        for (let i = 0; i < data.contents.length; i++) {
+          await new Promise(resolve => setTimeout(resolve, 400));
+          setCurrentPost(i + 1);
+          setGeneratedPosts(prev => [...prev, data.contents[i]]);
         }
+      }
+
+      setIsGenerating(false);
+      setCurrentPost(8);
+      
+      // Add to recent batches
+      setRecentBatches(prev => [
+        { topic: mainKeyword, date: "Just now", status: "Completed" },
+        ...prev.slice(0, 4)
       ]);
 
-      if (progress >= 8) {
-        clearInterval(progressInterval);
-        setIsGenerating(false);
-        setCurrentPost(8);
-        
-        // Add to recent batches
-        setRecentBatches(prev => [
-          { topic: mainKeyword, date: "Just now", status: "Completed" },
-          ...prev.slice(0, 4) // Keep only last 5
-        ]);
-
-        toast({
-          title: "¡Generación Completada!",
-          description: `8 posts generados y guardados exitosamente`,
-        });
-      }
-    }, 1500); // 1.5s per post for demo effect
+      toast({
+        title: "¡Generación Completada!",
+        description: `${data.generated} posts generados y guardados exitosamente`,
+      });
+    } catch (error) {
+      console.error('Generation error:', error);
+      setIsGenerating(false);
+      toast({
+        title: "Error",
+        description: "Hubo un problema generando el contenido. Por favor intenta de nuevo.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleRegenerate = (batchTopic: string) => {
