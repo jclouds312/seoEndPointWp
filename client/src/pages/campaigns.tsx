@@ -1,4 +1,3 @@
-
 import SidebarLayout from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,62 +14,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Campaign } from "@/lib/schema";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-// Mock data for frontend-only mode
-const MOCK_CAMPAIGNS: Campaign[] = [
-  {
-    id: 1,
-    name: "California Personal Injury Lawyers Blog",
-    blogUrl: "https://www.californiapersonalinjurylawyersblog.com",
-    description: "Primary SEO campaign for California personal injury niche",
-    embedCode: "<?php ... ?>",
-    status: "active",
-    posts: 145,
-    createdAt: new Date("2024-01-15"),
-    updatedAt: new Date("2024-03-20"),
-    userId: "user_1",
-    config: { niche: "Legal", language: "English" }
-  },
-  {
-    id: 2,
-    name: "Texas Accident Lawyers",
-    blogUrl: "https://texasaccidentlawyers.com",
-    description: "Expansion campaign for Houston area",
-    embedCode: "<?php ... ?>",
-    status: "paused",
-    posts: 32,
-    createdAt: new Date("2024-02-10"),
-    updatedAt: new Date("2024-03-18"),
-    userId: "user_1",
-    config: { niche: "Legal", language: "Spanish" }
-  },
-  {
-    id: 3,
-    name: "Tech Startup Legal Guide",
-    blogUrl: "https://techlegalguide.com",
-    description: "Legal resources for tech startups",
-    embedCode: "<?php ... ?>",
-    status: "draft",
-    posts: 5,
-    createdAt: new Date("2024-04-01"),
-    updatedAt: new Date("2024-04-05"),
-    userId: "user_1",
-    config: { niche: "Tech", language: "English" }
-  },
-  {
-    id: 4,
-    name: "Medical Malpractice Insights",
-    blogUrl: "https://medicalmalpractice.com",
-    description: "Expert insights on medical negligence cases",
-    embedCode: "<?php ... ?>",
-    status: "active",
-    posts: 89,
-    createdAt: new Date("2024-03-15"),
-    updatedAt: new Date("2024-04-10"),
-    userId: "user_1",
-    config: { niche: "Medical", language: "English" }
-  }
-];
-
 export default function Campaigns() {
   const queryClient = useQueryClient();
   const [newCampaign, setNewCampaign] = useState({
@@ -78,78 +21,83 @@ export default function Campaigns() {
     blogUrl: '',
     description: '',
     niche: '',
-    language: 'English'
+    language: 'Español'
   });
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [localCampaigns, setLocalCampaigns] = useState<Campaign[]>(MOCK_CAMPAIGNS);
 
-  // Mock Fetch campaigns
+  // Fetch campaigns from database
   const { data: campaigns = [], isLoading } = useQuery<Campaign[]>({
     queryKey: ['campaigns'],
     queryFn: async () => {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return localCampaigns;
-    },
-    initialData: localCampaigns
+      const response = await fetch('/api/campaigns');
+      if (!response.ok) throw new Error('Failed to fetch campaigns');
+      return response.json();
+    }
   });
 
-  // Mock Create campaign mutation
+  // Create campaign mutation
   const createCampaignMutation = useMutation({
     mutationFn: async (data: typeof newCampaign) => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
       const blogIdentifier = data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       const embedCode = generateEmbedCode(blogIdentifier);
-      
-      const newId = Math.max(0, ...localCampaigns.map(c => c.id)) + 1;
-      
-      const newCampaignObj: Campaign = {
-        id: newId,
-        name: data.name,
-        blogUrl: data.blogUrl,
-        description: data.description,
-        embedCode,
-        status: 'active',
-        posts: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: "user_1",
-        config: { niche: data.niche, language: data.language }
-      };
-      
-      setLocalCampaigns(prev => [...prev, newCampaignObj]);
-      return newCampaignObj;
+
+      const response = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          blogUrl: data.blogUrl,
+          description: data.description,
+          embedCode,
+          status: 'active',
+          posts: 0,
+          config: { niche: data.niche, language: data.language }
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to create campaign');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      setNewCampaign({ name: '', blogUrl: '', description: '', niche: '', language: 'English' });
+      setNewCampaign({ name: '', blogUrl: '', description: '', niche: '', language: 'Español' });
       setIsDialogOpen(false);
       toast({
-        title: "Success",
-        description: "New campaign initialized successfully."
+        title: "¡Éxito!",
+        description: "Campaña creada exitosamente."
       });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to create campaign.",
+        description: "No se pudo crear la campaña.",
         variant: "destructive"
       });
     }
   });
 
-  // Mock Delete campaign mutation
+  // Delete campaign mutation
   const deleteCampaignMutation = useMutation({
     mutationFn: async (id: number) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setLocalCampaigns(prev => prev.filter(c => c.id !== id));
-      return { success: true };
+      const response = await fetch(`/api/campaigns/${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Failed to delete campaign');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
       toast({
-        title: "Deleted",
-        description: "Campaign removed successfully."
+        title: "Eliminada",
+        description: "Campaña eliminada exitosamente."
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la campaña.",
+        variant: "destructive"
       });
     }
   });
@@ -279,7 +227,7 @@ function render_seo_hub_${blogIdentifier}() {
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="url">WordPress Site URL *</Label>
                 <Input 
@@ -368,7 +316,7 @@ function render_seo_hub_${blogIdentifier}() {
                     </div>
                   </div>
                 </div>
-                
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
