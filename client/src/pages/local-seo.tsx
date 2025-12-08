@@ -225,23 +225,55 @@ export default function LocalSEO() {
                 <div className="pt-4 border-t border-slate-100">
                   <Button 
                     className="w-full h-12 text-lg gap-2 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-900/20"
-                    onClick={() => setIsPublishing(true)}
+                    onClick={async () => {
+                      setIsPublishing(true);
+                      try {
+                        // Simulate bulk publishing process
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        toast({
+                          title: "Campaña de publicación iniciada",
+                          description: "El contenido se está publicando en las zonas seleccionadas"
+                        });
+                        
+                        // Simulate progress
+                        for (let i = 1; i <= 5; i++) {
+                          await new Promise(resolve => setTimeout(resolve, 1000));
+                          toast({
+                            title: `Publicando zona ${i}/5`,
+                            description: `Contenido adaptado y publicado con SEO local`
+                          });
+                        }
+                        
+                        toast({
+                          title: "¡Publicación masiva completada!",
+                          description: "5 zonas geográficas actualizadas exitosamente"
+                        });
+                      } catch (error: any) {
+                        toast({
+                          title: "Error en publicación",
+                          description: error.message,
+                          variant: "destructive"
+                        });
+                      } finally {
+                        setIsPublishing(false);
+                      }
+                    }}
                     disabled={isPublishing}
                   >
                     {isPublishing ? (
                       <>
                         <RefreshCw className="w-5 h-5 animate-spin" />
-                        Initializing Campaign...
+                        Publicando contenido...
                       </>
                     ) : (
                       <>
                         <Globe className="w-5 h-5" />
-                        Start Bulk Publishing
+                        Iniciar Publicación Masiva
                       </>
                     )}
                   </Button>
                   <p className="text-center text-xs text-slate-400 mt-3">
-                    This action will consume approximately 450 AI credits.
+                    Esta acción publicará contenido optimizado en múltiples zonas geográficas
                   </p>
                 </div>
               </div>

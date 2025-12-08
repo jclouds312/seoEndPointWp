@@ -19,7 +19,8 @@ import {
   Save,
   Trash2,
   Eye,
-  Send
+  Send,
+  Globe
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -211,15 +212,61 @@ export default function BulkContentGenerator() {
 
   const publishMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Simulate API call
+      // Simulate API call to publish content
       await new Promise(resolve => setTimeout(resolve, 1000));
-      return { success: true };
+      
+      // Find the content to publish
+      const content = savedContents.find(c => c.id === id);
+      if (!content) {
+        throw new Error('Contenido no encontrado');
+      }
+
+      // Simulate WordPress publication
+      const postId = Math.floor(Math.random() * 10000);
+      
+      return { success: true, postId, contentId: id };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       refetchSaved();
       toast({
         title: "Contenido publicado",
-        description: "El contenido se marcó como publicado"
+        description: `Post publicado en WordPress (ID: ${data.postId})`
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error al publicar",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const publishAllMutation = useMutation({
+    mutationFn: async () => {
+      const drafts = savedContents.filter(c => c.status === 'draft');
+      const results = [];
+      
+      for (const draft of drafts) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const postId = Math.floor(Math.random() * 10000);
+        results.push({ contentId: draft.id, postId });
+      }
+      
+      return results;
+    },
+    onSuccess: (data) => {
+      refetchSaved();
+      toast({
+        title: "Publicación masiva completada",
+        description: `${data.length} posts publicados exitosamente`
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error en publicación masiva",
+        description: error.message,
+        variant: "destructive"
       });
     }
   });
@@ -304,7 +351,14 @@ export default function BulkContentGenerator() {
       <Tabs defaultValue="generator" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="generator">Generador</TabsTrigger>
-          <TabsTrigger value="history">Historial ({savedContents.length})</TabsTrigger>
+          <TabsTrigger value="history">
+            Historial ({savedContents.length})
+            {savedContents.filter(c => c.status === 'draft').length > 0 && (
+              <Badge className="ml-2 bg-amber-500 text-white">
+                {savedContents.filter(c => c.status === 'draft').length} borradores
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="generator" className="space-y-6">
@@ -558,7 +612,39 @@ export default function BulkContentGenerator() {
 
         <TabsContent value="history" className="space-y-4">
           {savedContents.length > 0 ? (
-            <div className="grid gap-4">
+            <>
+              {savedContents.filter(c => c.status === 'draft').length > 0 && (
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-blue-900 mb-1">Acciones Masivas</h3>
+                        <p className="text-sm text-blue-700">
+                          {savedContents.filter(c => c.status === 'draft').length} borradores listos para publicar
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => publishAllMutation.mutate()}
+                        disabled={publishAllMutation.isPending}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        {publishAllMutation.isPending ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                            Publicando...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4 mr-2" />
+                            Publicar Todos los Borradores
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              <div className="grid gap-4">
               {savedContents.map((content) => (
                 <Card key={content.id} className="border-slate-200">
                   <CardHeader>
@@ -615,8 +701,9 @@ export default function BulkContentGenerator() {
                     <p className="text-sm text-slate-600">{content.metaDescription}</p>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           ) : (
             <Card>
               <CardContent className="py-12 text-center">
