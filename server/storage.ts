@@ -1,7 +1,7 @@
 import { type User, type InsertUser } from "@shared/schema";
 import { randomUUID } from "crypto";
-import { db } from "../shared/db";
-import { campaigns, generatedContent, bulkGenerationBatches } from "../shared/schema";
+import { db } from "@shared/db";
+import { campaigns, generatedContent, bulkGenerationBatches } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
 interface GeneratedContent {
