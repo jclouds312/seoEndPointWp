@@ -229,6 +229,14 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async createMonthlyQuota(data: { userId: string; month: string; contentGenerated: number; maxContent: number }): Promise<MonthlyContentQuota> {
+    const result = await db
+      .insert(monthlyContentQuota)
+      .values(data)
+      .returning();
+    return result[0];
+  }
+
   async updateMonthlyQuota(userId: string, month: string, increment: number = 1): Promise<MonthlyContentQuota> {
     const existing = await this.getMonthlyQuota(userId, month);
 
