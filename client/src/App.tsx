@@ -47,6 +47,7 @@ function AppRoutes() {
       <Route path="/sites" component={Sites} />
       
       {/* Bulk Generator Routes - All within dashboard */}
+      <Route path="/bulk-generator" component={BulkContentGenerator} />
       <Route path="/bulk-content-generator" component={BulkContentGenerator} />
       <Route path="/bulk-massive" component={BulkMassive} />
       <Route path="/seo-analyzer" component={SeoAnalyzer} />
