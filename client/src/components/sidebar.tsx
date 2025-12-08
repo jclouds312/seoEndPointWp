@@ -20,7 +20,6 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
     { icon: Zap, label: "Jetpack Features", href: "/jetpack" },
     { icon: Settings, label: "Settings", href: "/settings" },
     { icon: Megaphone, label: "Campañas", href: "/campaigns" },
-    { icon: FileText, label: "Crear Contenido", href: "/content-creator" },
   ];
 
   return (
@@ -60,6 +59,16 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
               }`}>
                 <Sparkles className="w-4 h-4" />
                 <span className="text-sm font-medium">Crear Contenido</span>
+              </div>
+            </Link>
+            <Link href="/content-publisher">
+              <div className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-all cursor-pointer ${
+                location === "/content-publisher"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
+                  : "hover:bg-slate-800 hover:text-white"
+              }`}>
+                <Send className="w-4 h-4" />
+                <span className="text-sm font-medium">Publicar Contenido</span>
               </div>
             </Link>
             <Link href="/bulk-generator">

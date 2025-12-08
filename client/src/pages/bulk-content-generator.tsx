@@ -69,14 +69,37 @@ export default function BulkContentGenerator() {
   const [promptSuggestion, setPromptSuggestion] = useState("");
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
 
+  // Mock Saved Data
+  const MOCK_SAVED_CONTENTS: GeneratedPost[] = [
+    {
+      id: "1",
+      title: "Guía de Accidentes de Trabajo 2024",
+      content: "Contenido simulado sobre accidentes de trabajo...",
+      metaDescription: "Todo lo que necesitas saber sobre accidentes laborales.",
+      seoScore: 88,
+      status: "draft",
+      createdAt: new Date(),
+      keywords: ["accidentes", "trabajo"]
+    },
+    {
+      id: "2",
+      title: "Compensación por Lesiones Personales",
+      content: "Contenido simulado sobre compensación...",
+      metaDescription: "Cómo maximizar tu compensación por lesiones.",
+      seoScore: 92,
+      status: "published",
+      createdAt: new Date(Date.now() - 86400000),
+      keywords: ["lesiones", "compensación"]
+    }
+  ];
+
   // Fetch saved content history
-  const { data: savedContents = [], refetch: refetchSaved } = useQuery<GeneratedPost[]>({
+  const { data: savedContents = MOCK_SAVED_CONTENTS, refetch: refetchSaved } = useQuery<GeneratedPost[]>({
     queryKey: ['saved-contents'],
     queryFn: async () => {
-      const response = await fetch('/api/content/list');
-      if (!response.ok) throw new Error('Error al cargar contenido guardado');
-      const data = await response.json();
-      return data.contents;
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return MOCK_SAVED_CONTENTS;
     }
   });
 
@@ -99,66 +122,19 @@ export default function BulkContentGenerator() {
         setCurrentGenerating(i + 1);
         setProgress(((i + 1) / selectedTopics.length) * 100);
 
-        let endpoint = '/api/generate-content';
-        if (aiProvider === 'claude') endpoint = '/api/generate-content-claude';
-        if (aiProvider === 'free') endpoint = '/api/generate-content-free';
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            topic: `${selectedTopics[i]} - Guía completa ${new Date().getFullYear()}`,
-            keywords: keywordList.length > 0 ? keywordList : ['legal', 'abogado'],
-            wordCount: wordCount + (i * 50), // Slight variation
-            tone: i % 2 === 0 ? 'profesional-empático' : 'profesional-informativo',
-            language: 'es',
-            model: aiProvider === 'free' ? 'gpt-4o' : undefined
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error(`Error generando contenido ${i + 1}`);
-        }
-
-        const data = await response.json();
         const generatedPost: GeneratedPost = {
-          title: data.title,
-          content: data.content,
-          metaDescription: data.metaDescription,
-          seoScore: data.seoScore,
+          title: `${selectedTopics[i]} - Guía Completa`,
+          content: `Este es un contenido generado automáticamente sobre ${selectedTopics[i]}. Incluye palabras clave como ${keywordList.join(', ')}. El tono es ${i % 2 === 0 ? 'profesional-empático' : 'profesional-informativo'}.`,
+          metaDescription: `Descubre todo sobre ${selectedTopics[i]} en esta guía detallada.`,
+          seoScore: Math.floor(Math.random() * (100 - 80) + 80), // Random score between 80-100
           keywords: keywordList,
-          featuredImage: undefined // Initialize featuredImage
+          featuredImage: `https://picsum.photos/seed/${i}/800/400` // Mock image
         };
 
-        // Generate featured image for each post
-        try {
-          const imageResponse = await fetch('/api/images/blog-header', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              title: generatedPost.title,
-              keywords: keywordList.length > 0 ? keywordList : ['legal']
-            })
-          });
-
-          if (imageResponse.ok) {
-            const imageData = await imageResponse.json();
-            generatedPost.featuredImage = imageData.imageUrl;
-          } else {
-             console.error('Error generating image:', imageResponse.statusText);
-          }
-        } catch (err) {
-          console.error('Error generating image:', err);
-        }
-
         results.push(generatedPost);
-
-        // Small delay to avoid rate limits
-        if (i < selectedTopics.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
       }
 
       return results;
@@ -190,22 +166,9 @@ export default function BulkContentGenerator() {
 
   const saveMutation = useMutation({
     mutationFn: async (post: GeneratedPost) => {
-      const response = await fetch('/api/content/save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...post,
-          status: 'draft'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al guardar contenido');
-      }
-
-      return response.json();
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return { success: true };
     },
     onSuccess: () => {
       refetchSaved();
@@ -233,15 +196,9 @@ export default function BulkContentGenerator() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/content/${id}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al eliminar contenido');
-      }
-
-      return response.json();
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return { success: true };
     },
     onSuccess: () => {
       refetchSaved();
@@ -254,19 +211,9 @@ export default function BulkContentGenerator() {
 
   const publishMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/content/${id}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: 'published' })
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al publicar contenido');
-      }
-
-      return response.json();
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return { success: true };
     },
     onSuccess: () => {
       refetchSaved();
@@ -280,24 +227,16 @@ export default function BulkContentGenerator() {
   const suggestPrompt = async () => {
     setIsLoadingSuggestion(true);
     try {
-      const response = await fetch('/api/content/suggest-prompt', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          existingTopics: baseTopics,
-          keywords: keywords.split(',').map(k => k.trim()).filter(k => k.length > 0),
-          count: postsCount
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al generar sugerencia');
-      }
-
-      const data = await response.json();
-      setPromptSuggestion(data.suggestion);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const suggestions = [
+        "accidentes de camión, responsabilidad de locales, negligencia en asilos",
+        "derecho familiar, divorcio, custodia de hijos",
+        "derecho penal, defensa dui, delitos de drogas"
+      ];
+      const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
+      
+      setPromptSuggestion(randomSuggestion);
       toast({
         title: "Sugerencia generada",
         description: "Se generó una sugerencia de prompt basada en tus temas"

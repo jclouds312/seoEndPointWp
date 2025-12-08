@@ -61,30 +61,20 @@ export default function ContentPublisher() {
     mutationFn: async () => {
       const keywordList = keywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
       
-      const response = await fetch('/api/generate-content', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          topic: title,
-          keywords: keywordList.length > 0 ? keywordList : ['legal', 'abogado'],
-          wordCount: 1000,
-          tone: 'profesional-informativo',
-          language: 'es'
-        })
-      });
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const mockContent = `Este es un artículo generado automáticamente sobre ${title}.
+      
+Contenido detallado que incluye palabras clave como: ${keywordList.join(', ')}.
 
-      if (!response.ok) {
-        throw new Error('Error al generar contenido con OpenAI');
-      }
+El sistema ha optimizado este texto para lectura profesional.`;
 
-      const data = await response.json();
       return {
-        content: data.content,
+        content: mockContent,
         seo: {
-          title: data.title,
-          description: data.metaDescription
+          title: `Guía sobre ${title}`,
+          description: `Descubre todo sobre ${title} en este artículo detallado.`
         }
       };
     },
