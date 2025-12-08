@@ -544,11 +544,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  return httpServer;
-}
-
-
-
   // Installed Add-ons endpoints
   app.get("/api/installed-addons", async (req, res) => {
     try {
@@ -607,3 +602,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       res.status(500).json({ error: error.message });
     }
   });
+
+  return httpServer;
+}

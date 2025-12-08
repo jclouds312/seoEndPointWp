@@ -288,10 +288,6 @@ export class DatabaseStorage implements IStorage {
   async deleteApiKey(id: number): Promise<void> {
     await db.delete(apiKeys).where(eq(apiKeys.id, id));
   }
-}
-
-export const storage = new DatabaseStorage();
-
 
   // Installed Addons methods
   async getInstalledAddons(userId: string): Promise<InstalledAddon[]> {
@@ -320,3 +316,6 @@ export const storage = new DatabaseStorage();
         eq(installedAddons.addonId, addonId)
       ));
   }
+}
+
+export const storage = new DatabaseStorage();
