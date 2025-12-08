@@ -1,136 +1,162 @@
 
-import { type User, type InsertUser, type GeneratedContent as DBGeneratedContent } from "@shared/schema";
-import { randomUUID } from "crypto";
-import { db } from "@shared/db";
-import { users, generatedContent, bulkGenerationBatches } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { firestore } from './firebase'; // Importa la instancia de Firestore
+import { FieldValue } from 'firebase-admin/firestore';
 
-// Define la estructura de los datos para guardar contenido
-interface SaveContentData {
+// --- TIPOS Y ESTRUCTURAS DE DATOS ---
+
+// Define la estructura para un post
+export interface ContentPost {
+  id?: string; // El ID será asignado por Firestore
   title: string;
   content: string;
   metaDescription: string;
   seoScore: number;
-  status: 'draft' | 'published';
   keywords: string;
-  featuredImage?: string;
+  status: 'draft' | 'published';
   provider?: string;
-  campaignId?: number;
-  batchId?: string; // Para agrupar posts de una misma tanda
-  bulkType?: string; // Para identificar la fuente ('standard', 'massive', 'single')
+  bulkType?: string; // Fuente: 'standard', 'massive', 'single'
+  batchId?: string; // ID del lote de generación
+  campaignId?: string; // ID de la campaña asociada
+  createdAt?: FieldValue; // Gestionado por el servidor
+  updatedAt?: FieldValue; // Gestionado por el servidor
+  publishedAt?: FieldValue | null;
 }
+
+// Define la estructura para una campaña
+export interface Campaign {
+  id?: string; // El ID será asignado por Firestore
+  name: string;
+  description: string;
+  blogUrl: string;
+  status: 'active' | 'archived';
+  postCount?: number; // Se puede actualizar con un contador
+  createdAt?: FieldValue;
+}
+
+// --- INTERFAZ DE ALMACENAMIENTO (Contrato) ---
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  getAllGeneratedContent(): Promise<DBGeneratedContent[]>;
-  getGeneratedContent(id: number): Promise<DBGeneratedContent | undefined>;
-  deleteGeneratedContent(id: number): Promise<void>;
-  publishGeneratedContent(id: number): Promise<DBGeneratedContent>;
-  saveGeneratedContent(data: SaveContentData): Promise<DBGeneratedContent>;
-  createBulkBatch(data: any): Promise<any>;
-  updateBulkBatch(batchId: string, data: any): Promise<any>;
-  getBulkBatches(userId?: string): Promise<any[]>;
+  // Operaciones de Contenido
+  saveGeneratedContent(data: ContentPost): Promise<ContentPost>;
+  getAllGeneratedContent(campaignId?: string): Promise<ContentPost[]>;
+  getGeneratedContent(id: string): Promise<ContentPost | null>;
+  updateGeneratedContent(id: string, data: Partial<ContentPost>): Promise<ContentPost>;
+  deleteGeneratedContent(id: string): Promise<void>;
+  publishGeneratedContent(id: string): Promise<ContentPost>;
+
+  // Operaciones de Campaña
+  createCampaign(data: Campaign): Promise<Campaign>;
+  getCampaigns(): Promise<Campaign[]>;
+  getCampaign(id: string): Promise<Campaign | null>;
+  updateCampaign(id: string, data: Partial<Campaign>): Promise<Campaign>;
 }
 
-export class DatabaseStorage implements IStorage {
-  async getUser(id: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.id, id));
-    return result[0];
-  }
+// --- IMPLEMENTACIÓN CON FIRESTORE ---
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.username, username));
-    return result[0];
-  }
+class FirebaseStorage implements IStorage {
+  private contentCollection = firestore.collection('generatedContent');
+  private campaignCollection = firestore.collection('campaigns');
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const result = await db.insert(users).values(insertUser).returning();
-    return result[0];
-  }
+  // --- MÉTODOS DE CONTENIDO ---
 
-  async getAllGeneratedContent(): Promise<DBGeneratedContent[]> {
-    return await db.select()
-      .from(generatedContent)
-      .orderBy(desc(generatedContent.createdAt));
-  }
-
-  async getGeneratedContent(id: number): Promise<DBGeneratedContent | undefined> {
-    const result = await db.select()
-      .from(generatedContent)
-      .where(eq(generatedContent.id, id));
-    return result[0];
-  }
-
-  async deleteGeneratedContent(id: number): Promise<void> {
-    await db.delete(generatedContent).where(eq(generatedContent.id, id));
-  }
-
-  async publishGeneratedContent(id: number): Promise<DBGeneratedContent> {
-    const result = await db.update(generatedContent)
-      .set({ status: 'published', publishedAt: new Date() })
-      .where(eq(generatedContent.id, id))
-      .returning();
-    
-    if (!result[0]) {
-      throw new Error('Content not found');
-    }
-    return result[0];
-  }
-
-  async saveGeneratedContent(data: SaveContentData): Promise<DBGeneratedContent> {
-    const slug = data.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
-    
-    const result = await db.insert(generatedContent).values({
-      title: data.title,
-      content: data.content,
-      metaDescription: data.metaDescription,
-      seoScore: data.seoScore,
-      status: data.status,
-      keywords: data.keywords,
-      featuredImage: data.featuredImage,
-      provider: data.provider || 'free',
-      campaignId: data.campaignId,
-      batchId: data.batchId,
-      bulkType: data.bulkType,
-      slug: slug,
-    }).returning();
-
-    if (!result[0]) {
-        throw new Error("Failed to save content to database.");
-    }
-
-    return result[0];
-  }
-
-  async createBulkBatch(data: any) {
-    const result = await db.insert(bulkGenerationBatches).values({
+  async saveGeneratedContent(data: ContentPost): Promise<ContentPost> {
+    const docData = {
       ...data,
-      createdAt: new Date()
-    }).returning();
-    return result[0];
-  }
-
-  async updateBulkBatch(batchId: string, data: any) {
-    const result = await db.update(bulkGenerationBatches)
-      .set({ ...data })
-      .where(eq(bulkGenerationBatches.batchId, batchId))
-      .returning();
-    return result[0];
-  }
-
-  async getBulkBatches(userId?: string) {
-    if (userId) {
-      return await db.select()
-        .from(bulkGenerationBatches)
-        .where(eq(bulkGenerationBatches.userId, userId))
-        .orderBy(desc(bulkGenerationBatches.createdAt));
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+      publishedAt: null,
+    };
+    const docRef = await this.contentCollection.add(docData);
+    
+    // Si hay un campaignId, actualizamos el contador de posts en la campaña
+    if (data.campaignId) {
+      const campaignRef = this.campaignCollection.doc(data.campaignId);
+      await campaignRef.update({ postCount: FieldValue.increment(1) });
     }
-    return await db.select()
-      .from(bulkGenerationBatches)
-      .orderBy(desc(bulkGenerationBatches.createdAt));
+
+    return { ...data, id: docRef.id };
+  }
+
+  async getAllGeneratedContent(campaignId?: string): Promise<ContentPost[]> {
+    let query: FirebaseFirestore.Query = this.contentCollection;
+
+    if (campaignId) {
+      query = query.where('campaignId', '==', campaignId);
+    }
+
+    const snapshot = await query.orderBy('createdAt', 'desc').get();
+    if (snapshot.empty) {
+      return [];
+    }
+
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContentPost));
+  }
+
+  async getGeneratedContent(id: string): Promise<ContentPost | null> {
+    const doc = await this.contentCollection.doc(id).get();
+    return doc.exists ? { id: doc.id, ...doc.data() } as ContentPost : null;
+  }
+
+  async updateGeneratedContent(id: string, data: Partial<ContentPost>): Promise<ContentPost> {
+    const docRef = this.contentCollection.doc(id);
+    await docRef.update({ ...data, updatedAt: FieldValue.serverTimestamp() });
+    const updatedDoc = await docRef.get();
+    return { id: updatedDoc.id, ...updatedDoc.data() } as ContentPost;
+  }
+
+  async deleteGeneratedContent(id: string): Promise<void> {
+    const docRef = this.contentCollection.doc(id);
+    const doc = await docRef.get();
+    const data = doc.data() as ContentPost | undefined;
+
+    await docRef.delete();
+
+    // Si el post pertenecía a una campaña, decrementamos el contador
+    if (data && data.campaignId) {
+      const campaignRef = this.campaignCollection.doc(data.campaignId);
+      await campaignRef.update({ postCount: FieldValue.increment(-1) });
+    }
+  }
+
+  async publishGeneratedContent(id: string): Promise<ContentPost> {
+    return this.updateGeneratedContent(id, {
+      status: 'published',
+      publishedAt: FieldValue.serverTimestamp(),
+    });
+  }
+
+  // --- MÉTODOS DE CAMPAÑA ---
+
+  async createCampaign(data: Campaign): Promise<Campaign> {
+    const docData = {
+      ...data,
+      postCount: 0,
+      createdAt: FieldValue.serverTimestamp(),
+    };
+    const docRef = await this.campaignCollection.add(docData);
+    return { ...data, id: docRef.id };
+  }
+
+  async getCampaigns(): Promise<Campaign[]> {
+    const snapshot = await this.campaignCollection.orderBy('createdAt', 'desc').get();
+    if (snapshot.empty) {
+      return [];
+    }
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Campaign));
+  }
+
+  async getCampaign(id: string): Promise<Campaign | null> {
+    const doc = await this.campaignCollection.doc(id).get();
+    return doc.exists ? { id: doc.id, ...doc.data() } as Campaign : null;
+  }
+
+  async updateCampaign(id: string, data: Partial<Campaign>): Promise<Campaign> {
+      const docRef = this.campaignCollection.doc(id);
+      await docRef.update(data);
+      const updatedDoc = await docRef.get();
+      return {id: updatedDoc.id, ...updatedDoc.data()} as Campaign
   }
 }
 
-export const storage = new DatabaseStorage();
+// Exporta una instancia única de la clase de almacenamiento
+export const storage = new FirebaseStorage();
