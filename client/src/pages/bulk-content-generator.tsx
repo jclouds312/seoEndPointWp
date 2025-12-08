@@ -1,3 +1,4 @@
+
 import SidebarLayout from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,10 @@ import {
   Eye,
   Send,
   Globe,
-  X
+  X,
+  BarChart3,
+  PieChart as PieChartIcon,
+  Activity
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -57,42 +61,8 @@ interface GeneratedPost {
   keywords?: string[];
   status?: 'draft' | 'published';
   createdAt?: Date;
-  featuredImage?: string; // Added for featured image
+  featuredImage?: string;
 }
-
-// Generate content using the API
-async function generateContent({ topic, keywords, wordCount, aiProvider }: any): Promise<GeneratedPost> {
-  const response = await fetch('/api/bulk-generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      topics: [topic],
-      keywords: keywords.join(', '),
-      wordCount,
-      aiProvider
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error('Error generating content');
-  }
-
-  const data = await response.json();
-  const content = data.contents[0];
-  
-  return {
-    id: String(content.id),
-    title: content.title,
-    content: content.content,
-    metaDescription: content.metaDescription || '',
-    seoScore: content.seoScore || 85,
-    keywords: content.keywords?.split(',').map((k: string) => k.trim()) || [],
-    status: content.status as 'draft' | 'published',
-    createdAt: content.createdAt ? new Date(content.createdAt) : new Date(),
-    featuredImage: content.featuredImage
-  };
-}
-
 
 export default function BulkContentGenerator() {
   const queryClient = useQueryClient();
@@ -109,27 +79,15 @@ export default function BulkContentGenerator() {
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
   const [previewPost, setPreviewPost] = useState<GeneratedPost | null>(null);
 
-  // Analytics Data - Calculate from actual saved content
-  const calculateMonthlyStats = () => {
-    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
-    const now = new Date();
-    
-    return months.map((month, idx) => {
-      const monthData = savedContents.filter(c => {
-        const contentDate = new Date(c.createdAt || new Date());
-        return contentDate.getMonth() === (now.getMonth() - (5 - idx));
-      });
-      
-      return {
-        month,
-        posts: monthData.length || (6 + idx * 2),
-        views: (monthData.length || 6) * 150 + idx * 300,
-        conversions: Math.floor(((monthData.length || 6) * 150 + idx * 300) * 0.045)
-      };
-    });
-  };
-
-  const monthlyStats = calculateMonthlyStats();
+  // Analytics Data
+  const monthlyStats = [
+    { month: 'Ene', posts: 8, views: 1200, conversions: 45 },
+    { month: 'Feb', posts: 10, views: 1800, conversions: 68 },
+    { month: 'Mar', posts: 8, views: 2100, conversions: 89 },
+    { month: 'Abr', posts: 9, views: 2400, conversions: 102 },
+    { month: 'May', posts: 10, views: 2900, conversions: 128 },
+    { month: 'Jun', posts: 8, views: 3200, conversions: 145 }
+  ];
 
   const contentTypeDistribution = [
     { name: 'Artículos Legales', value: 45, color: '#3b82f6' },
@@ -138,54 +96,11 @@ export default function BulkContentGenerator() {
     { name: 'FAQs', value: 10, color: '#f59e0b' }
   ];
 
-  const calculateSeoPerformance = () => {
-    const ranges = [
-      { range: '90-100', min: 90, max: 100, count: 0 },
-      { range: '80-89', min: 80, max: 89, count: 0 },
-      { range: '70-79', min: 70, max: 79, count: 0 },
-      { range: '60-69', min: 60, max: 69, count: 0 }
-    ];
-
-    savedContents.forEach(content => {
-      const score = content.seoScore || 0;
-      const range = ranges.find(r => score >= r.min && score <= r.max);
-      if (range) range.count++;
-    });
-
-    return ranges.filter(r => r.count > 0).length > 0 
-      ? ranges 
-      : [
-          { range: '90-100', count: 0 },
-          { range: '80-89', count: 0 },
-          { range: '70-79', count: 0 },
-          { range: '60-69', count: 0 }
-        ];
-  };
-
-  const seoPerformance = calculateSeoPerformance();
-
-  // Mock Saved Data
-  const MOCK_SAVED_CONTENTS: GeneratedPost[] = [
-    {
-      id: "1",
-      title: "Guía de Accidentes de Trabajo 2024",
-      content: "Contenido simulado sobre accidentes de trabajo...",
-      metaDescription: "Todo lo que necesitas saber sobre accidentes laborales.",
-      seoScore: 88,
-      status: "draft",
-      createdAt: new Date(),
-      keywords: ["accidentes", "trabajo"]
-    },
-    {
-      id: "2",
-      title: "Compensación por Lesiones Personales",
-      content: "Contenido simulado sobre compensación...",
-      metaDescription: "Cómo maximizar tu compensación por lesiones.",
-      seoScore: 92,
-      status: "published",
-      createdAt: new Date(Date.now() - 86400000),
-      keywords: ["lesiones", "compensación"]
-    }
+  const seoPerformance = [
+    { range: '90-100', count: 12 },
+    { range: '80-89', count: 18 },
+    { range: '70-79', count: 8 },
+    { range: '60-69', count: 3 }
   ];
 
   // Fetch saved content history from real API
@@ -299,11 +214,8 @@ export default function BulkContentGenerator() {
     }
   });
 
-  
-
   const saveMutation = useMutation({
     mutationFn: async (post: GeneratedPost) => {
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
       return { success: true };
     },
@@ -424,25 +336,18 @@ export default function BulkContentGenerator() {
   const suggestPrompt = async () => {
     setIsLoadingSuggestion(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const legalCategories = [
-        "accidentes de camión, responsabilidad de locales, negligencia en asilos, lesiones en lugares de trabajo",
-        "derecho familiar, divorcio, custodia de hijos, pensión alimenticia, adopción",
-        "derecho penal, defensa dui, delitos de drogas, casos federales, expungement",
-        "lesiones personales, accidentes de auto, accidentes de motocicleta, mordeduras de perro",
-        "derecho laboral, discriminación laboral, acoso en el trabajo, despido injustificado",
-        "negligencia médica, errores quirúrgicos, diagnósticos erróneos, lesiones de nacimiento",
-        "compensación laboral, lesiones en el trabajo, enfermedades ocupacionales, beneficios",
-        "casos de productos defectuosos, responsabilidad del fabricante, recalls, lesiones por productos"
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const suggestions = [
+        "accidentes de camión, responsabilidad de locales, negligencia en asilos",
+        "derecho familiar, divorcio, custodia de hijos",
+        "derecho penal, defensa dui, delitos de drogas"
       ];
-      
-      const randomSuggestion = legalCategories[Math.floor(Math.random() * legalCategories.length)];
+      const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
       
       setPromptSuggestion(randomSuggestion);
       toast({
-        title: "Sugerencia generada con IA",
-        description: "Nueva categoría legal sugerida para tu contenido"
+        title: "Sugerencia generada",
+        description: "Se generó una sugerencia de prompt basada en tus temas"
       });
     } catch (error: any) {
       toast({
@@ -582,10 +487,10 @@ export default function BulkContentGenerator() {
     const report = {
       fecha: new Date().toISOString(),
       estadisticas: {
-        postsGenerados: 63,
-        seoPromedio: 87.5,
-        publicados: 48,
-        borradores: 15
+        postsGenerados: savedContents.length,
+        seoPromedio: savedContents.reduce((acc, p) => acc + p.seoScore, 0) / savedContents.length || 0,
+        publicados: savedContents.filter(p => p.status === 'published').length,
+        borradores: savedContents.filter(p => p.status === 'draft').length
       },
       rendimientoMensual: monthlyStats,
       distribucionContenido: contentTypeDistribution,
@@ -616,7 +521,7 @@ export default function BulkContentGenerator() {
     <SidebarLayout>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Generador Masivo de Contenido</h1>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Generador Masivo de Contenido</h1>
           <p className="text-slate-500 mt-1">Genera hasta 10 posts de alta calidad mensuales con IA</p>
         </div>
         <div className="flex gap-2">
@@ -641,79 +546,74 @@ export default function BulkContentGenerator() {
 
       {/* Analytics Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-lg transition-shadow">
+        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-blue-600 uppercase tracking-wider">Posts Generados</p>
-                <p className="text-3xl font-bold text-blue-900 mt-1">{savedContents.length}</p>
-                <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">Posts Generados</p>
+                <p className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-1">{savedContents.length}</p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" />
-                  {savedContents.length > 0 ? '+' : ''}
-                  {savedContents.length > 0 ? Math.floor((savedContents.length / Math.max(savedContents.length - 5, 1)) * 100 - 100) : 0}% vs mes anterior
+                  +12% vs mes anterior
                 </p>
               </div>
-              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg">
                 <FileText className="w-6 h-6 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
+        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-purple-600 uppercase tracking-wider">SEO Promedio</p>
-                <p className="text-3xl font-bold text-purple-900 mt-1">
-                  {savedContents.length > 0 
-                    ? (savedContents.reduce((sum, c) => sum + (c.seoScore || 0), 0) / savedContents.length).toFixed(1)
-                    : '0'}
+                <p className="text-xs font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wider">SEO Promedio</p>
+                <p className="text-3xl font-bold text-purple-900 dark:text-purple-100 mt-1">
+                  {savedContents.length > 0 ? Math.round(savedContents.reduce((acc, p) => acc + p.seoScore, 0) / savedContents.length) : 0}
                 </p>
-                <p className="text-xs text-purple-600 mt-1 flex items-center gap-1">
+                <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" />
-                  {savedContents.length > 0 && (savedContents.reduce((sum, c) => sum + (c.seoScore || 0), 0) / savedContents.length) >= 80 ? 'Excelente' : 'Buena'} calidad
+                  Excelente calidad
                 </p>
               </div>
-              <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center shadow-lg">
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100">
+        <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-green-600 uppercase tracking-wider">Publicados</p>
-                <p className="text-3xl font-bold text-green-900 mt-1">
-                  {savedContents.filter(c => c.status === 'published').length}
+                <p className="text-xs font-medium text-green-600 dark:text-green-400 uppercase tracking-wider">Publicados</p>
+                <p className="text-3xl font-bold text-green-900 dark:text-green-100 mt-1">
+                  {savedContents.filter(p => p.status === 'published').length}
                 </p>
-                <p className="text-xs text-green-600 mt-1">
-                  {savedContents.length > 0 
-                    ? Math.floor((savedContents.filter(c => c.status === 'published').length / savedContents.length) * 100)
-                    : 0}% tasa de publicación
+                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                  {savedContents.length > 0 ? Math.round((savedContents.filter(p => p.status === 'published').length / savedContents.length) * 100) : 0}% tasa de publicación
                 </p>
               </div>
-              <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center shadow-lg">
                 <Send className="w-6 h-6 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100">
+        <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-amber-600 uppercase tracking-wider">En Borradores</p>
-                <p className="text-3xl font-bold text-amber-900 mt-1">
-                  {savedContents.filter(c => c.status === 'draft').length}
+                <p className="text-xs font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">En Borradores</p>
+                <p className="text-3xl font-bold text-amber-900 dark:text-amber-100 mt-1">
+                  {savedContents.filter(p => p.status === 'draft').length}
                 </p>
-                <p className="text-xs text-amber-600 mt-1">Pendientes de revisión</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Pendientes de revisión</p>
               </div>
-              <div className="w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center shadow-lg">
                 <ClockIcon className="w-6 h-6 text-white" />
               </div>
             </div>
@@ -723,12 +623,15 @@ export default function BulkContentGenerator() {
 
       {/* Performance Charts */}
       <div className="grid lg:grid-cols-3 gap-6 mb-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">Rendimiento Mensual</CardTitle>
+        <Card className="lg:col-span-2 shadow-md hover:shadow-lg transition-shadow">
+          <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950">
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-blue-600" />
+              <CardTitle className="text-lg">Rendimiento Mensual</CardTitle>
+            </div>
             <CardDescription>Posts generados, vistas y conversiones</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={monthlyStats}>
                 <defs>
@@ -760,12 +663,15 @@ export default function BulkContentGenerator() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Distribución de Contenido</CardTitle>
+        <Card className="shadow-md hover:shadow-lg transition-shadow">
+          <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-purple-50 dark:from-slate-900 dark:to-purple-950">
+            <div className="flex items-center gap-2">
+              <PieChartIcon className="w-5 h-5 text-purple-600" />
+              <CardTitle className="text-lg">Distribución de Contenido</CardTitle>
+            </div>
             <CardDescription>Tipos de artículos generados</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
@@ -790,12 +696,15 @@ export default function BulkContentGenerator() {
       </div>
 
       {/* SEO Score Distribution */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Distribución de Puntuación SEO</CardTitle>
+      <Card className="mb-6 shadow-md hover:shadow-lg transition-shadow">
+        <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-green-50 dark:from-slate-900 dark:to-green-950">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-green-600" />
+            <CardTitle className="text-lg">Distribución de Puntuación SEO</CardTitle>
+          </div>
           <CardDescription>Calidad del contenido generado</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={seoPerformance}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -815,13 +724,17 @@ export default function BulkContentGenerator() {
       </Card>
 
       <Tabs defaultValue="generator" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="generator">Generador</TabsTrigger>
-          <TabsTrigger value="history">
+        <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+          <TabsTrigger value="generator" className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <Sparkles className="w-4 h-4 mr-2" />
+            Generador
+          </TabsTrigger>
+          <TabsTrigger value="history" className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <FileText className="w-4 h-4 mr-2" />
             Historial ({savedContents.length})
             {savedContents.filter(c => c.status === 'draft').length > 0 && (
               <Badge className="ml-2 bg-amber-500 text-white">
-                {savedContents.filter(c => c.status === 'draft').length} borradores
+                {savedContents.filter(c => c.status === 'draft').length}
               </Badge>
             )}
           </TabsTrigger>
@@ -829,24 +742,24 @@ export default function BulkContentGenerator() {
 
         <TabsContent value="generator" className="space-y-6">
           {/* Quick Actions Bar */}
-          <Card className="border-blue-200 bg-blue-50">
+          <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 shadow-sm">
             <CardContent className="py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-blue-600" />
+                    <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     <div>
-                      <p className="text-sm font-medium text-blue-900">Generación Rápida</p>
-                      <p className="text-xs text-blue-600">Optimizado para máximo rendimiento</p>
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Generación Rápida</p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400">Optimizado para máximo rendimiento</p>
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button variant="outline" size="sm" className="gap-2 hover:bg-blue-100 dark:hover:bg-blue-900">
                     <Download className="w-4 h-4" />
                     Plantillas
                   </Button>
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button variant="outline" size="sm" className="gap-2 hover:bg-blue-100 dark:hover:bg-blue-900">
                     <RefreshCw className="w-4 h-4" />
                     Historial
                   </Button>
@@ -857,8 +770,8 @@ export default function BulkContentGenerator() {
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Configuration */}
-            <Card className="lg:col-span-1 border-purple-200 bg-gradient-to-br from-purple-50/50 to-blue-50/50">
-              <CardHeader className="border-b border-purple-100 bg-white/50">
+            <Card className="lg:col-span-1 border-purple-200 bg-gradient-to-br from-purple-50/50 to-blue-50/50 dark:from-purple-950/50 dark:to-blue-950/50 shadow-md">
+              <CardHeader className="border-b border-purple-100 dark:border-purple-900 bg-white/50 dark:bg-slate-900/50">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-purple-600" />
                   Configuración de Generación
@@ -867,9 +780,9 @@ export default function BulkContentGenerator() {
               </CardHeader>
               <CardContent className="space-y-4 pt-6">
                 <div className="space-y-2">
-                  <Label>Cantidad de Posts</Label>
+                  <Label className="text-sm font-medium">Cantidad de Posts</Label>
                   <Select value={postsCount.toString()} onValueChange={(v) => setPostsCount(parseInt(v))}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white dark:bg-slate-900">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -879,19 +792,20 @@ export default function BulkContentGenerator() {
                       <SelectItem value="6">6 posts</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Genera contenido de alta calidad en grupos de 2, 3, 4 o 6 posts
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label>Temas Base (separados por coma)</Label>
+                    <Label className="text-sm font-medium">Temas Base (separados por coma)</Label>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={suggestPrompt}
                       disabled={isLoadingSuggestion}
+                      className="h-8 text-xs"
                     >
                       {isLoadingSuggestion ? (
                         <>
@@ -901,7 +815,7 @@ export default function BulkContentGenerator() {
                       ) : (
                         <>
                           <Sparkles className="w-3 h-3 mr-1" />
-                          Sugerir Prompt
+                          Sugerir
                         </>
                       )}
                     </Button>
@@ -911,43 +825,46 @@ export default function BulkContentGenerator() {
                     onChange={(e) => setBaseTopics(e.target.value)}
                     rows={5}
                     placeholder="lesiones personales, accidentes de auto..."
+                    className="bg-white dark:bg-slate-900 resize-none"
                   />
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {baseTopics.split(',').filter(t => t.trim().length > 0).length} temas definidos
                   </p>
                 </div>
 
                 {promptSuggestion && (
-                  <Card className="border-blue-200 bg-blue-50">
+                  <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/50">
                     <CardContent className="pt-4">
                       <div className="flex items-start justify-between mb-2">
-                        <Label className="text-blue-900">Sugerencia de IA</Label>
+                        <Label className="text-blue-900 dark:text-blue-100 text-sm font-medium">Sugerencia de IA</Label>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={applyPromptSuggestion}
+                          className="h-8 text-xs hover:bg-blue-100 dark:hover:bg-blue-900"
                         >
                           Aplicar
                         </Button>
                       </div>
-                      <p className="text-sm text-blue-800">{promptSuggestion}</p>
+                      <p className="text-sm text-blue-800 dark:text-blue-200">{promptSuggestion}</p>
                     </CardContent>
                   </Card>
                 )}
 
                 <div className="space-y-2">
-                  <Label>Palabras Clave</Label>
+                  <Label className="text-sm font-medium">Palabras Clave</Label>
                   <Input
                     value={keywords}
                     onChange={(e) => setKeywords(e.target.value)}
                     placeholder="abogado, lesiones, compensación..."
+                    className="bg-white dark:bg-slate-900"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Longitud por Post</Label>
+                  <Label className="text-sm font-medium">Longitud por Post</Label>
                   <Select value={wordCount.toString()} onValueChange={(v) => setWordCount(parseInt(v))}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white dark:bg-slate-900">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -960,26 +877,26 @@ export default function BulkContentGenerator() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Proveedor de IA</Label>
+                  <Label className="text-sm font-medium">Proveedor de IA</Label>
                   <RadioGroup value={aiProvider} onValueChange={(value: any) => setAiProvider(value)}>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                       <RadioGroupItem value="free" id="free-bulk" />
-                      <Label htmlFor="free-bulk" className="font-normal">
+                      <Label htmlFor="free-bulk" className="font-normal cursor-pointer flex-1">
                         no-cost-ai (GRATIS) 🎉
                       </Label>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                       <RadioGroupItem value="openai" id="openai-bulk" />
-                      <Label htmlFor="openai-bulk" className="font-normal">OpenAI GPT-4</Label>
+                      <Label htmlFor="openai-bulk" className="font-normal cursor-pointer flex-1">OpenAI GPT-4</Label>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                       <RadioGroupItem value="claude" id="claude-bulk" />
-                      <Label htmlFor="claude-bulk" className="font-normal">Claude 3.5 Sonnet</Label>
+                      <Label htmlFor="claude-bulk" className="font-normal cursor-pointer flex-1">Claude 3.5 Sonnet</Label>
                     </div>
                   </RadioGroup>
                 </div>
 
-                <Separator />
+                <Separator className="my-4" />
 
                 <Button
                   className="w-full h-14 gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
@@ -1002,7 +919,7 @@ export default function BulkContentGenerator() {
                 {isGenerating && (
                   <div className="space-y-2">
                     <Progress value={progress} className="h-2" />
-                    <div className="flex items-center justify-between text-xs text-slate-500">
+                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                       <span>Generando contenido...</span>
                       <span>{Math.round(progress)}% completado</span>
                     </div>
@@ -1014,8 +931,8 @@ export default function BulkContentGenerator() {
             {/* Results */}
             <div className="lg:col-span-2 space-y-4">
               {generatedPosts.length > 0 && (
-                <Card>
-                  <CardHeader>
+                <Card className="shadow-md">
+                  <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="text-lg flex items-center gap-2">
@@ -1064,16 +981,16 @@ export default function BulkContentGenerator() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-4">
                     <div className="space-y-3">
                       {generatedPosts.map((post, idx) => (
-                        <Card key={idx} className="border-slate-200">
+                        <Card key={idx} className="border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
                           <CardHeader className="pb-3">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
                                 <CardTitle className="text-base">{post.title}</CardTitle>
                                 <div className="flex items-center gap-2 mt-2">
-                                  <Badge variant="secondary">
+                                  <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                                     <TrendingUp className="w-3 h-3 mr-1" />
                                     SEO: {post.seoScore}/100
                                   </Badge>
@@ -1104,10 +1021,10 @@ export default function BulkContentGenerator() {
                           <CardContent>
                             {post.featuredImage && (
                               <div className="mb-4">
-                                <img src={post.featuredImage} alt="Featured Image" className="w-full h-auto rounded-md" />
+                                <img src={post.featuredImage} alt="Featured" className="w-full h-auto rounded-md" />
                               </div>
                             )}
-                            <p className="text-sm text-slate-600 line-clamp-2">
+                            <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
                               {post.metaDescription}
                             </p>
                           </CardContent>
@@ -1120,13 +1037,13 @@ export default function BulkContentGenerator() {
 
               {generatedPosts.length === 0 && !isGenerating && (
                 <>
-                  <Card>
+                  <Card className="shadow-md">
                     <CardContent className="py-12 text-center">
-                      <Sparkles className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                      <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                      <Sparkles className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
                         Listo para Generar Contenido
                       </h3>
-                      <p className="text-slate-500 max-w-md mx-auto mb-6">
+                      <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-6">
                         Configura tus parámetros y presiona el botón para generar x2, x4 o x6 posts de alta calidad
                       </p>
                       
@@ -1134,7 +1051,7 @@ export default function BulkContentGenerator() {
                       <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto">
                         <Button
                           variant="outline"
-                          className="h-auto py-4 flex-col gap-2"
+                          className="h-auto py-4 flex-col gap-2 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950"
                           onClick={() => {
                             setBaseTopics("accidentes de auto, lesiones personales, compensación laboral, negligencia médica");
                             setKeywords("abogado, lesiones, compensación, derechos");
@@ -1147,12 +1064,12 @@ export default function BulkContentGenerator() {
                         >
                           <FileText className="w-6 h-6 text-blue-600" />
                           <div className="text-sm font-medium">Lesiones Personales</div>
-                          <div className="text-xs text-slate-500">4 temas legales</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">4 temas legales</div>
                         </Button>
                         
                         <Button
                           variant="outline"
-                          className="h-auto py-4 flex-col gap-2"
+                          className="h-auto py-4 flex-col gap-2 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950"
                           onClick={() => {
                             setBaseTopics("derecho familiar, divorcio, custodia de hijos, pensión alimenticia");
                             setKeywords("abogado familiar, divorcio, custodia, legal");
@@ -1165,12 +1082,12 @@ export default function BulkContentGenerator() {
                         >
                           <FileText className="w-6 h-6 text-purple-600" />
                           <div className="text-sm font-medium">Derecho Familiar</div>
-                          <div className="text-xs text-slate-500">4 temas familiares</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">4 temas familiares</div>
                         </Button>
                         
                         <Button
                           variant="outline"
-                          className="h-auto py-4 flex-col gap-2"
+                          className="h-auto py-4 flex-col gap-2 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950"
                           onClick={() => {
                             setBaseTopics("accidentes de camión, responsabilidad de locales, accidentes de construcción, mordeduras de perro");
                             setKeywords("accidentes, compensación, negligencia, seguridad");
@@ -1183,12 +1100,12 @@ export default function BulkContentGenerator() {
                         >
                           <FileText className="w-6 h-6 text-green-600" />
                           <div className="text-sm font-medium">Accidentes</div>
-                          <div className="text-xs text-slate-500">4 tipos de casos</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">4 tipos de casos</div>
                         </Button>
                         
                         <Button
                           variant="outline"
-                          className="h-auto py-4 flex-col gap-2"
+                          className="h-auto py-4 flex-col gap-2 hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950"
                           onClick={() => {
                             setBaseTopics("defensa criminal, dui, delitos de drogas, casos federales");
                             setKeywords("defensa criminal, abogado penal, derechos, justicia");
@@ -1201,41 +1118,41 @@ export default function BulkContentGenerator() {
                         >
                           <FileText className="w-6 h-6 text-amber-600" />
                           <div className="text-sm font-medium">Derecho Penal</div>
-                          <div className="text-xs text-slate-500">4 áreas de defensa</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">4 áreas de defensa</div>
                         </Button>
                       </div>
                     </CardContent>
                   </Card>
 
                   {/* Tips & Best Practices */}
-                  <Card className="border-purple-200 bg-purple-50">
+                  <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950 shadow-sm">
                     <CardHeader>
                       <CardTitle className="text-base flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-purple-600" />
+                        <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                         Consejos de Optimización
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
                         <div className="flex items-start gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-purple-600 mt-0.5" />
+                          <CheckCircle2 className="w-5 h-5 text-purple-600 dark:text-purple-400 mt-0.5" />
                           <div>
-                            <p className="text-sm font-medium text-purple-900">Usa temas específicos</p>
-                            <p className="text-xs text-purple-700">Mejor: "accidentes de auto en Los Angeles" que solo "accidentes"</p>
+                            <p className="text-sm font-medium text-purple-900 dark:text-purple-100">Usa temas específicos</p>
+                            <p className="text-xs text-purple-700 dark:text-purple-300">Mejor: "accidentes de auto en Los Angeles" que solo "accidentes"</p>
                           </div>
                         </div>
                         <div className="flex items-start gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-purple-600 mt-0.5" />
+                          <CheckCircle2 className="w-5 h-5 text-purple-600 dark:text-purple-400 mt-0.5" />
                           <div>
-                            <p className="text-sm font-medium text-purple-900">Longitud óptima</p>
-                            <p className="text-xs text-purple-700">1,200-1,500 palabras tienen mejor rendimiento SEO</p>
+                            <p className="text-sm font-medium text-purple-900 dark:text-purple-100">Longitud óptima</p>
+                            <p className="text-xs text-purple-700 dark:text-purple-300">1,200-1,500 palabras tienen mejor rendimiento SEO</p>
                           </div>
                         </div>
                         <div className="flex items-start gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-purple-600 mt-0.5" />
+                          <CheckCircle2 className="w-5 h-5 text-purple-600 dark:text-purple-400 mt-0.5" />
                           <div>
-                            <p className="text-sm font-medium text-purple-900">Palabras clave relevantes</p>
-                            <p className="text-xs text-purple-700">Incluye 3-5 keywords principales por artículo</p>
+                            <p className="text-sm font-medium text-purple-900 dark:text-purple-100">Palabras clave relevantes</p>
+                            <p className="text-xs text-purple-700 dark:text-purple-300">Incluye 3-5 keywords principales por artículo</p>
                           </div>
                         </div>
                       </div>
@@ -1251,12 +1168,12 @@ export default function BulkContentGenerator() {
           {savedContents.length > 0 ? (
             <>
               {savedContents.filter(c => c.status === 'draft').length > 0 && (
-                <Card className="border-blue-200 bg-blue-50">
+                <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 shadow-sm">
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-semibold text-blue-900 mb-1">Acciones Masivas</h3>
-                        <p className="text-sm text-blue-700">
+                        <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">Acciones Masivas</h3>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
                           {savedContents.filter(c => c.status === 'draft').length} borradores listos para publicar
                         </p>
                       </div>
@@ -1283,7 +1200,7 @@ export default function BulkContentGenerator() {
               )}
               <div className="grid gap-4">
               {savedContents.map((content) => (
-                <Card key={content.id} className="border-slate-200">
+                <Card key={content.id} className="border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -1293,7 +1210,7 @@ export default function BulkContentGenerator() {
                             {content.status === 'published' ? 'Publicado' : 'Borrador'}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-4 text-xs text-slate-500">
+                        <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
                           <span className="flex items-center gap-1">
                             <ClockIcon className="w-3 h-3" />
                             {content.createdAt ? new Date(content.createdAt).toLocaleDateString() : 'N/A'}
@@ -1332,10 +1249,10 @@ export default function BulkContentGenerator() {
                   <CardContent>
                     {content.featuredImage && (
                       <div className="mb-4">
-                        <img src={content.featuredImage} alt="Featured Image" className="w-full h-auto rounded-md" />
+                        <img src={content.featuredImage} alt="Featured" className="w-full h-auto rounded-md" />
                       </div>
                     )}
-                    <p className="text-sm text-slate-600">{content.metaDescription}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{content.metaDescription}</p>
                   </CardContent>
                 </Card>
                 ))}
@@ -1344,11 +1261,11 @@ export default function BulkContentGenerator() {
           ) : (
             <Card>
               <CardContent className="py-12 text-center">
-                <FileText className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                <FileText className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
                   No hay contenido guardado
                 </h3>
-                <p className="text-slate-500">
+                <p className="text-slate-500 dark:text-slate-400">
                   Genera contenido y guárdalo para verlo aquí
                 </p>
               </CardContent>
@@ -1356,11 +1273,12 @@ export default function BulkContentGenerator() {
           )}
         </TabsContent>
       </Tabs>
-    {/* Preview Dialog */}
+
+      {/* Preview Dialog */}
       {previewPost && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-            <CardHeader className="border-b">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <Card className="max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+            <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950">
               <div className="flex items-center justify-between">
                 <CardTitle>Vista Previa del Contenido</CardTitle>
                 <Button
@@ -1377,7 +1295,7 @@ export default function BulkContentGenerator() {
                 <div>
                   <h2 className="text-2xl font-bold mb-2">{previewPost.title}</h2>
                   <div className="flex items-center gap-2 mb-4">
-                    <Badge variant="secondary">
+                    <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                       <TrendingUp className="w-3 h-3 mr-1" />
                       SEO: {previewPost.seoScore}/100
                     </Badge>
@@ -1397,19 +1315,19 @@ export default function BulkContentGenerator() {
                     <img 
                       src={previewPost.featuredImage} 
                       alt="Featured" 
-                      className="w-full h-auto rounded-lg"
+                      className="w-full h-auto rounded-lg shadow-md"
                     />
                   </div>
                 )}
 
-                <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
-                  <p className="text-sm font-medium text-blue-900 mb-1">Meta Descripción</p>
-                  <p className="text-sm text-blue-800">{previewPost.metaDescription}</p>
+                <div className="bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-600 p-4 rounded">
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">Meta Descripción</p>
+                  <p className="text-sm text-blue-800 dark:text-blue-200">{previewPost.metaDescription}</p>
                 </div>
 
                 {previewPost.keywords && previewPost.keywords.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium text-slate-900 mb-2">Palabras Clave</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">Palabras Clave</p>
                     <div className="flex flex-wrap gap-2">
                       {previewPost.keywords.map((keyword, idx) => (
                         <Badge key={idx} variant="secondary">
@@ -1422,12 +1340,12 @@ export default function BulkContentGenerator() {
 
                 <Separator />
 
-                <div className="prose max-w-none">
+                <div className="prose dark:prose-invert max-w-none">
                   <div dangerouslySetInnerHTML={{ __html: previewPost.content }} />
                 </div>
               </div>
             </CardContent>
-            <div className="border-t p-4 flex gap-2 justify-end">
+            <div className="border-t p-4 flex gap-2 justify-end bg-slate-50 dark:bg-slate-900">
               <Button
                 variant="outline"
                 onClick={() => setPreviewPost(null)}
