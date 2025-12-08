@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ export default function BulkMassive() {
   const [currentPost, setCurrentPost] = useState(0);
   const [targetSite, setTargetSite] = useState("calinjurylaw");
   const [mainKeyword, setMainKeyword] = useState("Legal SEO Strategy");
+  const [apiKey, setApiKey] = useState(""); // Nuevo estado para la API Key
   const [generatedPosts, setGeneratedPosts] = useState<GeneratedPost[]>([]);
   const [recentBatches, setRecentBatches] = useState<Batch[]>([
     { topic: "Truck Accident Liability", date: "2 hrs ago", status: "Completed" },
@@ -39,10 +41,10 @@ export default function BulkMassive() {
   ]);
 
   const handleGenerate = async () => {
-    if (!mainKeyword.trim()) {
+    if (!mainKeyword.trim() || !apiKey.trim()) {
       toast({
         title: "Error",
-        description: "Por favor ingresa un tema o keyword",
+        description: "Por favor ingresa un tema y tu API Key de Google AI",
         variant: "destructive"
       });
       return;
@@ -61,17 +63,18 @@ export default function BulkMassive() {
         body: JSON.stringify({
           mainKeyword: mainKeyword,
           targetSite: targetSite,
-          count: 8
+          count: 8,
+          apiKey: apiKey // Enviar la API Key al backend
         })
       });
 
       if (!response.ok) {
-        throw new Error('Error generating content');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error generating content');
       }
 
       const data = await response.json();
       
-      // Animate the results coming in
       if (data.contents && Array.isArray(data.contents)) {
         for (let i = 0; i < data.contents.length; i++) {
           await new Promise(resolve => setTimeout(resolve, 400));
@@ -83,7 +86,6 @@ export default function BulkMassive() {
       setIsGenerating(false);
       setCurrentPost(8);
       
-      // Add to recent batches
       setRecentBatches(prev => [
         { topic: mainKeyword, date: "Just now", status: "Completed" },
         ...prev.slice(0, 4)
@@ -93,12 +95,12 @@ export default function BulkMassive() {
         title: "¡Generación Completada!",
         description: `${data.generated} posts generados y guardados exitosamente`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Generation error:', error);
       setIsGenerating(false);
       toast({
         title: "Error",
-        description: "Hubo un problema generando el contenido. Por favor intenta de nuevo.",
+        description: error.message || "Hubo un problema generando el contenido. Por favor intenta de nuevo.",
         variant: "destructive"
       });
     }
@@ -141,7 +143,6 @@ export default function BulkMassive() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Main Configuration Panel */}
           <div className="lg:col-span-8 space-y-6">
             <Card className="border-slate-200 shadow-sm overflow-hidden">
               <div className="h-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600" />
@@ -155,8 +156,6 @@ export default function BulkMassive() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-8 pt-6">
-                
-                {/* Topic & Site Selection */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <Label className="text-sm font-semibold text-slate-700">Target Website</Label>
@@ -186,7 +185,6 @@ export default function BulkMassive() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
                   <div className="space-y-3">
                     <Label className="text-sm font-semibold text-slate-700">Content Language</Label>
                     <Select defaultValue="en">
@@ -221,6 +219,21 @@ export default function BulkMassive() {
                   </p>
                 </div>
 
+                {/* Nuevo campo para la API Key */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold text-slate-700">Google AI API Key</Label>
+                  <Input 
+                    type="password"
+                    placeholder="Ingresa tu clave de API de Google AI"
+                    className="h-11 border-slate-200 shadow-sm"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                  />
+                   <p className="text-xs text-slate-500">
+                    Obtén tu clave de API gratuita desde <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Google AI Studio</a>.
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className="space-y-3">
                     <Label className="text-sm font-semibold text-slate-700">Tone of Voice</Label>
@@ -236,7 +249,6 @@ export default function BulkMassive() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
                   <div className="space-y-3">
                     <Label className="text-sm font-semibold text-slate-700">Target Audience</Label>
                      <Select defaultValue="gen">
@@ -253,13 +265,11 @@ export default function BulkMassive() {
                   </div>
                 </div>
 
-                {/* Advanced Toggles */}
                 <div className="bg-slate-50 rounded-xl p-5 border border-slate-100 space-y-5">
                   <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                     <Zap className="h-4 w-4 text-amber-500" />
                     Advanced Enhancements
                   </h3>
-                  
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label className="text-base font-medium text-slate-700">Semantic Internal Linking</Label>
@@ -267,9 +277,7 @@ export default function BulkMassive() {
                     </div>
                     <Switch defaultChecked className="data-[state=checked]:bg-indigo-600" />
                   </div>
-                  
                   <div className="h-px bg-slate-200/60" />
-
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label className="text-base font-medium text-slate-700">Schema.org Structured Data</Label>
@@ -277,9 +285,7 @@ export default function BulkMassive() {
                     </div>
                     <Switch defaultChecked className="data-[state=checked]:bg-indigo-600" />
                   </div>
-
                   <div className="h-px bg-slate-200/60" />
-
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label className="text-base font-medium text-slate-700">AI Image Generation</Label>
@@ -293,12 +299,12 @@ export default function BulkMassive() {
                   <Button 
                     className={cn(
                       "w-full h-14 text-lg font-medium shadow-lg transition-all duration-300",
-                      isGenerating || !mainKeyword
+                      isGenerating || !mainKeyword || !apiKey
                         ? "bg-slate-100 text-slate-400 shadow-none cursor-not-allowed" 
                         : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200"
                     )}
                     onClick={handleGenerate}
-                    disabled={isGenerating || !mainKeyword}
+                    disabled={isGenerating || !mainKeyword || !apiKey}
                   >
                     {isGenerating ? (
                       <div className="flex items-center gap-3">
@@ -321,10 +327,7 @@ export default function BulkMassive() {
             </Card>
           </div>
 
-          {/* Right Panel: Status & Preview */}
           <div className="lg:col-span-4 space-y-6">
-            
-            {/* Live Status Card */}
             <Card className={cn(
               "border shadow-sm transition-all duration-500",
               isGenerating ? "border-indigo-200 shadow-indigo-100 ring-2 ring-indigo-500/10" : "border-slate-200"
@@ -366,7 +369,6 @@ export default function BulkMassive() {
                       )}>
                         {currentPost > i ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
                       </div>
-                      
                       <div className="flex-1 min-w-0">
                         {generatedPosts[i] ? (
                           <div className="space-y-1">
@@ -389,7 +391,6 @@ export default function BulkMassive() {
                           </div>
                         )}
                       </div>
-
                       {currentPost === i && isGenerating && (
                         <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-500" />
                       )}
@@ -433,7 +434,6 @@ export default function BulkMassive() {
               )}
             </Card>
 
-            {/* Recent Batches (Mock) */}
             <Card className="border-slate-200 shadow-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Recent Batches</CardTitle>
@@ -473,7 +473,6 @@ export default function BulkMassive() {
                 </Button>
               </CardContent>
             </Card>
-
           </div>
         </div>
       </div>
