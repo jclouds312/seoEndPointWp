@@ -157,10 +157,14 @@ async function seedCampaigns() {
         password: 'default-pass',
         email: 'admin@example.com'
       });
-      console.log('✓ Default user created\n');
+      console.log('✓ Default user created');
+      console.log(`  User ID: ${user.id}\n`);
+    } else {
+      console.log('✓ Default user already exists');
+      console.log(`  User ID: ${user.id}\n`);
     }
 
-    // Create campaigns
+    // Create campaigns with the correct user ID
     for (const campaignData of EXAMPLE_CAMPAIGNS) {
       const blogIdentifier = campaignData.name
         .toLowerCase()
@@ -171,7 +175,11 @@ async function seedCampaigns() {
 
       try {
         const campaign = await storage.createCampaign({
-          ...campaignData,
+          name: campaignData.name,
+          blogUrl: campaignData.blogUrl,
+          description: campaignData.description,
+          userId: user.id, // Use the actual user ID from database
+          config: campaignData.config,
           embedCode,
           status: 'active',
           posts: Math.floor(Math.random() * 150) + 10 // Random posts between 10-160
