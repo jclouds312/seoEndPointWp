@@ -77,6 +77,18 @@ export const apiKeys = pgTable("api_keys", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const installedAddons = pgTable("installed_addons", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  addonId: text("addon_id").notNull(),
+  addonName: text("addon_name").notNull(),
+  category: text("category").notNull(),
+  config: jsonb("config"),
+  isActive: boolean("is_active").default(true),
+  installedAt: timestamp("installed_at").defaultNow().notNull(),
+  lastUsed: timestamp("last_used"),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -88,6 +100,10 @@ export const insertGeneratedContentSchema = createInsertSchema(generatedContent)
 export const insertContentHistorySchema = createInsertSchema(contentHistory);
 export const insertMonthlyQuotaSchema = createInsertSchema(monthlyContentQuota);
 export const insertApiKeySchema = createInsertSchema(apiKeys);
+export const insertInstalledAddonSchema = createInsertSchema(installedAddons);
+
+export type InstalledAddon = typeof installedAddons.$inferSelect;
+export type InsertInstalledAddon = z.infer<typeof insertInstalledAddonSchema);
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;

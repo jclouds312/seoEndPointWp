@@ -6,16 +6,20 @@ import {
   type ContentHistory,
   type MonthlyContentQuota,
   type ApiKey,
+  type InstalledAddon,
+  type InsertInstalledAddon,
   users,
   campaigns,
   generatedContent,
   contentHistory,
   monthlyContentQuota,
   apiKeys,
+  installedAddons,
   insertCampaignSchema,
   insertGeneratedContentSchema,
   insertContentHistorySchema,
-  insertApiKeySchema
+  insertApiKeySchema,
+  insertInstalledAddonSchema
 } from "@shared/schema";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -287,3 +291,32 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
+
+
+  // Installed Addons methods
+  async getInstalledAddons(userId: string): Promise<InstalledAddon[]> {
+    return await db.select().from(installedAddons).where(eq(installedAddons.userId, userId));
+  }
+
+  async installAddon(data: Omit<InsertInstalledAddon, 'id'>): Promise<InstalledAddon> {
+    const validated = insertInstalledAddonSchema.parse(data);
+    const result = await db.insert(installedAddons).values(validated).returning();
+    return result[0];
+  }
+
+  async uninstallAddon(userId: string, addonId: string): Promise<void> {
+    await db.delete(installedAddons)
+      .where(and(
+        eq(installedAddons.userId, userId),
+        eq(installedAddons.addonId, addonId)
+      ));
+  }
+
+  async updateAddonLastUsed(userId: string, addonId: string): Promise<void> {
+    await db.update(installedAddons)
+      .set({ lastUsed: new Date() })
+      .where(and(
+        eq(installedAddons.userId, userId),
+        eq(installedAddons.addonId, addonId)
+      ));
+  }

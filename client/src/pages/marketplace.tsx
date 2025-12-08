@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Star, Check, Search, Zap, Image, Link as LinkIcon, FileText, Share2, Shield, LayoutTemplate } from "lucide-react";
+import { Download, Star, Check, Search, Zap, Image, Link as LinkIcon, FileText, Share2, Shield, LayoutTemplate, CheckCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 
@@ -15,7 +15,7 @@ const tools = [
     category: "Technical SEO",
     rating: 4.9,
     installs: "2.4k",
-    icon: CodeIcon,
+    icon: LayoutTemplate, // Assuming CodeIcon was a placeholder and LayoutTemplate is intended
     installed: true,
   },
   {
@@ -70,10 +70,6 @@ const tools = [
   }
 ];
 
-function CodeIcon(props: any) {
-  return <LayoutTemplate {...props} />;
-}
-
 function MapPinIcon(props: any) {
     return (
         <svg
@@ -98,17 +94,40 @@ export default function Marketplace() {
   const [installedTools, setInstalledTools] = useState<Set<string>>(new Set(tools.filter(t => t.installed).map(t => t.id)));
   const [installing, setInstalling] = useState<string | null>(null);
 
-  const handleInstall = (id: string, name: string) => {
-    setInstalling(id);
+  // Placeholder for install/uninstall mutations as they were not provided
+  const installMutation = { isPending: false };
+  const uninstallMutation = { isPending: false };
+
+  const handleInstall = (tool: any) => {
+    setInstalling(tool.id);
+    // In a real app, this would be an API call
     setTimeout(() => {
-      setInstalledTools(prev => new Set(prev).add(id));
+      setInstalledTools(prev => new Set(prev).add(tool.id));
       setInstalling(null);
       toast({
         title: "Module Installed",
-        description: `${name} has been added to your SEO toolkit.`,
+        description: `${tool.name} has been added to your SEO toolkit.`,
       });
     }, 1500);
   };
+
+  // Placeholder for handleUninstall as it was not provided in the original or changes
+  const handleUninstall = (id: string) => {
+    setInstalling(id); // Re-using 'installing' state for uninstalling feedback
+    setTimeout(() => {
+      setInstalledTools(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      setInstalling(null);
+      toast({
+        title: "Module Uninstalled",
+        description: `Module with ID ${id} has been removed.`,
+      });
+    }, 1500);
+  };
+
 
   return (
     <SidebarLayout>
@@ -161,7 +180,7 @@ export default function Marketplace() {
                 </span>
                 <span>{tool.category}</span>
               </div>
-              
+
               {installedTools.has(tool.id) ? (
                  <Button variant="outline" className="w-full bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800 gap-2 cursor-default">
                    <Check className="w-4 h-4" /> Installed
@@ -169,7 +188,7 @@ export default function Marketplace() {
               ) : (
                 <Button 
                   className="w-full bg-slate-900 hover:bg-blue-700 text-white gap-2"
-                  onClick={() => handleInstall(tool.id, tool.name)}
+                  onClick={() => handleInstall(tool)}
                   disabled={installing === tool.id}
                 >
                   {installing === tool.id ? (

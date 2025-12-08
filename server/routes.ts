@@ -237,3 +237,64 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   return httpServer;
 }
+
+
+
+  // Installed Add-ons endpoints
+  app.get("/api/installed-addons", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const addons = await storage.getInstalledAddons(userId);
+      res.json(addons);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/install-addon", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { addonId, addonName, category, config } = req.body;
+
+      if (!addonId || !addonName || !category) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const addon = await storage.installAddon({
+        userId,
+        addonId,
+        addonName,
+        category,
+        config: config || {},
+        isActive: true
+      });
+
+      res.json(addon);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/uninstall-addon/:addonId", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { addonId } = req.params;
+
+      await storage.uninstallAddon(userId, addonId);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/addon-used/:addonId", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { addonId } = req.params;
+
+      await storage.updateAddonLastUsed(userId, addonId);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
