@@ -102,6 +102,17 @@ export default function ContentPublisher() {
     { time: '18:00', success: 22, pending: 0 }
   ];
 
+  const monthlyPublishingStats = [
+    { month: 'Ene', published: 45, drafts: 8, success: 98 },
+    { month: 'Feb', published: 52, drafts: 6, success: 99 },
+    { month: 'Mar', published: 48, drafts: 7, success: 97 },
+    { month: 'Abr', published: 55, drafts: 5, success: 99 },
+    { month: 'May', published: 60, drafts: 4, success: 100 },
+    { month: 'Jun', published: 58, drafts: 6, success: 98 },
+    { month: 'Jul', published: 62, drafts: 3, success: 100 },
+    { month: 'Ago', published: 65, drafts: 5, success: 99 }
+  ];
+
   // Fetch n8n workflows (Mocked)
   const { data: workflows = MOCK_WORKFLOWS } = useQuery({
     queryKey: ['n8n-workflows'],
@@ -298,30 +309,57 @@ El sistema ha optimizado este texto para lectura profesional.`;
       </div>
 
       {/* Publishing Activity Chart */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Actividad de Publicación</CardTitle>
-          <CardDescription>Posts publicados hoy por hora</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={publishingStats}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="time" stroke="#64748b" style={{ fontSize: '12px' }} />
-              <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
-              <RechartsTooltip
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px'
-                }}
-              />
-              <Line type="monotone" dataKey="success" stroke="#10b981" strokeWidth={2} name="Exitosos" />
-              <Line type="monotone" dataKey="pending" stroke="#f59e0b" strokeWidth={2} name="Pendientes" />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Actividad de Hoy</CardTitle>
+            <CardDescription>Posts publicados por hora</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={publishingStats}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="time" stroke="#64748b" style={{ fontSize: '12px' }} />
+                <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
+                <RechartsTooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Line type="monotone" dataKey="success" stroke="#10b981" strokeWidth={2} name="Exitosos" />
+                <Line type="monotone" dataKey="pending" stroke="#f59e0b" strokeWidth={2} name="Pendientes" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Últimos 8 Meses</CardTitle>
+            <CardDescription>Historial de publicaciones</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={monthlyPublishingStats}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="month" stroke="#64748b" style={{ fontSize: '12px' }} />
+                <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
+                <RechartsTooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Line type="monotone" dataKey="published" stroke="#3b82f6" strokeWidth={2} name="Publicados" />
+                <Line type="monotone" dataKey="drafts" stroke="#f59e0b" strokeWidth={2} name="Borradores" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Quick Actions Bar */}
       <Card className="mb-6 border-blue-200 bg-blue-50">
