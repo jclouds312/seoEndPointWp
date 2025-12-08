@@ -4,13 +4,42 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
+import Login from "@/pages/auth";
+import Dashboard from "@/pages/dashboard";
+import Workflows from "@/pages/workflow-editor";
+import Integrations from "@/pages/integrations";
+import DataSources from "@/pages/data-sources";
+import Settings from "@/pages/settings";
+import LocalSEO from "@/pages/local-seo";
+import Deployment from "@/pages/deployment";
+import Documentation from "@/pages/documentation";
+import Marketplace from "@/pages/marketplace";
+import Campaigns from "@/pages/campaigns";
+import SeoAnalyzer from "@/pages/seo-analyzer";
+import ContentCreator from "./pages/content-creator";
+import ContentPublisher from "./pages/content-publisher";
+import BulkContentGenerator from "./pages/bulk-content-generator";
+import JetpackIntegration from "@/pages/jetpack-integration";
 
 function Router() {
   return (
     <Switch>
-      {/* Add pages below */}
-      {/* <Route path="/" component={Home}/> */}
-      {/* Fallback to 404 */}
+      <Route path="/" component={Login} />
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/workflows" component={Workflows} />
+      <Route path="/integrations" component={Integrations} />
+      <Route path="/jetpack" component={JetpackIntegration} />
+      <Route path="/marketplace" component={Marketplace} />
+      <Route path="/data-sources" component={DataSources} />
+      <Route path="/local-seo" component={LocalSEO} />
+      <Route path="/deployment" component={Deployment} />
+      <Route path="/documentation" component={Documentation} />
+      <Route path="/settings" component={Settings} />
+      <Route path="/campaigns" component={Campaigns} />
+      <Route path="/content-creator" component={ContentCreator} />
+      <Route path="/content-publisher" component={ContentPublisher} />
+      <Route path="/bulk-generator" component={BulkContentGenerator} />
+      <Route path="/seo-analyzer" component={SeoAnalyzer} />
       <Route component={NotFound} />
     </Switch>
   );
