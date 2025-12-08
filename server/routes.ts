@@ -59,15 +59,15 @@ export async function registerRoutes(
       if (!quota) {
         return res.json({
           contentGenerated: 0,
-          maxContent: 10,
-          remaining: 10
+          maxContent: 8,
+          remaining: 8
         });
       }
 
       res.json({
         contentGenerated: quota.contentGenerated,
-        maxContent: quota.maxContent,
-        remaining: (quota.maxContent || 10) - (quota.contentGenerated || 0)
+        maxContent: quota.maxContent || 8,
+        remaining: (quota.maxContent || 8) - (quota.contentGenerated || 0)
       });
     } catch (error) {
       console.error('Error fetching quota:', error);
@@ -112,7 +112,8 @@ export async function registerRoutes(
       // Check monthly quota
       const currentMonth = new Date().toISOString().slice(0, 7);
       const quota = await storage.getMonthlyQuota(userId, currentMonth);
-      const remaining = quota ? (quota.maxContent || 10) - (quota.contentGenerated || 0) : 10;
+      const maxMonthlyContent = 8; // Límite mensual estándar
+      const remaining = quota ? maxMonthlyContent - (quota.contentGenerated || 0) : maxMonthlyContent;
 
       if (remaining < count) {
         return res.status(429).json({

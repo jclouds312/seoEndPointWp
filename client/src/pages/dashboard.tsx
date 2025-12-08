@@ -98,7 +98,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold text-slate-900">{totalContent}</div>
             <p className="text-xs text-slate-500 mt-1">
-              {publishedContent} published • {quotaData?.remaining || 10} remaining this month
+              {publishedContent} publicados • {quotaData?.remaining || 8} restantes este mes
             </p>
           </CardContent>
         </Card>

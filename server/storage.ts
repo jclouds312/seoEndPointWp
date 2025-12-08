@@ -115,7 +115,7 @@ export class MemStorage implements IStorage {
         userId,
         month,
         contentGenerated: 1,
-        maxContent: 10,
+        maxContent: 8, // Límite mensual estándar
         createdAt: new Date(),
         updatedAt: new Date(),
       };

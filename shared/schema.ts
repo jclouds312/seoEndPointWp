@@ -62,7 +62,7 @@ export const monthlyContentQuota = pgTable("monthly_content_quota", {
   userId: varchar("user_id").notNull().references(() => users.id),
   month: text("month").notNull(), // YYYY-MM format
   contentGenerated: integer("content_generated").default(0),
-  maxContent: integer("max_content").default(10),
+  maxContent: integer("max_content").default(8), // Límite mensual estándar: 8 posts
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

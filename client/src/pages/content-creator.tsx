@@ -129,6 +129,7 @@ export default function ContentCreator() {
   const [seoMetadata, setSeoMetadata] = useState<any>(null);
   const [seoScore, setSeoScore] = useState<any>(null);
   const [isGeneratingImages, setIsGeneratingImages] = useState(false);
+  const [isSuggestingPrompt, setIsSuggestingPrompt] = useState(false);
 
   // Fetch campaigns (Mocked)
   const { data: campaigns = MOCK_CAMPAIGNS } = useQuery<Campaign[]>({
@@ -138,6 +139,75 @@ export default function ContentCreator() {
       return MOCK_CAMPAIGNS;
     }
   });
+
+  const handleSuggestPrompt = async () => {
+    if (!targetKeywords) {
+      toast({
+        title: "Palabras clave requeridas",
+        description: "Agrega palabras clave objetivo primero",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSuggestingPrompt(true);
+    
+    try {
+      const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
+      
+      const response = await fetch('/api/no-cost-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: 'Eres un experto en SEO y marketing de contenidos legal. Tu trabajo es sugerir prompts efectivos para generar artículos optimizados.'
+            },
+            {
+              role: 'user',
+              content: `Sugiere un prompt detallado para crear un artículo SEO sobre: ${keywords.join(', ')}. 
+              
+El prompt debe:
+- Ser específico y detallado (mínimo 100 palabras)
+- Incluir estructura sugerida (introducción, secciones principales, conclusión)
+- Mencionar el tono y estilo deseado
+- Sugerir elementos a incluir (estadísticas, ejemplos, casos de éxito)
+- Enfocarse en intención de búsqueda del usuario
+
+Solo responde con el prompt sugerido, sin explicaciones adicionales.`
+            }
+          ],
+          model: 'gpt-4o',
+          temperature: 0.8,
+          max_tokens: 500
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al sugerir prompt');
+      }
+
+      const data = await response.json();
+      setContentPrompt(data.content);
+      
+      toast({
+        title: "¡Prompt sugerido!",
+        description: "Revisa y ajusta el prompt según tus necesidades"
+      });
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast({
+        title: "Error al sugerir prompt",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSuggestingPrompt(false);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!selectedCampaign || !contentPrompt) {
@@ -497,7 +567,29 @@ export default function ContentCreator() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Prompt de Contenido *</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Prompt de Contenido *</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={handleSuggestPrompt}
+                    disabled={isSuggestingPrompt || !targetKeywords}
+                  >
+                    {isSuggestingPrompt ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Sugiriendo...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        Sugerir Prompt
+                      </>
+                    )}
+                  </Button>
+                </div>
                 <Textarea 
                   placeholder="Ejemplo: Escribe un artículo completo sobre qué hacer después de un accidente de carro en California, incluyendo pasos legales, documentación necesaria y cuándo contactar un abogado..."
                   value={contentPrompt}
@@ -505,6 +597,9 @@ export default function ContentCreator() {
                   rows={6}
                   className="font-mono text-sm"
                 />
+                <p className="text-xs text-slate-500">
+                  Tip: Agrega palabras clave objetivo arriba y usa "Sugerir Prompt" para obtener ideas de IA
+                </p>
               </div>
 
               <Button 

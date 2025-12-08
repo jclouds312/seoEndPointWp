@@ -297,10 +297,13 @@ export default function BulkContentGenerator() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="5">5 posts</SelectItem>
-                      <SelectItem value="8">8 posts (Recomendado)</SelectItem>
-                      <SelectItem value="10">10 posts</SelectItem>
+                      <SelectItem value="8">8 posts (Plan Mensual)</SelectItem>
+                      <SelectItem value="10">10 posts (Máximo)</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-slate-500">
+                    Límite mensual: 8-10 posts de alta calidad
+                  </p>
                 </div>
 
                 <div className="space-y-2">
