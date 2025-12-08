@@ -27,6 +27,15 @@ import {
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip as RechartsTooltip, 
+  ResponsiveContainer 
+} from 'recharts';
 
 // Mock Data
 const MOCK_WORKFLOWS = [
@@ -186,8 +195,85 @@ El sistema ha optimizado este texto para lectura profesional.`;
     }
   });
 
+  const publishingStats = [
+    { time: '08:00', success: 12, pending: 2 },
+    { time: '10:00', success: 18, pending: 1 },
+    { time: '12:00', success: 24, pending: 3 },
+    { time: '14:00', success: 30, pending: 2 },
+    { time: '16:00', success: 28, pending: 1 },
+    { time: '18:00', success: 22, pending: 0 }
+  ];
+
   return (
     <SidebarLayout>
+      {/* Publishing Analytics Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-green-600 uppercase tracking-wider">Publicados Hoy</p>
+                <p className="text-3xl font-bold text-green-900 mt-1">28</p>
+                <p className="text-xs text-green-600 mt-1">+15% vs ayer</p>
+              </div>
+              <Send className="w-10 h-10 text-green-600 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-blue-600 uppercase tracking-wider">Tasa de Éxito</p>
+                <p className="text-3xl font-bold text-blue-900 mt-1">98.5%</p>
+                <p className="text-xs text-blue-600 mt-1">Últimos 30 días</p>
+              </div>
+              <CheckCircle2 className="w-10 h-10 text-blue-600 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-purple-600 uppercase tracking-wider">Tiempo Promedio</p>
+                <p className="text-3xl font-bold text-purple-900 mt-1">2.3s</p>
+                <p className="text-xs text-purple-600 mt-1">Por publicación</p>
+              </div>
+              <Clock className="w-10 h-10 text-purple-600 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Publishing Activity Chart */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg">Actividad de Publicación</CardTitle>
+          <CardDescription>Posts publicados hoy por hora</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={publishingStats}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="time" stroke="#64748b" style={{ fontSize: '12px' }} />
+              <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
+              <RechartsTooltip 
+                contentStyle={{ 
+                  backgroundColor: '#fff', 
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px'
+                }} 
+              />
+              <Line type="monotone" dataKey="success" stroke="#10b981" strokeWidth={2} name="Exitosos" />
+              <Line type="monotone" dataKey="pending" stroke="#f59e0b" strokeWidth={2} name="Pendientes" />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Publicador de Contenido</h1>

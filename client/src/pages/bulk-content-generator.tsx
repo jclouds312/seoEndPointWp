@@ -28,6 +28,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { 
+  LineChart, 
+  Line, 
+  BarChart, 
+  Bar, 
+  PieChart, 
+  Pie, 
+  Cell, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip as RechartsTooltip, 
+  Legend, 
+  ResponsiveContainer,
+  Area,
+  AreaChart
+} from 'recharts';
 
 interface GeneratedPost {
   id?: string;
@@ -69,6 +86,30 @@ export default function BulkContentGenerator() {
   const [currentGenerating, setCurrentGenerating] = useState(0);
   const [promptSuggestion, setPromptSuggestion] = useState("");
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
+
+  // Analytics Data
+  const monthlyStats = [
+    { month: 'Ene', posts: 8, views: 1200, conversions: 45 },
+    { month: 'Feb', posts: 10, views: 1800, conversions: 68 },
+    { month: 'Mar', posts: 8, views: 2100, conversions: 89 },
+    { month: 'Abr', posts: 9, views: 2400, conversions: 102 },
+    { month: 'May', posts: 10, views: 2900, conversions: 128 },
+    { month: 'Jun', posts: 8, views: 3200, conversions: 145 }
+  ];
+
+  const contentTypeDistribution = [
+    { name: 'Artículos Legales', value: 45, color: '#3b82f6' },
+    { name: 'Guías Prácticas', value: 30, color: '#8b5cf6' },
+    { name: 'Casos de Estudio', value: 15, color: '#10b981' },
+    { name: 'FAQs', value: 10, color: '#f59e0b' }
+  ];
+
+  const seoPerformance = [
+    { range: '90-100', count: 12 },
+    { range: '80-89', count: 18 },
+    { range: '70-79', count: 8 },
+    { range: '60-69', count: 3 }
+  ];
 
   // Mock Saved Data
   const MOCK_SAVED_CONTENTS: GeneratedPost[] = [
@@ -348,6 +389,168 @@ export default function BulkContentGenerator() {
         </div>
       </div>
 
+      {/* Analytics Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-blue-600 uppercase tracking-wider">Posts Generados</p>
+                <p className="text-3xl font-bold text-blue-900 mt-1">63</p>
+                <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" />
+                  +12% vs mes anterior
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                <FileText className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-purple-600 uppercase tracking-wider">SEO Promedio</p>
+                <p className="text-3xl font-bold text-purple-900 mt-1">87.5</p>
+                <p className="text-xs text-purple-600 mt-1 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Excelente calidad
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-green-600 uppercase tracking-wider">Publicados</p>
+                <p className="text-3xl font-bold text-green-900 mt-1">48</p>
+                <p className="text-xs text-green-600 mt-1">76% tasa de publicación</p>
+              </div>
+              <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
+                <Send className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-amber-600 uppercase tracking-wider">En Borradores</p>
+                <p className="text-3xl font-bold text-amber-900 mt-1">15</p>
+                <p className="text-xs text-amber-600 mt-1">Pendientes de revisión</p>
+              </div>
+              <div className="w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Performance Charts */}
+      <div className="grid lg:grid-cols-3 gap-6 mb-6">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg">Rendimiento Mensual</CardTitle>
+            <CardDescription>Posts generados, vistas y conversiones</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={monthlyStats}>
+                <defs>
+                  <linearGradient id="colorPosts" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="month" stroke="#64748b" style={{ fontSize: '12px' }} />
+                <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
+                <RechartsTooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }} 
+                />
+                <Legend />
+                <Area type="monotone" dataKey="posts" stroke="#3b82f6" fillOpacity={1} fill="url(#colorPosts)" name="Posts" />
+                <Area type="monotone" dataKey="views" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorViews)" name="Vistas (x100)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Distribución de Contenido</CardTitle>
+            <CardDescription>Tipos de artículos generados</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={contentTypeDistribution}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {contentTypeDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <RechartsTooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* SEO Score Distribution */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg">Distribución de Puntuación SEO</CardTitle>
+          <CardDescription>Calidad del contenido generado</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={seoPerformance}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="range" stroke="#64748b" style={{ fontSize: '12px' }} />
+              <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
+              <RechartsTooltip 
+                contentStyle={{ 
+                  backgroundColor: '#fff', 
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px'
+                }} 
+              />
+              <Bar dataKey="count" fill="#3b82f6" radius={[8, 8, 0, 0]} name="Posts" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="generator" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="generator">Generador</TabsTrigger>
@@ -362,6 +565,33 @@ export default function BulkContentGenerator() {
         </TabsList>
 
         <TabsContent value="generator" className="space-y-6">
+          {/* Quick Actions Bar */}
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-900">Generación Rápida</p>
+                      <p className="text-xs text-blue-600">Optimizado para máximo rendimiento</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Download className="w-4 h-4" />
+                    Plantillas
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <RefreshCw className="w-4 h-4" />
+                    Historial
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Configuration */}
             <Card className="lg:col-span-1">
@@ -594,17 +824,54 @@ export default function BulkContentGenerator() {
               )}
 
               {generatedPosts.length === 0 && !isGenerating && (
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <Sparkles className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                      Listo para Generar Contenido
-                    </h3>
-                    <p className="text-slate-500 max-w-md mx-auto">
-                      Configura tus parámetros y presiona el botón para generar {postsCount} posts de alta calidad
-                    </p>
-                  </CardContent>
-                </Card>
+                <>
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <Sparkles className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                      <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                        Listo para Generar Contenido
+                      </h3>
+                      <p className="text-slate-500 max-w-md mx-auto">
+                        Configura tus parámetros y presiona el botón para generar {postsCount} posts de alta calidad
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Tips & Best Practices */}
+                  <Card className="border-purple-200 bg-purple-50">
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-purple-600" />
+                        Consejos de Optimización
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <CheckCircle2 className="w-5 h-5 text-purple-600 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-purple-900">Usa temas específicos</p>
+                            <p className="text-xs text-purple-700">Mejor: "accidentes de auto en Los Angeles" que solo "accidentes"</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <CheckCircle2 className="w-5 h-5 text-purple-600 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-purple-900">Longitud óptima</p>
+                            <p className="text-xs text-purple-700">1,200-1,500 palabras tienen mejor rendimiento SEO</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <CheckCircle2 className="w-5 h-5 text-purple-600 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-purple-900">Palabras clave relevantes</p>
+                            <p className="text-xs text-purple-700">Incluye 3-5 keywords principales por artículo</p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
               )}
             </div>
           </div>
