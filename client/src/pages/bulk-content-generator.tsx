@@ -199,12 +199,12 @@ export default function BulkContentGenerator() {
 
       const data = await response.json();
       
-      // If queued, poll for completion
-      if (data.status === 'queued') {
-        return await pollQueueStatus(selectedTopics.length);
+      // Update progress incrementally
+      for (let i = 0; i <= 100; i += 10) {
+        setProgress(i);
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
       
-      // Legacy response format (direct generation)
       const results: GeneratedPost[] = data.contents.map((item: any) => ({
         id: String(item.id),
         title: item.title,
@@ -249,82 +249,7 @@ export default function BulkContentGenerator() {
     }
   });
 
-  // Poll queue status and update progress
-  const pollQueueStatus = async (expectedCount: number): Promise<GeneratedPost[]> => {
-    let attempts = 0;
-    const maxAttempts = 120; // 2 minutes max
-    const startTime = Date.now();
-    
-    while (attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      try {
-        // Check queue status
-        const queueResponse = await fetch('/api/queue-status');
-        const queueData = await queueResponse.json();
-        
-        // Update progress based on queue
-        const estimatedProgress = 10 + (90 * (1 - (queueData.queueLength / expectedCount)));
-        setProgress(Math.min(estimatedProgress, 95));
-        
-        // Check for new content
-        const contentResponse = await fetch('/api/generated-content');
-        const contents = await contentResponse.json();
-        
-        // Filter recently generated content (since we started)
-        const recentContents = contents.filter((item: any) => {
-          const createdAt = new Date(item.createdAt);
-          return createdAt.getTime() >= startTime;
-        });
-        
-        // Update current generating count
-        if (recentContents.length > 0) {
-          setCurrentGenerating(Math.min(recentContents.length + 1, expectedCount));
-        }
-        
-        // If we have the expected number of posts, we're done
-        if (recentContents.length >= expectedCount) {
-          return recentContents.slice(0, expectedCount).map((item: any) => ({
-            id: String(item.id),
-            title: item.title,
-            content: item.content,
-            metaDescription: item.metaDescription || '',
-            seoScore: item.seoScore || 85,
-            status: item.status as 'draft' | 'published',
-            createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
-            keywords: item.keywords?.split(',').map((k: string) => k.trim()) || [],
-            featuredImage: item.featuredImage
-          }));
-        }
-        
-      } catch (error) {
-        console.error('Error polling queue:', error);
-      }
-      
-      attempts++;
-    }
-    
-    // Timeout - return what we have
-    const contentResponse = await fetch('/api/generated-content');
-    const contents = await contentResponse.json();
-    const recentContents = contents.filter((item: any) => {
-      const createdAt = new Date(item.createdAt);
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-      return createdAt > fiveMinutesAgo;
-    });
-    
-    return recentContents.map((item: any) => ({
-      id: String(item.id),
-      title: item.title,
-      content: item.content,
-      metaDescription: item.metaDescription || '',
-      seoScore: item.seoScore || 85,
-      status: item.status as 'draft' | 'published',
-      createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
-      keywords: item.keywords?.split(',').map((k: string) => k.trim()) || [],
-      featuredImage: item.featuredImage
-    }));
-  };
+  
 
   const saveMutation = useMutation({
     mutationFn: async (post: GeneratedPost) => {

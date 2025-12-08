@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, Zap, History, Globe, CheckCircle2, AlertCircle, ArrowRight, LayoutTemplate } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SidebarLayout from "@/components/sidebar";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export default function BulkMassive() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -19,42 +19,46 @@ export default function BulkMassive() {
   const { toast } = useToast();
 
   const handleGenerate = async () => {
+    if (!mainKeyword.trim()) {
+      toast({
+        title: "Error",
+        description: "Por favor ingresa un tema o keyword",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsGenerating(true);
-    setStep(2); // Processing state
+    setStep(2);
     
     try {
-      const response = await fetch('/api/bulk-generate', {
+      const response = await fetch('/api/bulk-massive/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          topics: [mainKeyword], // Single seed topic that will generate 8 variations
-          keywords: mainKeyword,
-          wordCount: 1500,
-          aiProvider: 'free',
-          campaignId: null,
-          language: 'en',
-          tone: 'professional',
-          count: 8 // Generate 8 posts
+          mainKeyword,
+          targetSite,
+          count: 8
         })
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Error al generar contenido masivo');
+        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+        throw new Error(errorData.error || 'Error al generar contenido');
       }
 
       const data = await response.json();
       
-      // Poll for completion if queued
-      if (data.status === 'queued') {
-        await pollForCompletion();
-      }
-      
-      setStep(3); // Success state
+      setStep(3);
       toast({
         title: "¡Generación Completada!",
-        description: "8 posts generados exitosamente",
+        description: `${data.generated || 8} posts generados exitosamente`,
       });
+      
+      // Redirect to history after 2 seconds
+      setTimeout(() => {
+        window.location.href = '/bulk-content-generator';
+      }, 2000);
       
     } catch (error: any) {
       console.error('Error:', error);
@@ -66,28 +70,6 @@ export default function BulkMassive() {
       setStep(1);
     } finally {
       setIsGenerating(false);
-    }
-  };
-
-  const pollForCompletion = async () => {
-    let attempts = 0;
-    const maxAttempts = 120;
-    
-    while (attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      try {
-        const queueResponse = await fetch('/api/queue-status');
-        const queueData = await queueResponse.json();
-        
-        if (queueData.queueLength === 0) {
-          break;
-        }
-      } catch (error) {
-        console.error('Error polling queue:', error);
-      }
-      
-      attempts++;
     }
   };
 
