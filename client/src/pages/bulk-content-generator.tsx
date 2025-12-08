@@ -178,7 +178,7 @@ export default function BulkContentGenerator() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           topics: selectedTopics,
-          keywords: keywords || '',
+          keywords: keywords || selectedTopics.join(', '),
           wordCount,
           aiProvider,
           campaignId: null
@@ -186,8 +186,15 @@ export default function BulkContentGenerator() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Error al generar contenido masivo');
+        const errorText = await response.text();
+        let errorMessage = 'Error al generar contenido masivo';
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -246,9 +253,10 @@ export default function BulkContentGenerator() {
   const pollQueueStatus = async (expectedCount: number): Promise<GeneratedPost[]> => {
     let attempts = 0;
     const maxAttempts = 120; // 2 minutes max
+    const startTime = Date.now();
     
     while (attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       try {
         // Check queue status
@@ -263,12 +271,16 @@ export default function BulkContentGenerator() {
         const contentResponse = await fetch('/api/generated-content');
         const contents = await contentResponse.json();
         
-        // Filter recently generated content (last 5 minutes)
+        // Filter recently generated content (since we started)
         const recentContents = contents.filter((item: any) => {
           const createdAt = new Date(item.createdAt);
-          const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-          return createdAt > fiveMinutesAgo;
+          return createdAt.getTime() >= startTime;
         });
+        
+        // Update current generating count
+        if (recentContents.length > 0) {
+          setCurrentGenerating(Math.min(recentContents.length + 1, expectedCount));
+        }
         
         // If we have the expected number of posts, we're done
         if (recentContents.length >= expectedCount) {
@@ -284,8 +296,6 @@ export default function BulkContentGenerator() {
             featuredImage: item.featuredImage
           }));
         }
-        
-        setCurrentGenerating(recentContents.length + 1);
         
       } catch (error) {
         console.error('Error polling queue:', error);
@@ -491,6 +501,13 @@ export default function BulkContentGenerator() {
       toast({
         title: "Advertencia",
         description: `Solo tienes ${topics.length} temas, pero solicitaste ${postsCount} posts. Se generarán ${topics.length} posts.`,
+      });
+    }
+
+    if (!keywords || keywords.trim().length === 0) {
+      toast({
+        title: "Advertencia",
+        description: "No has definido palabras clave. Se usarán los temas como keywords.",
       });
     }
 

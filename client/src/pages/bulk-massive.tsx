@@ -9,19 +9,86 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, Zap, History, Globe, CheckCircle2, AlertCircle, ArrowRight, LayoutTemplate } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SidebarLayout from "@/components/sidebar";
+import { toast } from "@/hooks/use-toast";
 
 export default function BulkMassive() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [step, setStep] = useState(1);
   const [targetSite, setTargetSite] = useState("calinjurylaw");
+  const [mainKeyword, setMainKeyword] = useState("");
+  const { toast } = useToast();
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setIsGenerating(true);
-    // Simulate generation process
-    setTimeout(() => {
-      setIsGenerating(false);
+    setStep(2); // Processing state
+    
+    try {
+      const response = await fetch('/api/bulk-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topics: [mainKeyword], // Single seed topic that will generate 8 variations
+          keywords: mainKeyword,
+          wordCount: 1500,
+          aiProvider: 'free',
+          campaignId: null,
+          language: 'en',
+          tone: 'professional',
+          count: 8 // Generate 8 posts
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al generar contenido masivo');
+      }
+
+      const data = await response.json();
+      
+      // Poll for completion if queued
+      if (data.status === 'queued') {
+        await pollForCompletion();
+      }
+      
       setStep(3); // Success state
-    }, 4000);
+      toast({
+        title: "¡Generación Completada!",
+        description: "8 posts generados exitosamente",
+      });
+      
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast({
+        title: "Error en Generación",
+        description: error.message,
+        variant: "destructive"
+      });
+      setStep(1);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const pollForCompletion = async () => {
+    let attempts = 0;
+    const maxAttempts = 120;
+    
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      try {
+        const queueResponse = await fetch('/api/queue-status');
+        const queueData = await queueResponse.json();
+        
+        if (queueData.queueLength === 0) {
+          break;
+        }
+      } catch (error) {
+        console.error('Error polling queue:', error);
+      }
+      
+      attempts++;
+    }
   };
 
   return (
@@ -120,7 +187,9 @@ export default function BulkMassive() {
                   <div className="relative">
                     <Input 
                       placeholder="e.g. 'Car Accident Settlements in California'" 
-                      className="h-12 text-lg pl-4 pr-12 border-slate-200 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" 
+                      className="h-12 text-lg pl-4 pr-12 border-slate-200 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                      value={mainKeyword}
+                      onChange={(e) => setMainKeyword(e.target.value)}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded">
                       Seed
@@ -203,12 +272,12 @@ export default function BulkMassive() {
                   <Button 
                     className={cn(
                       "w-full h-14 text-lg font-medium shadow-lg transition-all duration-300",
-                      isGenerating 
+                      isGenerating || !mainKeyword
                         ? "bg-slate-100 text-slate-400 shadow-none cursor-not-allowed" 
                         : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200"
                     )}
                     onClick={handleGenerate}
-                    disabled={isGenerating}
+                    disabled={isGenerating || !mainKeyword}
                   >
                     {isGenerating ? (
                       <div className="flex items-center gap-3">
