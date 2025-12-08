@@ -103,7 +103,7 @@ export const insertApiKeySchema = createInsertSchema(apiKeys);
 export const insertInstalledAddonSchema = createInsertSchema(installedAddons);
 
 export type InstalledAddon = typeof installedAddons.$inferSelect;
-export type InsertInstalledAddon = z.infer<typeof insertInstalledAddonSchema);
+export type InsertInstalledAddon = z.infer<typeof insertInstalledAddonSchema>;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
