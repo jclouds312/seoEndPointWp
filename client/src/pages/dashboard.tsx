@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowUpRight, CheckCircle2, RefreshCw, Link as LinkIcon, BarChart3, FileText, Search, Send } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { useQuery } from "@tanstack/react-query";
 
 const data = [
   { name: 'Mon', score: 65 },
@@ -17,6 +18,27 @@ const data = [
 ];
 
 export default function Dashboard() {
+  const userId = "default-user"; // Replace with actual auth
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  
+  const { data: contentData } = useQuery({
+    queryKey: ['/api/content', userId],
+    queryFn: async () => {
+      const res = await fetch(`/api/content?userId=${userId}`);
+      return res.json();
+    }
+  });
+  
+  const { data: quotaData } = useQuery({
+    queryKey: ['/api/quota', userId, currentMonth],
+    queryFn: async () => {
+      const res = await fetch(`/api/quota/${userId}/${currentMonth}`);
+      return res.json();
+    }
+  });
+  
+  const totalContent = contentData?.length || 0;
+  const publishedContent = contentData?.filter((c: any) => c.status === 'published').length || 0;
   return (
     <SidebarLayout>
       <div className="flex items-center justify-between mb-8">
@@ -68,14 +90,16 @@ export default function Dashboard() {
 
         <Card className="border-slate-100 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Processed Posts</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-500">Generated Content</CardTitle>
             <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
               <FileText className="w-4 h-4 text-purple-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">1,284</div>
-            <p className="text-xs text-slate-500 mt-1">Auto-optimized by n8n</p>
+            <div className="text-2xl font-bold text-slate-900">{totalContent}</div>
+            <p className="text-xs text-slate-500 mt-1">
+              {publishedContent} published • {quotaData?.remaining || 10} remaining this month
+            </p>
           </CardContent>
         </Card>
       </div>

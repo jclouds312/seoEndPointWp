@@ -1,4 +1,3 @@
-
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -30,6 +29,53 @@ export async function registerRoutes(
 ): Promise<Server> {
   const router = Router();
 
+  // Health check
+  router.get('/api/health', (_req, res) => {
+    res.json({ status: 'ok' });
+  });
+
+  // Get user's generated content
+  router.get('/api/content', async (req, res) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID required' });
+      }
+
+      const content = await storage.getGeneratedContent(userId);
+      res.json(content);
+    } catch (error) {
+      console.error('Error fetching content:', error);
+      res.status(500).json({ error: 'Failed to fetch content' });
+    }
+  });
+
+  // Get monthly quota
+  router.get('/api/quota/:userId/:month', async (req, res) => {
+    try {
+      const { userId, month } = req.params;
+      const quota = await storage.getMonthlyQuota(userId, month);
+
+      if (!quota) {
+        return res.json({
+          contentGenerated: 0,
+          maxContent: 10,
+          remaining: 10
+        });
+      }
+
+      res.json({
+        contentGenerated: quota.contentGenerated,
+        maxContent: quota.maxContent,
+        remaining: (quota.maxContent || 10) - (quota.contentGenerated || 0)
+      });
+    } catch (error) {
+      console.error('Error fetching quota:', error);
+      res.status(500).json({ error: 'Failed to fetch quota' });
+    }
+  });
+
+
   // Content Generation with OpenAI
   router.post("/api/generate-content", async (req, res) => {
     try {
@@ -54,22 +100,70 @@ export async function registerRoutes(
     }
   });
 
-  router.post("/api/generate-bulk-content", async (req, res) => {
+  // Bulk content generation
+  router.post('/api/content/bulk-generate', async (req, res) => {
     try {
-      const schema = z.object({
-        requests: z.array(z.object({
-          topic: z.string().min(1),
-          keywords: z.array(z.string()),
-          wordCount: z.number().min(300).max(3000),
-          tone: z.string(),
-          language: z.string().optional(),
-        }))
+      const { count = 8, topics, keywords, tone, provider = 'openai', userId } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID required' });
+      }
+
+      // Check monthly quota
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      const quota = await storage.getMonthlyQuota(userId, currentMonth);
+      const remaining = quota ? (quota.maxContent || 10) - (quota.contentGenerated || 0) : 10;
+
+      if (remaining < count) {
+        return res.status(429).json({
+          error: `Monthly quota exceeded. You have ${remaining} posts remaining this month.`
+        });
+      }
+
+      const promises = Array.from({ length: count }).map(async (_, i) => {
+        const topic = topics?.[i] || topics?.[0] || 'general topic';
+        return await generateContent({
+          topic,
+          keywords: keywords?.split(',') || [],
+          wordCount: 300,
+          tone: tone || 'neutral',
+          language: 'en'
+        } as ContentGenerationRequest);
       });
 
-      const data = schema.parse(req.body);
-      const results = await generateBulkContent(data.requests as ContentGenerationRequest[]);
+      const results = await Promise.all(promises);
 
-      res.json({ results, count: results.length });
+      // Save to database
+      const savedContent = await Promise.all(
+        results.map(async (item) => {
+          const content = await storage.saveGeneratedContent({
+            title: item.title,
+            content: item.content,
+            slug: item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            excerpt: item.content.substring(0, 160),
+            keywords: keywords ? keywords.split(',') : [],
+            metaDescription: item.content.substring(0, 160),
+            focusKeyword: keywords?.split(',')[0] || '',
+            seoScore: null,
+            status: 'draft',
+            provider: provider,
+            userId: userId,
+            campaignId: null,
+            metadata: { topics, tone },
+          });
+
+          // Update quota
+          await storage.updateMonthlyQuota(userId, currentMonth);
+
+          return content;
+        })
+      );
+
+      res.json({
+        success: true,
+        generated: savedContent.length,
+        content: savedContent
+      });
     } catch (error: any) {
       console.error("Error generating bulk content:", error);
       res.status(500).json({
@@ -206,7 +300,7 @@ export async function registerRoutes(
       });
 
       const data = schema.parse(req.body);
-      
+
       const newContent: StoredContent = {
         id: `content_${contentIdCounter++}`,
         ...data,
@@ -215,10 +309,10 @@ export async function registerRoutes(
 
       contentStore.push(newContent);
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         id: newContent.id,
-        message: "Content saved successfully" 
+        message: "Content saved successfully"
       });
     } catch (error: any) {
       console.error("Error saving content:", error);
@@ -233,13 +327,13 @@ export async function registerRoutes(
   router.get("/api/content/list", async (req, res) => {
     try {
       const { status, campaignId } = req.query;
-      
+
       let filtered = [...contentStore];
-      
+
       if (status) {
         filtered = filtered.filter(c => c.status === status);
       }
-      
+
       if (campaignId) {
         filtered = filtered.filter(c => c.campaignId === campaignId);
       }
@@ -247,9 +341,9 @@ export async function registerRoutes(
       // Sort by newest first
       filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-      res.json({ 
+      res.json({
         contents: filtered,
-        total: filtered.length 
+        total: filtered.length
       });
     } catch (error: any) {
       console.error("Error listing content:", error);
@@ -264,7 +358,7 @@ export async function registerRoutes(
   router.get("/api/content/:id", async (req, res) => {
     try {
       const content = contentStore.find(c => c.id === req.params.id);
-      
+
       if (!content) {
         return res.status(404).json({ error: "Content not found" });
       }
@@ -288,16 +382,16 @@ export async function registerRoutes(
 
       const data = schema.parse(req.body);
       const content = contentStore.find(c => c.id === req.params.id);
-      
+
       if (!content) {
         return res.status(404).json({ error: "Content not found" });
       }
 
       content.status = data.status;
 
-      res.json({ 
+      res.json({
         success: true,
-        message: "Content status updated" 
+        message: "Content status updated"
       });
     } catch (error: any) {
       console.error("Error updating content status:", error);
@@ -312,16 +406,16 @@ export async function registerRoutes(
   router.delete("/api/content/:id", async (req, res) => {
     try {
       const index = contentStore.findIndex(c => c.id === req.params.id);
-      
+
       if (index === -1) {
         return res.status(404).json({ error: "Content not found" });
       }
 
       contentStore.splice(index, 1);
 
-      res.json({ 
+      res.json({
         success: true,
-        message: "Content deleted successfully" 
+        message: "Content deleted successfully"
       });
     } catch (error: any) {
       console.error("Error deleting content:", error);
