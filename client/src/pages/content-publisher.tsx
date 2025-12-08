@@ -1,4 +1,3 @@
-
 import SidebarLayout from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,12 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Send, 
-  Save, 
-  Sparkles, 
-  Globe, 
-  Share2, 
+import {
+  Send,
+  Save,
+  Sparkles,
+  Globe,
+  Share2,
   CheckCircle2,
   AlertCircle,
   RefreshCw,
@@ -23,19 +22,20 @@ import {
   Image as ImageIcon,
   Workflow,
   Search,
-  Clock as ClockIcon
+  Clock as ClockIcon,
+  Download,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip as RechartsTooltip, 
-  ResponsiveContainer 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer
 } from 'recharts';
 
 // Mock Data
@@ -46,6 +46,41 @@ const MOCK_WORKFLOWS = [
 ];
 
 export default function ContentPublisher() {
+  const queryClient = useQueryClient();
+
+  const exportPublishingReport = () => {
+    const report = {
+      fecha: new Date().toISOString(),
+      estadisticas: {
+        publicadosHoy: 28,
+        tasaExito: '98.5%',
+        tiempoPromedio: '2.3s'
+      },
+      actividadPorHora: publishingStats,
+      integracionesActivas: [
+        'WordPress',
+        'WP-SEO Plugin',
+        'Jetpack Social',
+        'n8n Workflows',
+        'OpenAI GPT-4'
+      ]
+    };
+
+    const dataStr = JSON.stringify(report, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const exportFileDefaultName = `reporte-publicacion-${new Date().toISOString().split('T')[0]}.json`;
+
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+
+    toast({
+      title: "Reporte exportado",
+      description: "El reporte de publicación se descargó exitosamente"
+    });
+  };
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [keywords, setKeywords] = useState("");
@@ -70,12 +105,12 @@ export default function ContentPublisher() {
   const generateContentMutation = useMutation({
     mutationFn: async () => {
       const keywordList = keywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
-      
+
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       const mockContent = `Este es un artículo generado automáticamente sobre ${title}.
-      
+
 Contenido detallado que incluye palabras clave como: ${keywordList.join(', ')}.
 
 El sistema ha optimizado este texto para lectura profesional.`;
@@ -94,9 +129,9 @@ El sistema ha optimizado este texto para lectura profesional.`;
         setSeoTitle(data.seo.title);
         setSeoDescription(data.seo.description);
       }
-      toast({ 
-        title: "¡Contenido generado!", 
-        description: "Contenido creado exitosamente con OpenAI GPT-4" 
+      toast({
+        title: "¡Contenido generado!",
+        description: "Contenido creado exitosamente con OpenAI GPT-4"
       });
     },
     onError: (error: any) => {
@@ -177,7 +212,7 @@ El sistema ha optimizado este texto para lectura profesional.`;
         title: data.isDraft ? "Borrador guardado" : "Publicado exitosamente",
         description: `Post ID: ${data.postId}. Todas las integraciones completadas.`
       });
-      
+
       // Reset form
       setTitle("");
       setContent("");
@@ -261,12 +296,12 @@ El sistema ha optimizado este texto para lectura profesional.`;
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="time" stroke="#64748b" style={{ fontSize: '12px' }} />
               <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
-              <RechartsTooltip 
-                contentStyle={{ 
-                  backgroundColor: '#fff', 
+              <RechartsTooltip
+                contentStyle={{
+                  backgroundColor: '#fff',
                   border: '1px solid #e2e8f0',
                   borderRadius: '8px'
-                }} 
+                }}
               />
               <Line type="monotone" dataKey="success" stroke="#10b981" strokeWidth={2} name="Exitosos" />
               <Line type="monotone" dataKey="pending" stroke="#f59e0b" strokeWidth={2} name="Pendientes" />
@@ -281,8 +316,8 @@ El sistema ha optimizado este texto para lectura profesional.`;
           <p className="text-slate-500 mt-1">Sistema unificado con todas las integraciones activas</p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="gap-2"
             onClick={() => publishMutation.mutate(true)}
             disabled={!title || !content || isPublishing}
@@ -290,7 +325,7 @@ El sistema ha optimizado este texto para lectura profesional.`;
             <Save className="w-4 h-4" />
             Guardar Borrador
           </Button>
-          <Button 
+          <Button
             className="gap-2 bg-green-600 hover:bg-green-700"
             onClick={() => publishMutation.mutate(false)}
             disabled={!title || !content || isPublishing}
@@ -306,6 +341,15 @@ El sistema ha optimizado este texto para lectura profesional.`;
                 Publicar Ahora
               </>
             )}
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={exportPublishingReport}
+            disabled={isPublishing}
+          >
+            <Download className="w-4 h-4" />
+            Exportar Reporte
           </Button>
         </div>
       </div>
@@ -363,7 +407,7 @@ El sistema ha optimizado este texto para lectura profesional.`;
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Título del Artículo</Label>
-                <Input 
+                <Input
                   placeholder="Ej: Guía Completa sobre Accidentes de Auto en California"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -372,7 +416,7 @@ El sistema ha optimizado este texto para lectura profesional.`;
 
               <div className="space-y-2">
                 <Label>Palabras Clave Objetivo</Label>
-                <Input 
+                <Input
                   placeholder="abogado lesiones, accidente auto, compensación"
                   value={keywords}
                   onChange={(e) => setKeywords(e.target.value)}
@@ -402,7 +446,7 @@ El sistema ha optimizado este texto para lectura profesional.`;
 
               <div className="space-y-2">
                 <Label>Contenido</Label>
-                <Textarea 
+                <Textarea
                   placeholder="Escribe tu contenido aquí o genera con IA..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -423,7 +467,7 @@ El sistema ha optimizado este texto para lectura profesional.`;
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Título SEO (50-60 caracteres)</Label>
-                <Input 
+                <Input
                   placeholder="Título optimizado para motores de búsqueda"
                   value={seoTitle}
                   onChange={(e) => setSeoTitle(e.target.value)}
@@ -434,7 +478,7 @@ El sistema ha optimizado este texto para lectura profesional.`;
 
               <div className="space-y-2">
                 <Label>Meta Descripción (120-160 caracteres)</Label>
-                <Textarea 
+                <Textarea
                   placeholder="Descripción que aparecerá en resultados de búsqueda"
                   value={seoDescription}
                   onChange={(e) => setSeoDescription(e.target.value)}
@@ -498,7 +542,7 @@ El sistema ha optimizado este texto para lectura profesional.`;
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label htmlFor="auto-seo" className="text-sm">Optimizar SEO automáticamente</Label>
-                <Switch 
+                <Switch
                   id="auto-seo"
                   checked={autoOptimizeSEO}
                   onCheckedChange={setAutoOptimizeSEO}
@@ -507,7 +551,7 @@ El sistema ha optimizado este texto para lectura profesional.`;
 
               <div className="flex items-center justify-between">
                 <Label htmlFor="social" className="text-sm">Compartir en redes sociales</Label>
-                <Switch 
+                <Switch
                   id="social"
                   checked={publishToSocial}
                   onCheckedChange={setPublishToSocial}
@@ -516,7 +560,7 @@ El sistema ha optimizado este texto para lectura profesional.`;
 
               <div className="flex items-center justify-between">
                 <Label htmlFor="images" className="text-sm">Generar imágenes con IA</Label>
-                <Switch 
+                <Switch
                   id="images"
                   checked={generateImages}
                   onCheckedChange={setGenerateImages}

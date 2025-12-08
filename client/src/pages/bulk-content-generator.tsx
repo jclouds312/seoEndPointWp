@@ -28,6 +28,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { 
   LineChart, 
   Line, 
@@ -368,6 +369,74 @@ export default function BulkContentGenerator() {
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
+    
+    toast({
+      title: "Descarga iniciada",
+      description: "Archivo JSON descargado exitosamente"
+    });
+  };
+
+  const downloadAsCSV = () => {
+    const headers = ['Título', 'Contenido', 'Meta Descripción', 'SEO Score', 'Palabras Clave'];
+    const rows = generatedPosts.map(post => [
+      `"${post.title.replace(/"/g, '""')}"`,
+      `"${post.content.replace(/"/g, '""')}"`,
+      `"${post.metaDescription.replace(/"/g, '""')}"`,
+      post.seoScore,
+      `"${post.keywords?.join(', ') || ''}"`
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `content-${new Date().toISOString().split('T')[0]}.csv`);
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Descarga iniciada",
+      description: "Archivo CSV descargado exitosamente"
+    });
+  };
+
+  const downloadAsMarkdown = () => {
+    const mdContent = generatedPosts.map(post => {
+      return `# ${post.title}\n\n**SEO Score:** ${post.seoScore}/100\n\n**Meta Descripción:** ${post.metaDescription}\n\n**Palabras Clave:** ${post.keywords?.join(', ') || 'N/A'}\n\n---\n\n${post.content}\n\n---\n\n`;
+    }).join('\n\n');
+    
+    const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `content-${new Date().toISOString().split('T')[0]}.md`);
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Descarga iniciada",
+      description: "Archivo Markdown descargado exitosamente"
+    });
+  };
+
+  const downloadAsTXT = () => {
+    const txtContent = generatedPosts.map((post, idx) => {
+      return `POST ${idx + 1}\n${'='.repeat(50)}\n\nTítulo: ${post.title}\n\nSEO Score: ${post.seoScore}/100\n\nMeta Descripción: ${post.metaDescription}\n\nPalabras Clave: ${post.keywords?.join(', ') || 'N/A'}\n\nContenido:\n${post.content}\n\n${'='.repeat(50)}\n\n`;
+    }).join('\n');
+    
+    const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `content-${new Date().toISOString().split('T')[0]}.txt`);
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Descarga iniciada",
+      description: "Archivo TXT descargado exitosamente"
+    });
   };
 
   return (
@@ -759,14 +828,32 @@ export default function BulkContentGenerator() {
                         </CardDescription>
                       </div>
                       <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={downloadAsJSON}
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Exportar JSON
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <Download className="w-4 h-4 mr-2" />
+                              Exportar
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={downloadAsJSON}>
+                              <FileText className="w-4 h-4 mr-2" />
+                              Exportar como JSON
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={downloadAsCSV}>
+                              <FileText className="w-4 h-4 mr-2" />
+                              Exportar como CSV
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={downloadAsMarkdown}>
+                              <FileText className="w-4 h-4 mr-2" />
+                              Exportar como Markdown
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={downloadAsTXT}>
+                              <FileText className="w-4 h-4 mr-2" />
+                              Exportar como TXT
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <Button
                           size="sm"
                           onClick={() => saveAllMutation.mutate()}
