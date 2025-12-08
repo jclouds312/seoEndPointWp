@@ -115,6 +115,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/bulk-generate", async (req, res) => {
     try {
       const userId = getUserId(req);
+      
+      // Verify user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ error: "Usuario no encontrado. Por favor inicia sesión nuevamente." });
+      }
+      
       const { topics, keywords, wordCount, aiProvider, campaignId } = req.body;
       if (!topics || !Array.isArray(topics)) return res.status(400).json({ error: "Topics requerido" });
 

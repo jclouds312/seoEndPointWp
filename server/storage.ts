@@ -1,5 +1,5 @@
-import { 
-  type User, 
+import {
+  type User,
   type InsertUser,
   type Campaign,
   type GeneratedContent,
@@ -135,7 +135,7 @@ export class DatabaseStorage implements IStorage {
   async createGeneratedContent(data: any): Promise<GeneratedContent> {
     const validated = insertGeneratedContentSchema.parse(data);
     const result = await db.insert(generatedContent).values(validated).returning();
-    
+
     // Track content history
     await this.createContentHistory({
       contentId: result[0].id,
@@ -143,7 +143,7 @@ export class DatabaseStorage implements IStorage {
       changes: { title: result[0].title },
       performedBy: result[0].userId
     });
-    
+
     return result[0];
   }
 
@@ -153,7 +153,7 @@ export class DatabaseStorage implements IStorage {
       .set({ ...data, updatedAt: new Date() })
       .where(eq(generatedContent.id, id))
       .returning();
-    
+
     // Track content history
     await this.createContentHistory({
       contentId: id,
@@ -161,7 +161,7 @@ export class DatabaseStorage implements IStorage {
       changes: data,
       performedBy: result[0].userId
     });
-    
+
     return result[0];
   }
 
@@ -172,14 +172,14 @@ export class DatabaseStorage implements IStorage {
   async publishContent(id: number): Promise<GeneratedContent> {
     const result = await db
       .update(generatedContent)
-      .set({ 
-        status: 'published', 
+      .set({
+        status: 'published',
         publishedAt: new Date(),
-        updatedAt: new Date() 
+        updatedAt: new Date()
       })
       .where(eq(generatedContent.id, id))
       .returning();
-    
+
     // Track content history
     await this.createContentHistory({
       contentId: id,
@@ -187,7 +187,7 @@ export class DatabaseStorage implements IStorage {
       changes: { status: 'published', publishedAt: new Date() },
       performedBy: result[0].userId
     });
-    
+
     return result[0];
   }
 
@@ -218,13 +218,13 @@ export class DatabaseStorage implements IStorage {
 
   async updateMonthlyQuota(userId: string, month: string, increment: number = 1): Promise<MonthlyContentQuota> {
     const existing = await this.getMonthlyQuota(userId, month);
-    
+
     if (existing) {
       const result = await db
         .update(monthlyContentQuota)
-        .set({ 
+        .set({
           contentGenerated: sql`${monthlyContentQuota.contentGenerated} + ${increment}`,
-          updatedAt: new Date() 
+          updatedAt: new Date()
         })
         .where(eq(monthlyContentQuota.id, existing.id))
         .returning();
