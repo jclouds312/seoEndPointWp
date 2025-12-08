@@ -1,40 +1,17 @@
-import { type User, type InsertUser } from "@shared/schema";
+import { type User, type InsertUser, type GeneratedContent as DBGeneratedContent } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "@shared/db";
-import { campaigns, generatedContent, bulkGenerationBatches } from "@shared/schema";
+import { users, generatedContent, bulkGenerationBatches } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
-
-interface GeneratedContent {
-  id: string;
-  title: string;
-  content: string;
-  metaDescription: string;
-  seoScore: number;
-  keywords: string;
-  status: 'draft' | 'published';
-  createdAt: Date;
-  featuredImage?: string;
-}
-
-interface InsertGeneratedContent {
-  title: string;
-  content: string;
-  metaDescription: string;
-  seoScore: number;
-  keywords: string;
-  status: 'draft' | 'published';
-  featuredImage?: string;
-}
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  createGeneratedContent(content: InsertGeneratedContent): Promise<GeneratedContent>;
-  getAllGeneratedContent(): Promise<GeneratedContent[]>;
-  getGeneratedContent(id: string): Promise<GeneratedContent | undefined>;
-  deleteGeneratedContent(id: string): Promise<void>;
-  publishGeneratedContent(id: string): Promise<GeneratedContent>;
+  getAllGeneratedContent(): Promise<DBGeneratedContent[]>;
+  getGeneratedContent(id: number): Promise<DBGeneratedContent | undefined>;
+  deleteGeneratedContent(id: number): Promise<void>;
+  publishGeneratedContent(id: number): Promise<DBGeneratedContent>;
   saveGeneratedContent(data: {
     title: string;
     content: string;
@@ -45,80 +22,55 @@ export interface IStorage {
     featuredImage?: string;
     provider?: string;
     campaignId?: number;
-  }): Promise<GeneratedContent>;
+  }): Promise<DBGeneratedContent>;
   createBulkBatch(data: any): Promise<any>;
   updateBulkBatch(batchId: string, data: any): Promise<any>;
   getBulkBatches(userId?: string): Promise<any[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private generatedContent: Map<string, GeneratedContent>;
-
-  constructor() {
-    this.users = new Map();
-    this.generatedContent = new Map();
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0];
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const result = await db.select().from(users).where(eq(users.username, username));
+    return result[0];
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+    const result = await db.insert(users).values(insertUser).returning();
+    return result[0];
   }
 
-  async createGeneratedContent(data: {
-    title: string;
-    content: string;
-    metaDescription: string;
-    seoScore: number;
-    keywords: string;
-    status: 'draft' | 'published';
-    featuredImage?: string;
-    provider?: string;
-    campaignId?: number;
-  }): Promise<GeneratedContent> {
-    const id = randomUUID();
-    const content: GeneratedContent = {
-      ...data,
-      id,
-      createdAt: new Date()
-    };
-    this.generatedContent.set(id, content);
-    return content;
+  async getAllGeneratedContent(): Promise<DBGeneratedContent[]> {
+    return await db.select()
+      .from(generatedContent)
+      .orderBy(desc(generatedContent.createdAt));
   }
 
-  async getAllGeneratedContent(): Promise<GeneratedContent[]> {
-    return Array.from(this.generatedContent.values())
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  async getGeneratedContent(id: number): Promise<DBGeneratedContent | undefined> {
+    const result = await db.select()
+      .from(generatedContent)
+      .where(eq(generatedContent.id, id));
+    return result[0];
   }
 
-  async getGeneratedContent(id: string): Promise<GeneratedContent | undefined> {
-    return this.generatedContent.get(id);
+  async deleteGeneratedContent(id: number): Promise<void> {
+    await db.delete(generatedContent).where(eq(generatedContent.id, id));
   }
 
-  async deleteGeneratedContent(id: string): Promise<void> {
-    this.generatedContent.delete(id);
-  }
-
-  async publishGeneratedContent(id: string): Promise<GeneratedContent> {
-    const content = this.generatedContent.get(id);
-    if (!content) {
+  async publishGeneratedContent(id: number): Promise<DBGeneratedContent> {
+    const result = await db.update(generatedContent)
+      .set({ status: 'published', publishedAt: new Date() })
+      .where(eq(generatedContent.id, id))
+      .returning();
+    
+    if (!result[0]) {
       throw new Error('Content not found');
     }
-    content.status = 'published';
-    this.generatedContent.set(id, content);
-    return content;
+    return result[0];
   }
 
   async saveGeneratedContent(data: {
@@ -131,7 +83,7 @@ export class MemStorage implements IStorage {
     featuredImage?: string;
     provider?: string;
     campaignId?: number;
-  }) {
+  }): Promise<DBGeneratedContent> {
     const result = await db.insert(generatedContent).values({
       title: data.title,
       content: data.content,
@@ -158,7 +110,7 @@ export class MemStorage implements IStorage {
 
   async updateBulkBatch(batchId: string, data: any) {
     const result = await db.update(bulkGenerationBatches)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...data })
       .where(eq(bulkGenerationBatches.batchId, batchId))
       .returning();
     return result[0];
@@ -177,4 +129,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
