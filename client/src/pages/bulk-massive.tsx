@@ -30,7 +30,7 @@ export default function BulkMassive() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentPost, setCurrentPost] = useState(0);
   const [targetSite, setTargetSite] = useState("calinjurylaw");
-  const [mainKeyword, setMainKeyword] = useState("");
+  const [mainKeyword, setMainKeyword] = useState("Legal SEO Strategy");
   const [generatedPosts, setGeneratedPosts] = useState<GeneratedPost[]>([]);
   const [recentBatches, setRecentBatches] = useState<Batch[]>([
     { topic: "Truck Accident Liability", date: "2 hrs ago", status: "Completed" },
