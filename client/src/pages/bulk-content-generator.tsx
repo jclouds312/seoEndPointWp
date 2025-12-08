@@ -4,158 +4,61 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import {
-  Calendar,
-  Sparkles,
-  Download,
-  RefreshCw,
-  CheckCircle2,
-  Clock as ClockIcon,
-  TrendingUp,
-  FileText,
-  Save,
-  Trash2,
-  Eye,
-  Send,
-  Globe,
-  X,
-  BarChart3,
-  PieChart as PieChartIcon,
-  Activity
-} from "lucide-react";
+import { Sparkles, RefreshCw, CheckCircle2, Info, ArrowLeft, FileText, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearch } from "wouter";
+import { useSearch, useLocation, Link } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { 
-  LineChart, 
-  Line, 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip as RechartsTooltip, 
-  Legend, 
-  ResponsiveContainer,
-  Area,
-  AreaChart
-} from 'recharts';
 
-interface GeneratedPost {
-  id?: string;
-  title: string;
-  content: string;
-  metaDescription: string;
-  seoScore: number;
-  keywords?: string[];
-  status?: 'draft' | 'published';
-  createdAt?: Date;
-  featuredImage?: string;
-}
+// Tipos de datos
+interface GeneratedPost { id?: string; title: string; content: string; metaDescription: string; seoScore: number; }
+interface CampaignDetails { campaign: { id: string; name: string; }; }
 
 export default function BulkContentGenerator() {
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const searchString = useSearch();
   const searchParams = new URLSearchParams(searchString);
+  const campaignId = searchParams.get('campaignId');
+
+  // Estado del formulario
   const [postsCount, setPostsCount] = useState(4);
-  const [baseTopics, setBaseTopics] = useState("lesiones personales, accidentes de auto, compensación laboral, negligencia médica, accidentes de trabajo, lesiones en construcción, accidentes de motocicleta, mordeduras de perro");
-  const [keywords, setKeywords] = useState("abogado, lesiones, compensación, derechos legales");
+  const [baseTopics, setBaseTopics] = useState("lesiones personales, accidentes de auto, compensación laboral");
+  const [keywords, setKeywords] = useState("abogado, miami, indemnización");
   const [wordCount, setWordCount] = useState(1200);
-  const [aiProvider, setAiProvider] = useState<'openai' | 'claude' | 'gemini' | 'free'>('gemini');
-  const [apiKey, setApiKey] = useState(""); // API Key state
-  const [generatedPosts, setGeneratedPosts] = useState<GeneratedPost[]>([]);
-  const [progress, setProgress] = useState(0);
+  const [aiProvider, setAiProvider] = useState<'gemini' | 'free'>('gemini');
+  const [apiKey, setApiKey] = useState("");
+
+  // Estado de la UI
   const [isGenerating, setIsGenerating] = useState(false);
-  const [currentGenerating, setCurrentGenerating] = useState(0);
-  const [promptSuggestion, setPromptSuggestion] = useState("");
-  const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
-  const [previewPost, setPreviewPost] = useState<GeneratedPost | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("generator");
+  const [progress, setProgress] = useState(0);
+  const [generatedPosts, setGeneratedPosts] = useState<GeneratedPost[]>([]);
 
-  useEffect(() => {
-    const autoGenerate = searchParams.get('auto');
-    const showResults = searchParams.get('results');
-    
-    if (showResults === 'true' && savedContents.length > 0) {
-      setActiveTab('history');
-      toast({
-        title: "Mostrando resultados guardados",
-        description: `Tienes ${savedContents.length} contenidos generados`
-      });
-    } else if (autoGenerate === 'true' && !isGenerating && baseTopics.trim()) {
-      setTimeout(() => {
-        handleGenerate();
-      }, 500);
-    }
-  }, [searchParams]);
-
-  const monthlyStats = [
-    { month: 'Ene', posts: 8, views: 1200, conversions: 45 },
-    { month: 'Feb', posts: 10, views: 1800, conversions: 68 },
-    { month: 'Mar', posts: 8, views: 2100, conversions: 89 },
-    { month: 'Abr', posts: 9, views: 2400, conversions: 102 },
-    { month: 'May', posts: 10, views: 2900, conversions: 128 },
-    { month: 'Jun', posts: 8, views: 3200, conversions: 145 }
-  ];
-
-  const contentTypeDistribution = [
-    { name: 'Artículos Legales', value: 45, color: '#3b82f6' },
-    { name: 'Guías Prácticas', value: 30, color: '#8b5cf6' },
-    { name: 'Casos de Estudio', value: 15, color: '#10b981' },
-    { name: 'FAQs', value: 10, color: '#f59e0b' }
-  ];
-
-  const seoPerformance = [
-    { range: '90-100', count: 12 },
-    { range: '80-89', count: 18 },
-    { range: '70-79', count: 8 },
-    { range: '60-69', count: 3 }
-  ];
-
-  const { data: savedContents = [], refetch: refetchSaved } = useQuery<GeneratedPost[]>({
-    queryKey: ['saved-contents'],
+  // Obtener detalles de la campaña si el ID está en la URL
+  const { data: campaignData, isLoading: isLoadingCampaign } = useQuery<CampaignDetails>({
+    queryKey: ['campaignDetails', campaignId],
     queryFn: async () => {
-      const response = await fetch('/api/generated-content');
-      if (!response.ok) throw new Error('Error al cargar contenido');
-      const data = await response.json();
-      return data.map((item: any) => ({
-        id: String(item.id),
-        title: item.title,
-        content: item.content,
-        metaDescription: item.metaDescription || '',
-        seoScore: item.seoScore || 0,
-        status: item.status as 'draft' | 'published',
-        createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
-        keywords: item.keywords?.split(',').map((k: string) => k.trim()) || [],
-        featuredImage: item.featuredImage
-      }));
-    }
+      const response = await fetch(`/api/campaigns/${campaignId}`);
+      if (!response.ok) throw new Error('No se pudieron cargar los detalles de la campaña');
+      return response.json();
+    },
+    enabled: !!campaignId, // Solo se ejecuta si hay un campaignId
   });
 
+  // Mutación para la generación masiva, ahora consciente de la campaña
   const generateBulkMutation = useMutation({
     mutationFn: async () => {
-      const topics = baseTopics.split(',').map(t => t.trim()).filter(t => t.length > 0);
-
-      if (topics.length === 0) {
-        throw new Error('Debes proporcionar al menos un tema');
-      }
+      const topics = baseTopics.split(',').map(t => t.trim()).filter(Boolean);
+      if (topics.length === 0) throw new Error('Debes proporcionar al menos un tema.');
 
       const postsToGenerate = Math.min(postsCount, topics.length);
       const selectedTopics = topics.slice(0, postsToGenerate);
 
-      setCurrentGenerating(1);
       setProgress(10);
 
       const response = await fetch('/api/bulk-generate', {
@@ -163,252 +66,162 @@ export default function BulkContentGenerator() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           topics: selectedTopics,
-          keywords: keywords || selectedTopics.join(', '),
+          keywords,
           wordCount,
           aiProvider,
           apiKey: aiProvider === 'gemini' ? apiKey : undefined,
-          campaignId: null,
+          campaignId: campaignId, // <-- AQUÍ SE ENVÍA EL ID DE CAMPAÑA
           bulkType: 'standard'
         })
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage = 'Error al generar contenido masivo';
-        try {
-          const errorJson = JSON.parse(errorText);
-          errorMessage = errorJson.error || errorMessage;
-        } catch {
-          errorMessage = errorText || errorMessage;
-        }
-        throw new Error(errorMessage);
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error desconocido al generar contenido.');
       }
 
       const data = await response.json();
-      
-      for (let i = 0; i <= 100; i += 10) {
-        setProgress(i);
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
-      
-      const results: GeneratedPost[] = data.contents.map((item: any) => ({
-        id: String(item.id),
-        title: item.title,
-        content: item.content,
-        metaDescription: item.metaDescription || '',
-        seoScore: item.seoScore || 85,
-        status: item.status as 'draft' | 'published',
-        createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
-        keywords: item.keywords?.split(',').map((k: string) => k.trim()) || [],
-        featuredImage: item.featuredImage
-      }));
-
-      return results;
+      setProgress(100);
+      return data.contents as GeneratedPost[];
     },
     onSuccess: (data) => {
       setGeneratedPosts(data);
-      setProgress(100);
-      setCurrentGenerating(0);
-      refetchSaved();
+      queryClient.invalidateQueries({ queryKey: ['campaignDetails', campaignId] });
       toast({
-        title: "¡Contenido generado exitosamente!",
-        description: `Se generaron ${data.length} posts de alta calidad con ${aiProvider}`
+        title: "¡Éxito!",
+        description: `Se generaron ${data.length} posts para la campaña "${campaignData?.campaign.name || ''}".`,
       });
+
+      // Redirección automática a la página de la campaña
+      if (campaignId) {
+        setTimeout(() => {
+          setLocation(`/campaign/${campaignId}`);
+        }, 1200); // Pequeño delay para que el usuario vea el mensaje
+      }
     },
     onError: (error: any) => {
-      toast({
-        title: "Error al generar contenido",
-        description: error.message,
-        variant: "destructive"
-      });
-      setProgress(0);
-      setCurrentGenerating(0);
+      toast({ title: "Error de Generación", description: error.message, variant: "destructive" });
       setIsGenerating(false);
-      setGeneratedPosts([]);
+      setProgress(0);
     },
     onSettled: () => {
       setIsGenerating(false);
     }
   });
 
-  // ... (otras mutaciones)
-
   const handleGenerate = () => {
     if (aiProvider === 'gemini' && !apiKey.trim()) {
-      toast({
-        title: "API Key Requerida",
-        description: "Por favor, ingresa tu Google AI API Key para usar Gemini.",
-        variant: "destructive"
-      });
+      toast({ title: "Clave de API Requerida", description: "Ingresa tu Google AI API Key.", variant: "destructive" });
       return;
     }
-    
-    const topics = baseTopics.split(',').map(t => t.trim()).filter(t => t.length > 0);
-    
-    if (topics.length === 0) {
-      toast({
-        title: "Error",
-        description: "Debes proporcionar al menos un tema",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (topics.length < postsCount) {
-      toast({
-        title: "Advertencia",
-        description: `Solo tienes ${topics.length} temas, pero solicitaste ${postsCount} posts. Se generarán ${topics.length} posts.`,
-      });
-    }
-
-    setProgress(0);
-    setCurrentGenerating(0);
-    setGeneratedPosts([]);
     setIsGenerating(true);
+    setGeneratedPosts([]);
     generateBulkMutation.mutate();
   };
-  
-  // ... (el resto del componente permanece igual)
-
 
   return (
     <SidebarLayout>
+      {/* Notificación de Contexto de Campaña */}
+      {campaignId && (
+        <Card className="mb-6 bg-blue-50 border-blue-200">
+          <CardContent className="pt-6">
+            {isLoadingCampaign ? (
+              <div className="flex items-center gap-3"><RefreshCw className="w-4 h-4 animate-spin"/>Cargando campaña...</div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Info className="w-5 h-5 text-blue-600" />
+                  <p className="font-semibold text-blue-800">
+                    Generando contenido para la campaña: "{campaignData?.campaign.name}"
+                  </p>
+                </div>
+                <Link href={`/campaign/${campaignId}`} className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+                  <ArrowLeft className="w-3 h-3"/> Volver a la Campaña
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Generador Masivo de Contenido</h1>
-          <p className="text-slate-500 mt-1">Genera hasta 10 posts de alta calidad mensuales con IA</p>
-        </div>
-        <div className="flex gap-2">
-          <Badge className="bg-purple-600 text-white px-4 py-2 text-base">
-            <Calendar className="w-4 h-4 mr-2" />
-            x{postsCount} Posts configurados
-          </Badge>
-          <Badge variant="outline" className="px-4 py-2">
-            <FileText className="w-4 h-4 mr-2" />
-            {savedContents.length} guardados
-          </Badge>
-          {savedContents.length > 0 && (
-            <Button
-              variant="default"
-              className="gap-2 bg-green-600 hover:bg-green-700"
-              onClick={() => setActiveTab('history')}
-            >
-              <Eye className="w-4 h-4" />
-              Ver Resultados
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            className="gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Exportar Dashboard
-          </Button>
+          <h1 className="text-3xl font-bold">Generador Masivo de Contenido</h1>
+          <p className="text-slate-500 mt-1">Define tus parámetros y crea múltiples artículos con IA.</p>
         </div>
       </div>
 
-      {/* ... (resto del JSX) */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Panel de Configuración */}
+        <Card className="lg:col-span-1">
+          <CardHeader><CardTitle>Configuración</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            {/* ... Campos del formulario ... */}
+             <div className="space-y-2">
+                <Label>Proveedor de IA</Label>
+                <RadioGroup value={aiProvider} onValueChange={(v: any) => setAiProvider(v)}>
+                    <div className="flex items-center space-x-2"><RadioGroupItem value="gemini" id="gemini" /><Label htmlFor="gemini">Google Gemini</Label></div>
+                    <div className="flex items-center space-x-2"><RadioGroupItem value="free" id="free" /><Label htmlFor="free">Gratuito (Prueba)</Label></div>
+                </RadioGroup>
+            </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-          <TabsTrigger value="generator" className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <Sparkles className="w-4 h-4 mr-2" />
-            Generador
-          </TabsTrigger>
-          <TabsTrigger value="history" className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <FileText className="w-4 h-4 mr-2" />
-            Historial ({savedContents.length})
-            {savedContents.filter(c => c.status === 'draft').length > 0 && (
-              <Badge className="ml-2 bg-amber-500 text-white">
-                {savedContents.filter(c => c.status === 'draft').length}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="generator" className="space-y-6">
-          <div className="grid lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-1 border-purple-200 bg-gradient-to-br from-purple-50/50 to-blue-50/50 dark:from-purple-950/50 dark:to-blue-950/50 shadow-md">
-              <CardHeader className="border-b border-purple-100 dark:border-purple-900 bg-white/50 dark:bg-slate-900/50">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-purple-600" />
-                  Configuración de Generación
-                </CardTitle>
-                <CardDescription>Define los parámetros para generar contenido masivo</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 pt-6">
-                 {/* ... (otros campos) */}
-                
+            {aiProvider === 'gemini' && (
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Proveedor de IA</Label>
-                  <RadioGroup value={aiProvider} onValueChange={(value: any) => setAiProvider(value)}>
-                    <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                      <RadioGroupItem value="gemini" id="gemini-bulk" />
-                      <Label htmlFor="gemini-bulk" className="font-normal cursor-pointer flex-1">Google Gemini</Label>
-                    </div>
-                    <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                      <RadioGroupItem value="free" id="free-bulk" />
-                      <Label htmlFor="free-bulk" className="font-normal cursor-pointer flex-1">No-Cost AI (Mock)</Label>
-                    </div>
-                    {/* Add other providers as needed */}
-                  </RadioGroup>
+                    <Label>Google AI API Key</Label>
+                    <Input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="Ingresa tu clave de API"/>
                 </div>
+            )}
+            <div className="space-y-2">
+                <Label>Temas Principales (separados por comas)</Label>
+                <Textarea value={baseTopics} onChange={(e) => setBaseTopics(e.target.value)} placeholder="Ej: lesiones personales, accidentes de auto" rows={3} />
+            </div>
+             <div className="space-y-2">
+                <Label>Palabras Clave Secundarias (separadas por comas)</Label>
+                <Input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="Ej: abogado, indemnización" />
+            </div>
+             <div className="space-y-2">
+                <Label>Número de Posts a Generar</Label>
+                <Input type="number" value={postsCount} onChange={(e) => setPostsCount(Number(e.target.value))} min={1} />
+            </div>
 
-                {aiProvider === 'gemini' && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Google AI API Key</Label>
-                    <Input
-                      type="password"
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      placeholder="Ingresa tu clave de API"
-                      className="bg-white dark:bg-slate-900"
-                    />
-                  </div>
-                )}
-                
-                 {/* ... (otros campos) */}
+            <Separator className="my-4" />
+            <Button className="w-full h-12 gap-2" onClick={handleGenerate} disabled={isGenerating}>
+              {isGenerating ? <><RefreshCw className="w-5 h-5 animate-spin"/>Generando...</> : <><Sparkles className="w-5 h-5"/>Generar Contenido</>}
+            </Button>
+            {isGenerating && <Progress value={progress} className="h-2 mt-2" />}
+          </CardContent>
+        </Card>
 
-                <Separator className="my-4" />
-
-                <Button
-                  className="w-full h-14 gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
-                  onClick={handleGenerate}
-                  disabled={isGenerating}
-                >
-                  {isGenerating ? (
-                    <>
-                      <RefreshCw className="w-5 h-5 animate-spin" />
-                      Generando...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      Generar x{postsCount} Posts
-                    </>
-                  )}
-                </Button>
-
-                {isGenerating && (
-                  <div className="space-y-2">
-                    <Progress value={progress} className="h-2" />
-                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                      <span>Generando contenido...</span>
-                      <span>{Math.round(progress)}% completado</span>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* ... (results panel) */}
-          </div>
-        </TabsContent>
-
-        {/* ... (history tab) */}
-      </Tabs>
-
-      {/* ... (preview dialog) */}
+        {/* Panel de Resultados */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Resultados de la Generación</CardTitle>
+            <CardDescription>Los posts generados aparecerán aquí.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isGenerating && generatedPosts.length === 0 && (
+                <div className="text-center py-16"><RefreshCw className="mx-auto w-8 h-8 animate-spin text-blue-600"/><p className="mt-4 text-slate-500">La IA está trabajando... Esto puede tardar unos momentos.</p></div>
+            )}
+            {!isGenerating && generatedPosts.length === 0 && (
+                <div className="text-center py-16 border-2 border-dashed rounded-lg"><p className="text-slate-500">Los resultados aparecerán aquí después de la generación.</p></div>
+            )}
+            {generatedPosts.length > 0 && (
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3 text-green-600"><CheckCircle2/><h4>¡Generación completada! Serás redirigido en un momento.</h4></div>
+                    {generatedPosts.map((post, index) => (
+                        <div key={index} className="p-4 border rounded-lg">
+                            <h3 className="font-semibold">{post.title}</h3>
+                            <p className="text-sm text-slate-600 mt-1 truncate">{post.metaDescription}</p>
+                             <div className="flex items-center gap-4 mt-2">
+                                <span className="text-xs font-semibold">SEO Score: {post.seoScore}</span>
+                             </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </SidebarLayout>
   );
 }
