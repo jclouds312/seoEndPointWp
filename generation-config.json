@@ -1,0 +1,109 @@
+
+{
+  "aiProviders": {
+    "openai": {
+      "model": "gpt-4",
+      "maxTokens": 3000,
+      "temperature": 0.7,
+      "endpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "claude": {
+      "model": "claude-3-5-sonnet-20241022",
+      "maxTokens": 3000,
+      "temperature": 0.7,
+      "endpoint": "https://api.anthropic.com/v1/messages",
+      "version": "2023-06-01"
+    },
+    "free": {
+      "enabled": true,
+      "fallback": true
+    }
+  },
+  "queueConfig": {
+    "batchSize": 2,
+    "delayBetweenBatches": 2000,
+    "maxRetries": 3,
+    "retryDelay": 5000
+  },
+  "contentGeneration": {
+    "defaultWordCount": 1200,
+    "minWordCount": 800,
+    "maxWordCount": 2500,
+    "seoScoreRange": {
+      "min": 80,
+      "max": 100
+    }
+  },
+  "monthlyQuota": {
+    "default": 8,
+    "premium": 50,
+    "enterprise": 200
+  },
+  "contentTemplates": {
+    "legal": {
+      "sections": [
+        "Introducción",
+        "Definición y Conceptos Clave",
+        "Marco Legal",
+        "Derechos y Obligaciones",
+        "Proceso Legal",
+        "Casos Comunes",
+        "Cómo Podemos Ayudarte",
+        "Conclusión"
+      ],
+      "tone": "professional",
+      "includeCallToAction": true
+    },
+    "informative": {
+      "sections": [
+        "Introducción",
+        "Contexto",
+        "Puntos Clave",
+        "Consideraciones Importantes",
+        "Recursos Adicionales",
+        "Conclusión"
+      ],
+      "tone": "informative",
+      "includeCallToAction": false
+    }
+  },
+  "seoOptimization": {
+    "keywordDensity": {
+      "min": 0.01,
+      "max": 0.03
+    },
+    "headingStructure": {
+      "h2": {
+        "min": 3,
+        "max": 7
+      },
+      "h3": {
+        "min": 2,
+        "max": 10
+      }
+    },
+    "metaDescription": {
+      "minLength": 120,
+      "maxLength": 155
+    },
+    "titleLength": {
+      "min": 50,
+      "max": 60
+    }
+  },
+  "integrations": {
+    "wordpress": {
+      "enabled": true,
+      "autoPublish": false,
+      "postStatus": "draft",
+      "postType": "post",
+      "categories": [],
+      "tags": []
+    },
+    "yoast": {
+      "enabled": true,
+      "focusKeyword": true,
+      "seoScore": true
+    }
+  }
+}
