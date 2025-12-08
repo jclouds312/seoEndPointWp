@@ -1,3 +1,4 @@
+
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -7,16 +8,26 @@ import { generateContent, generateBulkContent, type ContentGenerationRequest } f
 import { generateContentWithClaude, generateWithClaude } from "./claude";
 import { generateContentWithNoCostAI, generateWithNoCostAI } from "./no-cost-ai";
 
+// In-memory storage for generated content (replace with database in production)
+interface StoredContent {
+  id: string;
+  title: string;
+  content: string;
+  metaDescription: string;
+  seoScore: number;
+  keywords: string[];
+  createdAt: Date;
+  campaignId?: string;
+  status: 'draft' | 'published';
+}
+
+const contentStore: StoredContent[] = [];
+let contentIdCounter = 1;
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
-
-  // use storage to perform CRUD operations on the storage interface
-  // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
-
   const router = Router();
 
   // Content Generation with OpenAI
@@ -98,7 +109,6 @@ export async function registerRoutes(
     }
   });
 
-  // Generic Claude API endpoint
   router.post("/api/claude", async (req, res) => {
     try {
       const schema = z.object({
@@ -157,7 +167,6 @@ export async function registerRoutes(
     }
   });
 
-  // Generic no-cost-ai API endpoint
   router.post("/api/no-cost-ai", async (req, res) => {
     try {
       const schema = z.object({
@@ -183,6 +192,145 @@ export async function registerRoutes(
     }
   });
 
+  // Save generated content
+  router.post("/api/content/save", async (req, res) => {
+    try {
+      const schema = z.object({
+        title: z.string(),
+        content: z.string(),
+        metaDescription: z.string(),
+        seoScore: z.number(),
+        keywords: z.array(z.string()),
+        campaignId: z.string().optional(),
+        status: z.enum(['draft', 'published']).default('draft'),
+      });
+
+      const data = schema.parse(req.body);
+      
+      const newContent: StoredContent = {
+        id: `content_${contentIdCounter++}`,
+        ...data,
+        createdAt: new Date(),
+      };
+
+      contentStore.push(newContent);
+
+      res.json({ 
+        success: true, 
+        id: newContent.id,
+        message: "Content saved successfully" 
+      });
+    } catch (error: any) {
+      console.error("Error saving content:", error);
+      res.status(500).json({
+        error: "Failed to save content",
+        message: error.message
+      });
+    }
+  });
+
+  // Get all saved content
+  router.get("/api/content/list", async (req, res) => {
+    try {
+      const { status, campaignId } = req.query;
+      
+      let filtered = [...contentStore];
+      
+      if (status) {
+        filtered = filtered.filter(c => c.status === status);
+      }
+      
+      if (campaignId) {
+        filtered = filtered.filter(c => c.campaignId === campaignId);
+      }
+
+      // Sort by newest first
+      filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+      res.json({ 
+        contents: filtered,
+        total: filtered.length 
+      });
+    } catch (error: any) {
+      console.error("Error listing content:", error);
+      res.status(500).json({
+        error: "Failed to list content",
+        message: error.message
+      });
+    }
+  });
+
+  // Get single content by ID
+  router.get("/api/content/:id", async (req, res) => {
+    try {
+      const content = contentStore.find(c => c.id === req.params.id);
+      
+      if (!content) {
+        return res.status(404).json({ error: "Content not found" });
+      }
+
+      res.json(content);
+    } catch (error: any) {
+      console.error("Error getting content:", error);
+      res.status(500).json({
+        error: "Failed to get content",
+        message: error.message
+      });
+    }
+  });
+
+  // Update content status
+  router.patch("/api/content/:id/status", async (req, res) => {
+    try {
+      const schema = z.object({
+        status: z.enum(['draft', 'published']),
+      });
+
+      const data = schema.parse(req.body);
+      const content = contentStore.find(c => c.id === req.params.id);
+      
+      if (!content) {
+        return res.status(404).json({ error: "Content not found" });
+      }
+
+      content.status = data.status;
+
+      res.json({ 
+        success: true,
+        message: "Content status updated" 
+      });
+    } catch (error: any) {
+      console.error("Error updating content status:", error);
+      res.status(500).json({
+        error: "Failed to update content status",
+        message: error.message
+      });
+    }
+  });
+
+  // Delete content
+  router.delete("/api/content/:id", async (req, res) => {
+    try {
+      const index = contentStore.findIndex(c => c.id === req.params.id);
+      
+      if (index === -1) {
+        return res.status(404).json({ error: "Content not found" });
+      }
+
+      contentStore.splice(index, 1);
+
+      res.json({ 
+        success: true,
+        message: "Content deleted successfully" 
+      });
+    } catch (error: any) {
+      console.error("Error deleting content:", error);
+      res.status(500).json({
+        error: "Failed to delete content",
+        message: error.message
+      });
+    }
+  });
 
   app.use(router);
 
