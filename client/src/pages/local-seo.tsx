@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, Globe, Search, Briefcase, Send, Users, BarChart, CheckCircle2, AlertCircle, ArrowRight, RefreshCw } from "lucide-react";
 import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
 
 const zones = [
   { name: "Los Angeles County", status: "optimized", score: 92, posts: 145 },

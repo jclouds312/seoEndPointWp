@@ -123,12 +123,12 @@ export default function Workflows() {
   const { data: workflowsData, isLoading } = useQuery({
     queryKey: ['/api/n8n/workflows'],
     refetchInterval: 10000, // Refresh every 10 seconds
-  });
+  }) as any;
 
   // Fetch n8n health
   const { data: healthData } = useQuery({
     queryKey: ['/api/n8n/health'],
-  });
+  }) as any;
 
   useEffect(() => {
     if (healthData?.baseUrl) {
