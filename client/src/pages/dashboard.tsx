@@ -1,4 +1,3 @@
-
 import SidebarLayout from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,12 @@ import {
   TrendingUp,
   Users,
   Globe,
-  Zap
+  Zap,
+  Activity,
+  AlertCircle,
+  Clock,
+  MoreHorizontal,
+  Plus
 } from "lucide-react";
 import { 
   Area, 
@@ -28,26 +32,30 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  Legend
+  Legend,
+  ComposedChart,
+  Line
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import generatedImage from '@assets/generated_images/abstract_tech_background_for_dashboard.png';
 
 const performanceData = [
-  { name: 'Mon', score: 65, traffic: 1200 },
-  { name: 'Tue', score: 72, traffic: 1350 },
-  { name: 'Wed', score: 68, traffic: 1250 },
-  { name: 'Thu', score: 85, traffic: 1600 },
-  { name: 'Fri', score: 82, traffic: 1500 },
-  { name: 'Sat', score: 90, traffic: 1900 },
-  { name: 'Sun', score: 94, traffic: 2100 },
+  { name: 'Mon', score: 65, traffic: 1200, keywords: 45 },
+  { name: 'Tue', score: 72, traffic: 1350, keywords: 52 },
+  { name: 'Wed', score: 68, traffic: 1250, keywords: 48 },
+  { name: 'Thu', score: 85, traffic: 1600, keywords: 61 },
+  { name: 'Fri', score: 82, traffic: 1500, keywords: 58 },
+  { name: 'Sat', score: 90, traffic: 1900, keywords: 75 },
+  { name: 'Sun', score: 94, traffic: 2100, keywords: 82 },
 ];
 
 const campaignPerformance = [
-  { name: 'Legal Blog', posts: 12, views: 4500 },
-  { name: 'Tech Guide', posts: 8, views: 3200 },
-  { name: 'Health Tips', posts: 15, views: 5100 },
+  { name: 'Legal Blog', posts: 12, views: 4500, engagement: 2.4 },
+  { name: 'Tech Guide', posts: 8, views: 3200, engagement: 3.1 },
+  { name: 'Health Tips', posts: 15, views: 5100, engagement: 1.8 },
+  { name: 'Local SEO', posts: 24, views: 6200, engagement: 4.2 },
 ];
 
 export default function Dashboard() {
@@ -58,122 +66,105 @@ export default function Dashboard() {
     setTimeout(() => {
       setIsSyncing(false);
       toast({
-        title: "Sync Complete",
-        description: "All campaigns and metrics updated successfully."
+        title: "System Sync Complete",
+        description: "All campaigns, metrics, and integrations updated successfully."
       });
     }, 2000);
   };
 
   return (
     <SidebarLayout>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Dashboard Overview</h1>
-          <p className="text-slate-500 mt-1">Real-time insights and automated pipeline status</p>
+      {/* Hero Section with Background */}
+      <div className="relative mb-8 rounded-3xl overflow-hidden bg-slate-900 text-white shadow-2xl">
+        <div className="absolute inset-0 opacity-40">
+           <img 
+            src={generatedImage} 
+            alt="Dashboard Background" 
+            className="w-full h-full object-cover"
+          />
         </div>
-        <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            className="gap-2 border-slate-200 hover:bg-slate-50"
-            onClick={handleSync}
-            disabled={isSyncing}
-          >
-            <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-            {isSyncing ? 'Syncing...' : 'Sync Data'}
-          </Button>
-          <Button className="gap-2 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200">
-            <Zap className="w-4 h-4" />
-            Quick Action
-          </Button>
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/80 to-transparent z-10" />
+        
+        <div className="relative z-20 p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+               <Badge className="bg-blue-500/20 text-blue-200 hover:bg-blue-500/30 border-blue-500/50 backdrop-blur-md">
+                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 mr-2 animate-pulse"></span>
+                 System Online
+               </Badge>
+               <span className="text-slate-400 text-sm">v2.4.0-stable</span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 tracking-tight">Welcome back, Admin</h1>
+            <p className="text-slate-300 max-w-xl text-lg">
+              Your automated SEO pipeline is running at <span className="text-green-400 font-semibold">98% efficiency</span>. 
+              3 campaigns are currently active with 12 posts scheduled for today.
+            </p>
+          </div>
+          
+          <div className="flex gap-3">
+            <Button 
+              size="lg"
+              variant="secondary" 
+              className="gap-2 bg-white/10 hover:bg-white/20 text-white border-white/10 backdrop-blur-sm"
+              onClick={handleSync}
+              disabled={isSyncing}
+            >
+              <RefreshCw className={`w-5 h-5 ${isSyncing ? 'animate-spin' : ''}`} />
+              {isSyncing ? 'Syncing...' : 'Sync Data'}
+            </Button>
+            <Button size="lg" className="gap-2 bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-900/20 border-0">
+              <Plus className="w-5 h-5" />
+              New Campaign
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="border-slate-100 shadow-sm bg-white hover:shadow-md transition-all duration-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-blue-600" />
+        {[
+          { label: "Avg. SEO Score", value: "94/100", change: "+12.5%", icon: BarChart3, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Posts Generated", value: "24", sub: "8 remaining this month", icon: FileText, color: "text-purple-600", bg: "bg-purple-50" },
+          { label: "Total Views", value: "12.5k", change: "+5.2%", icon: Users, color: "text-orange-600", bg: "bg-orange-50" },
+          { label: "Active Campaigns", value: "5", sub: "2 pending approval", icon: Globe, color: "text-green-600", bg: "bg-green-50" }
+        ].map((stat, i) => (
+          <Card key={i} className="border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-12 h-12 ${stat.bg} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                </div>
+                {stat.change && (
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-100 font-semibold">
+                    {stat.change}
+                  </Badge>
+                )}
               </div>
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-100">
-                +12.5%
-              </Badge>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-2xl font-bold text-slate-900">94/100</h3>
-              <p className="text-sm text-slate-500">Avg. SEO Score</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-100 shadow-sm bg-white hover:shadow-md transition-all duration-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-                <FileText className="w-5 h-5 text-purple-600" />
+              <div>
+                <h3 className="text-3xl font-bold text-slate-900 tracking-tight">{stat.value}</h3>
+                <p className="text-sm text-slate-500 font-medium mt-1">{stat.label}</p>
+                {stat.sub && <p className="text-xs text-slate-400 mt-1">{stat.sub}</p>}
               </div>
-              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-100">
-                8 Left
-              </Badge>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-2xl font-bold text-slate-900">24</h3>
-              <p className="text-sm text-slate-500">Posts Generated</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-100 shadow-sm bg-white hover:shadow-md transition-all duration-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-orange-600" />
-              </div>
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-100">
-                +5.2%
-              </Badge>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-2xl font-bold text-slate-900">12.5k</h3>
-              <p className="text-sm text-slate-500">Total Views</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-100 shadow-sm bg-white hover:shadow-md transition-all duration-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                <Globe className="w-5 h-5 text-green-600" />
-              </div>
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100">
-                Active
-              </Badge>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-2xl font-bold text-slate-900">5</h3>
-              <p className="text-sm text-slate-500">Active Campaigns</p>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
+      {/* Main Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        {/* Main Chart */}
+        {/* Traffic & SEO Score Chart */}
         <Card className="lg:col-span-2 border-slate-100 shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>SEO Performance & Traffic</CardTitle>
-                <CardDescription>Correlation between optimization scores and traffic</CardDescription>
+                <CardTitle>Performance Analytics</CardTitle>
+                <CardDescription>SEO Score vs. Traffic Volume Correlation</CardDescription>
               </div>
-              <Tabs defaultValue="week" className="w-[200px]">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="week">Week</TabsTrigger>
-                  <TabsTrigger value="month">Month</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <div className="flex bg-slate-100 rounded-lg p-1">
+                <button className="px-3 py-1 text-xs font-medium bg-white rounded-md shadow-sm text-slate-700">Week</button>
+                <button className="px-3 py-1 text-xs font-medium text-slate-500 hover:text-slate-700">Month</button>
+                <button className="px-3 py-1 text-xs font-medium text-slate-500 hover:text-slate-700">Year</button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -182,12 +173,12 @@ export default function Dashboard() {
                 <AreaChart data={performanceData}>
                   <defs>
                     <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorTraffic" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#16a34a" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#16a34a" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -195,87 +186,127 @@ export default function Dashboard() {
                   <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
                   <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
                   <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    itemStyle={{ fontSize: '12px', fontWeight: 600 }}
                   />
-                  <Area yAxisId="left" type="monotone" dataKey="score" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorScore)" name="SEO Score" />
-                  <Area yAxisId="right" type="monotone" dataKey="traffic" stroke="#16a34a" strokeWidth={3} fillOpacity={1} fill="url(#colorTraffic)" name="Traffic" />
+                  <Area 
+                    yAxisId="left" 
+                    type="monotone" 
+                    dataKey="score" 
+                    stroke="#3b82f6" 
+                    strokeWidth={3} 
+                    fillOpacity={1} 
+                    fill="url(#colorScore)" 
+                    name="SEO Score" 
+                  />
+                  <Area 
+                    yAxisId="right" 
+                    type="monotone" 
+                    dataKey="traffic" 
+                    stroke="#10b981" 
+                    strokeWidth={3} 
+                    fillOpacity={1} 
+                    fill="url(#colorTraffic)" 
+                    name="Traffic" 
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Campaign Distribution */}
-        <Card className="border-slate-100 shadow-sm">
-          <CardHeader>
-            <CardTitle>Campaign Performance</CardTitle>
-            <CardDescription>Views per campaign</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[350px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={campaignPerformance} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 12}} width={80} />
-                  <Tooltip 
-                    cursor={{fill: '#f8fafc'}}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  />
-                  <Bar dataKey="views" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={32} />
-                </BarChart>
-              </ResponsiveContainer>
+        {/* Live Activity Feed */}
+        <Card className="border-slate-100 shadow-sm flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-blue-600" />
+              <CardTitle className="text-base">Live System Activity</CardTitle>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-slate-100 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Recent Activity</CardTitle>
-            <Button variant="ghost" size="sm" className="h-8 text-xs text-blue-600 hover:text-blue-700">View All</Button>
+            <Badge variant="secondary" className="bg-green-100 text-green-700 animate-pulse">Live</Badge>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
+          <CardContent className="flex-1 overflow-auto pr-2">
+            <div className="relative border-l border-slate-200 ml-3 space-y-6 pb-2">
               {[
-                { title: "Article Published", desc: "California Personal Injury - New post live", time: "2m ago", icon: CheckCircle2, color: "text-green-600", bg: "bg-green-100" },
-                { title: "SEO Optimization", desc: "Automated keyword injection completed", time: "15m ago", icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-100" },
-                { title: "Image Generated", desc: "New hero image for Tech Guide", time: "1h ago", icon: FileText, color: "text-purple-600", bg: "bg-purple-100" },
+                { title: "Article Published", desc: "California Personal Injury - New post live on WordPress", time: "2m ago", icon: CheckCircle2, color: "text-green-600", bg: "bg-green-100" },
+                { title: "Keyword Analysis", desc: "Found 12 high-value keywords for 'Tech Guide'", time: "15m ago", icon: Search, color: "text-blue-600", bg: "bg-blue-100" },
+                { title: "Image Generated", desc: "Hero image created via DALL-E 3", time: "42m ago", icon: FileText, color: "text-purple-600", bg: "bg-purple-100" },
+                { title: "Workflow Triggered", desc: "Auto-posting schedule activated", time: "1h ago", icon: Zap, color: "text-orange-600", bg: "bg-orange-100" },
+                { title: "System Update", desc: "Core algorithms updated to v2.4.1", time: "3h ago", icon: RefreshCw, color: "text-slate-600", bg: "bg-slate-100" },
               ].map((item, i) => (
-                <div key={i} className="flex gap-4 items-start">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${item.bg}`}>
-                    <item.icon className={`w-4 h-4 ${item.color}`} />
+                <div key={i} className="ml-6 relative">
+                  <span className={`absolute -left-[31px] top-1 w-6 h-6 rounded-full border-4 border-white ${item.bg} flex items-center justify-center`}>
+                    <item.icon className={`w-3 h-3 ${item.color}`} />
+                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-slate-800">{item.title}</span>
+                    <span className="text-xs text-slate-500 mb-1">{item.desc}</span>
+                    <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> {item.time}
+                    </span>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-900">{item.title}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
-                  </div>
-                  <span className="text-xs text-slate-400 font-medium whitespace-nowrap">{item.time}</span>
                 </div>
               ))}
             </div>
           </CardContent>
+          <div className="p-4 border-t border-slate-100 bg-slate-50 rounded-b-xl">
+             <Button variant="ghost" size="sm" className="w-full text-slate-500 hover:text-blue-600 text-xs font-medium h-8">
+               View All Activity Log <ArrowUpRight className="w-3 h-3 ml-1" />
+             </Button>
+          </div>
+        </Card>
+      </div>
+
+      {/* Quick Actions & Campaign Breakdown */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <Card className="col-span-2 border-slate-100 shadow-sm">
+           <CardHeader>
+             <CardTitle>Campaign Efficiency Breakdown</CardTitle>
+             <CardDescription>Engagement metrics across active channels</CardDescription>
+           </CardHeader>
+           <CardContent>
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={campaignPerformance} layout="vertical" margin={{ left: 0, right: 30 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                    <XAxis type="number" hide />
+                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 13, fontWeight: 500}} width={100} />
+                    <Tooltip 
+                      cursor={{fill: '#f8fafc'}}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Bar dataKey="views" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={24} name="Views" stackId="a" />
+                    <Bar dataKey="posts" fill="#93c5fd" radius={[0, 4, 4, 0]} barSize={24} name="Posts" stackId="a" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border-none shadow-lg">
+        <Card className="bg-gradient-to-br from-indigo-600 to-blue-700 text-white border-none shadow-xl overflow-hidden relative">
+          <div className="absolute top-0 right-0 p-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 p-24 bg-black/10 rounded-full blur-2xl -ml-12 -mb-12 pointer-events-none"></div>
+          
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-yellow-400" />
-              Pro Tips
+            <CardTitle className="flex items-center gap-2 relative z-10">
+              <Zap className="w-5 h-5 text-yellow-300 fill-yellow-300" />
+              Pro Actions
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-3 bg-white/10 rounded-lg border border-white/10">
-              <h4 className="font-medium text-sm mb-1 text-white">Optimize Images</h4>
-              <p className="text-xs text-slate-300">Using the new Image API integration can increase engagement by 40%.</p>
-            </div>
-            <div className="p-3 bg-white/10 rounded-lg border border-white/10">
-              <h4 className="font-medium text-sm mb-1 text-white">Keyword Density</h4>
-              <p className="text-xs text-slate-300">Keep keyword density between 1.5% and 2.5% for optimal ranking.</p>
-            </div>
-            <Button className="w-full bg-white text-slate-900 hover:bg-slate-100 mt-2">
-              Start New Campaign
+          <CardContent className="space-y-3 relative z-10">
+            <p className="text-sm text-blue-100 mb-4">
+              Your "Tech Guide" campaign is trending. Boost it now to maximize reach.
+            </p>
+            
+            <Button className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold border-none shadow-md">
+              <TrendingUp className="w-4 h-4 mr-2" /> Boost "Tech Guide"
+            </Button>
+            
+            <Button variant="outline" className="w-full bg-blue-800/50 border-blue-400/30 text-white hover:bg-blue-800/70">
+              <Search className="w-4 h-4 mr-2" /> Find New Keywords
+            </Button>
+            
+            <Button variant="outline" className="w-full bg-blue-800/50 border-blue-400/30 text-white hover:bg-blue-800/70">
+              <Send className="w-4 h-4 mr-2" /> Distribute to Socials
             </Button>
           </CardContent>
         </Card>

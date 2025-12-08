@@ -1,4 +1,3 @@
-
 import SidebarLayout from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileText, CheckCircle2, AlertCircle, AlertTriangle, RefreshCw, Smartphone, Monitor, Globe, Wand2, Share2, Twitter, Facebook } from "lucide-react";
+import { Search, FileText, CheckCircle2, AlertCircle, AlertTriangle, RefreshCw, Smartphone, Monitor, Globe, Wand2, Share2, Twitter, Facebook, BarChart } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
 
 interface SEOResult {
   text: string;
@@ -18,7 +18,7 @@ interface SEOResult {
 }
 
 export default function SeoAnalyzer() {
-  const [content, setContent] = useState("This is a sample text. It is not very long. You should write more content to get a better score. SEO is important for your website visibility.");
+  const [content, setContent] = useState("Search Engine Optimization (SEO) is the process of improving the quality and quantity of website traffic to a website or a web page from search engines. SEO targets unpaid traffic (known as 'natural' or 'organic' results) rather than direct traffic or paid traffic.");
   const [keyword, setKeyword] = useState("SEO");
   const [title, setTitle] = useState("Ultimate Guide to SEO Optimization - 2025 Edition");
   const [slug, setSlug] = useState("ultimate-guide-seo-optimization");
@@ -27,6 +27,11 @@ export default function SeoAnalyzer() {
   const [score, setScore] = useState<number>(0);
   const [isFixing, setIsFixing] = useState(false);
 
+  // Re-run analysis when content changes
+  useEffect(() => {
+    runAnalysis();
+  }, [content, keyword, title, metaDesc]);
+
   const runAnalysis = () => {
     if (!content) return;
 
@@ -34,135 +39,50 @@ export default function SeoAnalyzer() {
     let passed = 0;
     let total = 0;
 
-    // Word count analysis
+    // 1. Word Count
     const wordCount = content.trim().split(/\s+/).length;
     const wordCountScore = wordCount > 300 ? 9 : wordCount > 150 ? 6 : 3;
     analysisResults.push({
-      text: `Text length: The text contains <strong>${wordCount} words</strong>. ${wordCount > 300 ? 'Good job!' : wordCount > 150 ? 'Consider adding more content.' : 'This is below the recommended minimum.'}`,
+      text: `Text length: <strong>${wordCount} words</strong>. ${wordCount > 300 ? 'Great depth!' : 'Consider adding more content.'}`,
       score: wordCountScore,
       type: "length"
     });
     if (wordCountScore >= 7) passed++;
     total++;
 
-    // Keyword in title
+    // 2. Keyword in Title
     const keywordInTitle = title.toLowerCase().includes(keyword.toLowerCase());
-    const titleKeywordScore = keywordInTitle ? 9 : 2;
+    const titleScore = keywordInTitle ? 9 : 2;
     analysisResults.push({
-      text: keywordInTitle 
-        ? `Keyphrase in title: The focus keyphrase appears in the SEO title.` 
-        : `Keyphrase in title: The focus keyphrase does not appear in the SEO title.`,
-      score: titleKeywordScore,
-      type: "titleKeyword"
+      text: keywordInTitle ? "Keyphrase appears in SEO title." : "Keyphrase missing from SEO title.",
+      score: titleScore,
+      type: "title"
     });
-    if (titleKeywordScore >= 7) passed++;
+    if (titleScore >= 7) passed++;
     total++;
 
-    // Keyphrase length
-    const keyphraseWords = keyword.split(' ').length;
-    const keyphraseLengthScore = keyphraseWords <= 4 ? 9 : 4;
+    // 3. Keyword Density
+    const matches = (content.match(new RegExp(keyword, "gi")) || []).length;
+    const density = (matches / wordCount) * 100;
+    const densityScore = density >= 0.5 && density <= 2.5 ? 9 : 5;
     analysisResults.push({
-      text: `Keyphrase length: ${keyphraseWords <= 4 ? 'Good job!' : 'Your keyphrase is rather long. Consider using a shorter keyphrase.'}`,
-      score: keyphraseLengthScore,
-      type: "keywordLength"
-    });
-    if (keyphraseLengthScore >= 7) passed++;
-    total++;
-
-    // Keyphrase density
-    const keywordRegex = new RegExp(keyword, "gi");
-    const keywordMatches = (content.match(keywordRegex) || []).length;
-    const density = (keywordMatches / wordCount) * 100;
-    const densityScore = density >= 0.5 && density <= 2.5 ? 9 : density > 0 ? 6 : 2;
-    analysisResults.push({
-      text: `Keyphrase density: The focus keyphrase was found <strong>${keywordMatches} times</strong>. That's a ${density.toFixed(2)}% density. ${densityScore >= 7 ? 'Good job!' : 'Consider using the keyphrase more often.'}`,
+      text: `Keyphrase density: <strong>${density.toFixed(1)}%</strong> (${matches} times).`,
       score: densityScore,
       type: "density"
     });
     if (densityScore >= 7) passed++;
     total++;
 
-    // Meta description length
-    const metaLength = metaDesc.length;
-    const metaLengthScore = metaLength >= 120 && metaLength <= 160 ? 9 : metaLength > 0 ? 5 : 2;
-    analysisResults.push({
-      text: `Meta description length: ${metaLengthScore >= 7 ? 'Well done!' : metaLength < 120 ? 'The meta description is too short.' : 'The meta description is too long.'}`,
-      score: metaLengthScore,
-      type: "meta"
-    });
-    if (metaLengthScore >= 7) passed++;
-    total++;
-
-    // Keyphrase in meta description
-    const keywordInMeta = metaDesc.toLowerCase().includes(keyword.toLowerCase());
-    const metaKeywordScore = keywordInMeta ? 9 : 3;
-    analysisResults.push({
-      text: keywordInMeta 
-        ? `Keyphrase in meta description: The focus keyphrase appears in the meta description.` 
-        : `Keyphrase in meta description: The meta description doesn't contain the focus keyphrase.`,
-      score: metaKeywordScore,
-      type: "metaKeyword"
-    });
-    if (metaKeywordScore >= 7) passed++;
-    total++;
-
-    // Keyphrase in introduction
-    const intro = content.slice(0, Math.min(content.length, 200));
-    const keywordInIntro = intro.toLowerCase().includes(keyword.toLowerCase());
-    const introScore = keywordInIntro ? 9 : 3;
-    analysisResults.push({
-      text: keywordInIntro 
-        ? `Keyphrase in introduction: The focus keyphrase appears in the first paragraph.` 
-        : `Keyphrase in introduction: The focus keyphrase doesn't appear in the first paragraph.`,
-      score: introScore,
-      type: "intro"
-    });
-    if (introScore >= 7) passed++;
-    total++;
-
-    // Title length
-    const titleLength = title.length;
-    const titleLengthScore = titleLength >= 30 && titleLength <= 60 ? 9 : titleLength > 0 ? 5 : 2;
-    analysisResults.push({
-      text: `SEO title length: ${titleLengthScore >= 7 ? 'Good job!' : titleLength < 30 ? 'The SEO title is too short.' : 'The SEO title is too long.'}`,
-      score: titleLengthScore,
-      type: "titleLength"
-    });
-    if (titleLengthScore >= 7) passed++;
-    total++;
-
-    // Subheadings
-    const hasSubheadings = content.includes('\n\n') || content.split(/[.!?]/).length > 5;
-    const subheadingScore = hasSubheadings ? 7 : 4;
-    analysisResults.push({
-      text: hasSubheadings 
-        ? `Subheading distribution: Great! Your text structure looks good.` 
-        : `Subheading distribution: Consider adding subheadings to improve readability.`,
-      score: subheadingScore,
-      type: "subheadings"
-    });
-    if (subheadingScore >= 7) passed++;
-    total++;
-
     setResults(analysisResults);
-    const calculatedScore = Math.round((passed / total) * 100);
-    setScore(calculatedScore);
+    setScore(Math.round((passed / total) * 100));
   };
-
-  useEffect(() => {
-    runAnalysis();
-  }, [content, keyword, title, metaDesc]);
 
   const handleFixWithAI = () => {
     setIsFixing(true);
     setTimeout(() => {
-      setContent(prev => prev + "\n\nAlso, keep in mind that " + keyword + " is crucial for modern digital strategies. This additional paragraph helps improve the word count and keyword density naturally.");
-      setMetaDesc(prev => prev.includes(keyword) ? prev : prev + " Learn more about " + keyword + " here.");
+      setContent(prev => prev + `\n\nAdditionally, maximizing your ${keyword} strategy involves understanding user intent. By aligning your content with what users are actually searching for, you can significantly improve your search rankings and visibility.`);
       setIsFixing(false);
-      toast({
-        title: "Optimized!",
-        description: "AI has improved your content density and meta description."
-      });
+      toast({ title: "Optimized!", description: "AI has expanded your content depth." });
     }, 1500);
   };
 
@@ -170,243 +90,141 @@ export default function SeoAnalyzer() {
     <SidebarLayout>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Real-time SEO Analyzer</h1>
-          <p className="text-slate-500 mt-1">Professional SEO analysis engine with Google Preview</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Real-Time SEO Analyzer</h1>
+          <p className="text-slate-500 mt-1">Optimize your content for maximum search visibility</p>
         </div>
-        <div className="flex items-center gap-2">
-            <Button 
-                variant="outline" 
-                onClick={handleFixWithAI} 
-                disabled={isFixing || score > 90}
-                className="gap-2 bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
-            >
-                {isFixing ? (
-                    <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        Fixing...
-                    </>
-                ) : (
-                    <>
-                        <Wand2 className="w-4 h-4" />
-                        Fix with AI
-                    </>
-                )}
-            </Button>
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 px-3 py-1">
-                <CheckCircle2 className="w-3 h-3 mr-1" />
-                Analysis Active
-            </Badge>
+        <div className="flex gap-3">
+          <Button variant="outline" className="gap-2 bg-white" onClick={() => setContent("")}>
+            <RefreshCw className="w-4 h-4" /> Clear
+          </Button>
+          <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200" onClick={handleFixWithAI} disabled={isFixing}>
+            {isFixing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+            Auto-Optimize
+          </Button>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader>
-              <CardTitle>Content Editor</CardTitle>
-              <CardDescription>Optimize your content for search engines</CardDescription>
+      <div className="grid lg:grid-cols-12 gap-6 h-[calc(100vh-200px)] min-h-[600px]">
+        {/* LEFT COLUMN - Editor */}
+        <div className="lg:col-span-7 flex flex-col gap-6">
+          <Card className="flex-1 border-slate-200 shadow-sm flex flex-col overflow-hidden">
+            <CardHeader className="py-4 px-6 border-b border-slate-100 bg-slate-50/50">
+               <div className="flex items-center gap-4">
+                 <div className="flex-1">
+                   <Label htmlFor="keyword" className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Focus Keyphrase</Label>
+                   <div className="relative mt-1">
+                     <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400" />
+                     <Input 
+                        id="keyword"
+                        value={keyword}
+                        onChange={(e) => setKeyword(e.target.value)}
+                        className="pl-9 bg-white border-slate-200 focus-visible:ring-indigo-500"
+                        placeholder="e.g. digital marketing"
+                     />
+                   </div>
+                 </div>
+                 <div className="flex-1">
+                    <Label className="text-xs text-slate-500 uppercase tracking-wider font-semibold">SEO Title</Label>
+                    <Input 
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="mt-1 bg-white border-slate-200"
+                    />
+                 </div>
+               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="keyword">Focus Keyphrase</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                  <Input 
-                    id="keyword" 
-                    value={keyword} 
-                    onChange={(e) => setKeyword(e.target.value)}
-                    className="pl-9"
-                    placeholder="Enter main keyword..." 
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="content">Article Content</Label>
-                <Textarea 
-                  id="content" 
-                  value={content} 
-                  onChange={(e) => setContent(e.target.value)}
-                  className="min-h-[400px] font-mono text-sm leading-relaxed"
-                  placeholder="Start writing or paste your content here..." 
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader>
-              <CardTitle>Search & Social Previews</CardTitle>
-              <CardDescription>See how your page looks on different platforms</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Tabs defaultValue="mobile" className="w-full">
-                    <TabsList className="mb-4">
-                        <TabsTrigger value="mobile" className="gap-2">
-                            <Smartphone className="w-4 h-4" /> Mobile
-                        </TabsTrigger>
-                        <TabsTrigger value="desktop" className="gap-2">
-                            <Monitor className="w-4 h-4" /> Desktop
-                        </TabsTrigger>
-                        <TabsTrigger value="social" className="gap-2">
-                            <Share2 className="w-4 h-4" /> Social
-                        </TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="mobile" className="bg-white p-4 rounded-lg border border-slate-100 max-w-sm mx-auto sm:mx-0">
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-xs text-slate-500">
-                                <Globe className="w-3 h-3" />
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="text-xs text-slate-800">example.com</span>
-                                <span className="text-[10px] text-slate-500">https://example.com › {slug}</span>
-                            </div>
-                        </div>
-                        <h3 className="text-[#1a0dab] text-lg leading-snug hover:underline cursor-pointer mb-1">
-                            {title || "Page Title"}
-                        </h3>
-                        <p className="text-sm text-slate-600 leading-snug">
-                            {metaDesc || "Please provide a meta description to see how it looks in search results."}
-                        </p>
-                    </TabsContent>
-
-                    <TabsContent value="desktop" className="bg-white p-6 rounded-lg border border-slate-100">
-                        <div className="flex flex-col mb-1">
-                            <div className="flex items-center gap-1 text-sm text-slate-800">
-                                <span>example.com</span>
-                                <span className="text-slate-400">›</span>
-                                <span>{slug}</span>
-                            </div>
-                            <div className="text-xs text-slate-500 mb-1">https://example.com/{slug}</div>
-                        </div>
-                        <h3 className="text-[#1a0dab] text-xl hover:underline cursor-pointer mb-1">
-                            {title || "Page Title"}
-                        </h3>
-                        <p className="text-sm text-slate-600 max-w-2xl">
-                            {metaDesc || "Please provide a meta description to see how it looks in search results."}
-                        </p>
-                    </TabsContent>
-
-                    <TabsContent value="social" className="space-y-6">
-                        <div className="border rounded-lg overflow-hidden bg-white max-w-md">
-                            <div className="bg-slate-100 h-48 w-full flex items-center justify-center text-slate-400">
-                                <FileText className="w-12 h-12" />
-                            </div>
-                            <div className="p-4 bg-slate-50 border-t">
-                                <div className="uppercase text-xs text-slate-500 font-semibold mb-1">EXAMPLE.COM</div>
-                                <div className="font-bold text-slate-900 mb-1 leading-tight">{title}</div>
-                                <div className="text-sm text-slate-600 line-clamp-2">{metaDesc}</div>
-                            </div>
-                        </div>
-                    </TabsContent>
-                </Tabs>
-
-                <div className="grid gap-4 mt-6 p-4 bg-slate-50 rounded-lg border border-slate-100">
-                    <div className="space-y-2">
-                        <Label htmlFor="seo-title">SEO Title</Label>
-                        <Input 
-                            id="seo-title" 
-                            value={title} 
-                            onChange={(e) => setTitle(e.target.value)}
-                        />
-                        <div className="h-1 w-full bg-slate-200 rounded-full overflow-hidden">
-                            <div 
-                                className={`h-full ${title.length > 60 ? 'bg-red-500' : 'bg-green-500'}`} 
-                                style={{ width: `${Math.min(100, (title.length / 60) * 100)}%` }} 
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="slug">Slug</Label>
-                        <Input 
-                            id="slug" 
-                            value={slug} 
-                            onChange={(e) => setSlug(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="meta-desc">Meta Description</Label>
-                        <Textarea 
-                            id="meta-desc" 
-                            value={metaDesc} 
-                            onChange={(e) => setMetaDesc(e.target.value)}
-                            rows={3}
-                        />
-                         <div className="h-1 w-full bg-slate-200 rounded-full overflow-hidden">
-                            <div 
-                                className={`h-full ${metaDesc.length > 160 ? 'bg-red-500' : 'bg-green-500'}`} 
-                                style={{ width: `${Math.min(100, (metaDesc.length / 160) * 100)}%` }} 
-                            />
-                        </div>
-                    </div>
-                </div>
-            </CardContent>
+            <div className="flex-1 p-0">
+              <Textarea 
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="w-full h-full resize-none border-0 focus-visible:ring-0 p-6 text-base font-serif leading-relaxed text-slate-800"
+                placeholder="Paste your article content here to begin analysis..."
+              />
+            </div>
           </Card>
         </div>
 
-        <div className="space-y-6">
-          <Card className="border-slate-200 shadow-sm sticky top-6">
-            <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
-              <CardTitle>Analysis Results</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-center mb-6">
-                <div className={`relative w-32 h-32 rounded-full flex items-center justify-center border-8 ${
-                    score >= 80 ? 'border-green-500 text-green-600' : 
-                    score >= 50 ? 'border-amber-500 text-amber-600' : 
-                    'border-red-500 text-red-600'
-                }`}>
-                  <div className="text-center">
-                    <span className="text-3xl font-bold">{score}</span>
-                    <span className="block text-xs uppercase font-bold text-slate-400 mt-1">Score</span>
+        {/* RIGHT COLUMN - Analysis & Preview */}
+        <div className="lg:col-span-5 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-1">
+          
+          {/* Score Card */}
+          <Card className="border-slate-200 shadow-sm bg-white">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-6">
+                <div className="relative w-24 h-24 flex items-center justify-center">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                    <path className="text-slate-100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3" />
+                    <path 
+                      className={`${score > 80 ? 'text-green-500' : score > 50 ? 'text-amber-500' : 'text-red-500'} transition-all duration-1000 ease-out`} 
+                      strokeDasharray={`${score}, 100`} 
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="3" 
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center flex-col">
+                    <span className="text-2xl font-bold text-slate-900">{score}</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Score</span>
+                  </div>
+                </div>
+                <div className="flex-1 space-y-2">
+                  <h3 className="font-semibold text-slate-900">Analysis Summary</h3>
+                  <div className="space-y-1">
+                    {results.map((r, i) => (
+                      <div key={i} className="flex items-center gap-2 text-sm">
+                        <div className={`w-2 h-2 rounded-full ${r.score >= 7 ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span className="text-slate-600 truncate" dangerouslySetInnerHTML={{__html: r.text}} />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="space-y-4">
-                <h4 className="font-medium text-sm text-slate-900 border-b pb-2">SEO Analysis</h4>
-                {results && results.map((result: SEOResult, i: number) => (
-                    <div key={i} className="flex gap-3 items-start">
-                        <div className="mt-0.5 shrink-0">
-                            {result.score >= 7 ? (
-                                <div className="w-3 h-3 rounded-full bg-green-500" />
-                            ) : result.score >= 4 ? (
-                                <div className="w-3 h-3 rounded-full bg-amber-500" />
-                            ) : (
-                                <div className="w-3 h-3 rounded-full bg-red-500" />
-                            )}
-                        </div>
-                        <p className="text-sm text-slate-600 leading-snug" dangerouslySetInnerHTML={{ __html: result.text }} />
-                    </div>
-                ))}
-                
-                {(!results || results.length === 0) && (
-                    <div className="text-sm text-slate-400 italic text-center py-4">
-                        Add content to generate analysis...
-                    </div>
-                )}
+          {/* Google Preview */}
+          <Card className="border-slate-200 shadow-sm overflow-hidden">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Globe className="w-4 h-4 text-blue-600" />
+                SERP Preview
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div className="bg-white rounded p-1">
+                <div className="flex items-center gap-2 text-sm text-slate-800 mb-1">
+                  <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-[10px]">W</div>
+                  <div className="flex flex-col leading-none">
+                    <span className="text-xs">www.example.com</span>
+                    <span className="text-[10px] text-slate-500">https://www.example.com › {slug}</span>
+                  </div>
+                </div>
+                <h3 className="text-[#1a0dab] text-xl hover:underline cursor-pointer mb-1 leading-snug">
+                  {title || "Page Title"}
+                </h3>
+                <p className="text-sm text-slate-600 leading-snug">
+                  {metaDesc || "Please provide a meta description to see how it looks in search results..."}
+                </p>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                 <Label className="text-xs text-slate-500">Meta Description Editor</Label>
+                 <Textarea 
+                   value={metaDesc}
+                   onChange={(e) => setMetaDesc(e.target.value)}
+                   className="h-20 text-sm"
+                 />
+                 <div className="flex justify-between text-xs text-slate-400">
+                   <span>{metaDesc.length} / 160 characters</span>
+                   <span className={metaDesc.length > 160 ? "text-red-500" : "text-green-500"}>
+                     {metaDesc.length > 160 ? "Too Long" : "Optimal"}
+                   </span>
+                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-blue-50 border-blue-100">
-            <CardContent className="p-4">
-                <div className="flex gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
-                        <FileText className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div>
-                        <h4 className="font-medium text-blue-900 text-sm">Readability Check</h4>
-                        <p className="text-xs text-blue-700 mt-1">
-                            Content is {content.split(' ').length > 100 ? 'well-structured' : 'brief'} with {content.split('.').length} sentences
-                        </p>
-                    </div>
-                </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </SidebarLayout>
