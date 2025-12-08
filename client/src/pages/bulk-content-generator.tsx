@@ -30,7 +30,7 @@ import {
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearch } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -67,7 +67,8 @@ interface GeneratedPost {
 
 export default function BulkContentGenerator() {
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
   const [postsCount, setPostsCount] = useState(4);
   const [baseTopics, setBaseTopics] = useState("lesiones personales, accidentes de auto, compensación laboral, negligencia médica, accidentes de trabajo, lesiones en construcción, accidentes de motocicleta, mordeduras de perro");
   const [keywords, setKeywords] = useState("abogado, lesiones, compensación, derechos legales");
