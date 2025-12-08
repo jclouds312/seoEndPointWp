@@ -80,7 +80,55 @@ export default function ContentCreator() {
   const queryClient = useQueryClient();
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
-  const [contentPrompt, setContentPrompt] = useState("");
+  const [contentPrompt, setContentPrompt] = useState(`IDEAL CLIENT & CASE PROFILE (FOR CONTENT TARGETING ONLY – DO NOT OUTPUT THIS TEXT)
+
+The ideal client is:
+
+- An ADULT injured in a:
+  - Car, truck, motorcycle, bicycle, or pedestrian accident, OR
+  - Dog bite / dog attack
+- Accident occurred in CALIFORNIA, preferably Southern California
+  (Los Angeles, San Fernando Valley, Riverside, Ventura, Orange County, etc.)
+- Liability:
+  - Client is NOT at fault
+  - Clear liability cases preferred (especially rear-end collisions), but other
+    injury accidents are also welcome
+- Property damage:
+  - Significant visible damage to the client’s vehicle is ideal
+  - More damage to the vehicles involved is generally better for the claim
+- Injuries:
+  - Serious injuries or death (wrongful death cases are highly preferred)
+  - Common high-value injuries include:
+    - Death / wrongful death
+    - Head injuries, concussion, traumatic brain injury (TBI)
+    - Complex Regional Pain Syndrome (CRPS), Reflex Sympathetic Dystrophy (RSD),
+      fibromyalgia and other neuropathic or regional pain syndromes
+    - Any type of fracture
+    - Injuries and/or pain to: face, TMJ, neck, shoulders, upper/mid/low back,
+      spine, arms, hands, fingers, hips, knees (including torn ligaments),
+      legs, ankles, feet, toes
+- Medical treatment:
+  - Client required (or reasonably should receive) medical care such as:
+    - Emergency room or urgent care
+    - Follow-up with doctors, specialists, chiropractors, physical therapy,
+      injections, surgery and/or rehabilitation
+  - Even if no emergency treatment so far, the case can still be good if
+    treatment is appropriate and likely
+- Insurance:
+  - Client and other driver/party typically have auto or appropriate insurance
+  - Uninsured motorist (UM) and underinsured motorist (UIM) cases are also
+    desirable
+
+CONTENT INSTRUCTIONS BASED ON IDEAL CLIENT
+- Prioritize topics, examples and FAQs that speak directly to these types of clients.
+- When giving examples, focus on:
+  - Not-at-fault California accident victims, especially in Southern California
+  - Clear liability rear-end crashes with major property damage
+  - Serious injuries, wrongful death and cases needing significant medical care.
+- Emphasize:
+  - Medical treatment, documentation of injuries, and impact on daily life
+  - Insurance coverage issues, including UM/UIM
+  - Why these clients should contact the firm quickly for help.`);
   const [targetKeywords, setTargetKeywords] = useState("");
   const [wordCount, setWordCount] = useState([1500]);
   const [creativity, setCreativity] = useState([0.7]);
@@ -117,8 +165,31 @@ export default function ContentCreator() {
       await new Promise(resolve => setTimeout(resolve, 1500));
       const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
       const suggestedPrompt = `Write a comprehensive and authoritative guide about "${keywords.join(', ')}". \n\nSuggested Structure:\n1. Introduction: Definition and relevant statistics.\n2. Legal Framework: Applicable laws and victim rights.\n3. Actionable Steps: Step-by-step guide to protecting the claim.\n4. Common Mistakes: What to avoid.\n5. Conclusion: Importance of legal counsel.\n\nTone: Professional, empathetic, and educational.`;
+      
+      // Suggest similar prompts based on keywords
+      const similarPrompts = [
+        `Explain the process of filing a ${keywords[0]} claim in California, focusing on common pitfalls and how to maximize compensation.`,
+        `Create a checklist for victims of ${keywords[0]} to ensure they document everything needed for a successful legal case.`,
+        `Discuss the long-term impact of ${keywords[0]} injuries and why immediate medical attention is crucial for both health and legal reasons.`
+      ];
+      
       setContentPrompt(suggestedPrompt);
-      toast({ title: "Prompt Suggested!", description: "Review and adjust as needed." });
+      toast({ 
+        title: "Prompt Suggested!", 
+        description: (
+          <div className="flex flex-col gap-2">
+            <span>Main prompt applied. Try these variations too:</span>
+            <ul className="list-disc pl-4 text-xs mt-1">
+              {similarPrompts.map((p, i) => (
+                <li key={i} className="cursor-pointer hover:underline" onClick={() => setContentPrompt(p)}>
+                  Variation {i + 1}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ),
+        duration: 8000
+      });
     } finally {
       setIsSuggestingPrompt(false);
     }
