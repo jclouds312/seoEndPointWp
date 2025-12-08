@@ -4,7 +4,8 @@ import { storage } from "./storage";
 import { Router } from "express";
 import { z } from "zod";
 import { generateContent, generateBulkContent, type ContentGenerationRequest } from "./openai";
-import { generateContentWithClaude, generateWithClaude } from "./claude"; // Assuming claude.ts exists and has these functions
+import { generateContentWithClaude, generateWithClaude } from "./claude";
+import { generateContentWithNoCostAI, generateWithNoCostAI } from "./no-cost-ai";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -119,6 +120,64 @@ export async function registerRoutes(
       console.error("Error calling Claude API:", error);
       res.status(500).json({
         error: "Failed to call Claude API",
+        message: error.message
+      });
+    }
+  });
+
+  // Content Generation with no-cost-ai (FREE)
+  router.post("/api/generate-content-free", async (req, res) => {
+    try {
+      const schema = z.object({
+        topic: z.string().min(1),
+        keywords: z.array(z.string()),
+        wordCount: z.number().min(300).max(8000),
+        tone: z.string(),
+        language: z.string().optional(),
+        model: z.string().optional(),
+      });
+
+      const data = schema.parse(req.body);
+      const result = await generateContentWithNoCostAI(
+        data.topic,
+        data.keywords,
+        data.wordCount,
+        data.tone,
+        data.language,
+        data.model
+      );
+
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error generating content with no-cost-ai:", error);
+      res.status(500).json({
+        error: "Failed to generate content with no-cost-ai",
+        message: error.message
+      });
+    }
+  });
+
+  // Generic no-cost-ai API endpoint
+  router.post("/api/no-cost-ai", async (req, res) => {
+    try {
+      const schema = z.object({
+        messages: z.array(z.object({
+          role: z.enum(['system', 'user', 'assistant']),
+          content: z.string(),
+        })),
+        model: z.string().optional(),
+        max_tokens: z.number().optional(),
+        temperature: z.number().optional(),
+      });
+
+      const data = schema.parse(req.body);
+      const result = await generateWithNoCostAI(data);
+
+      res.json({ content: result });
+    } catch (error: any) {
+      console.error("Error calling no-cost-ai API:", error);
+      res.status(500).json({
+        error: "Failed to call no-cost-ai API",
         message: error.message
       });
     }

@@ -122,7 +122,7 @@ export default function ContentCreator() {
   const [creativity, setCreativity] = useState([0.7]);
   const [includeImages, setIncludeImages] = useState(true);
   const [includeSEO, setIncludeSEO] = useState(true);
-  const [aiProvider, setAiProvider] = useState<'openai' | 'claude'>('openai');
+  const [aiProvider, setAiProvider] = useState<'openai' | 'claude' | 'free'>('free');
   const [generatedContent, setGeneratedContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
@@ -155,7 +155,9 @@ export default function ContentCreator() {
     try {
       const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
       
-      const endpoint = aiProvider === 'claude' ? '/api/generate-content-claude' : '/api/generate-content';
+      let endpoint = '/api/generate-content';
+      if (aiProvider === 'claude') endpoint = '/api/generate-content-claude';
+      if (aiProvider === 'free') endpoint = '/api/generate-content-free';
       
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -167,7 +169,8 @@ export default function ContentCreator() {
           keywords: keywords.length > 0 ? keywords : ['legal', 'abogado'],
           wordCount: wordCount[0],
           tone: 'profesional-empático',
-          language: 'es'
+          language: 'es',
+          model: aiProvider === 'free' ? 'gpt-4o' : undefined
         })
       });
 
@@ -215,7 +218,11 @@ export default function ContentCreator() {
 
       toast({
         title: "¡Contenido generado exitosamente!",
-        description: `El contenido ha sido creado con ${aiProvider === 'claude' ? 'Claude 3.5 Sonnet' : 'OpenAI GPT-4'}`
+        description: `El contenido ha sido creado con ${
+          aiProvider === 'claude' ? 'Claude 3.5 Sonnet' : 
+          aiProvider === 'free' ? 'no-cost-ai (GRATIS)' : 
+          'OpenAI GPT-4'
+        }`
       });
 
       if (includeSEO) {
@@ -419,6 +426,13 @@ export default function ContentCreator() {
                 <div className="space-y-2">
                   <Label>Proveedor de IA</Label>
                   <RadioGroup value={aiProvider} onValueChange={(value: any) => setAiProvider(value)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="free" id="free" />
+                      <Label htmlFor="free" className="font-normal">
+                        no-cost-ai (GRATIS) 🎉
+                        <span className="text-xs text-green-600 ml-2">Recomendado</span>
+                      </Label>
+                    </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="openai" id="openai" />
                       <Label htmlFor="openai" className="font-normal">OpenAI GPT-4</Label>
