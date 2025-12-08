@@ -6,7 +6,7 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
+
   // Bulk Massive Generator - generates 8 posts from a seed keyword
   app.post('/api/bulk-massive/generate', async (req, res) => {
     try {
@@ -32,7 +32,7 @@ export async function registerRoutes(
       // Generate all 8 posts
       for (let i = 0; i < Math.min(count, subTopics.length); i++) {
         const topic = subTopics[i];
-        
+
         const content = `# ${topic}
 
 ## Introduction
@@ -61,47 +61,43 @@ When dealing with ${mainKeyword}, it's essential to have a thorough understandin
 
 ${topic} requires attention to detail and a strategic approach. By following these guidelines, you'll be well-equipped to handle any situation related to ${mainKeyword}.
 
-For more information and personalized assistance, don't hesitate to reach out to our expert team.`;
+For more information or personalized assistance, consider consulting with a professional in this field.`;
 
-        const metaDescription = `Comprehensive guide about ${topic}. Learn everything you need to know about ${mainKeyword} with expert insights and practical advice.`;
-        
-        const seoScore = Math.floor(Math.random() * 15) + 85; // 85-100
-
-        const savedContent = await storage.saveGeneratedContent({
+        const newPost = {
           title: topic,
           content: content,
-          metaDescription: metaDescription,
-          seoScore: seoScore,
-          keywords: `${mainKeyword}, guide, tips, advice`,
-          status: 'draft'
+          metaDescription: `Learn everything you need to know about ${topic}. Expert insights and practical advice.`,
+          seoScore: Math.floor(Math.random() * 15) + 85,
+          status: 'draft',
+          keywords: `${mainKeyword}, ${topic}`,
+          featuredImage: null,
+          createdAt: new Date().toISOString(),
+          campaignId: null,
+          targetSite: targetSite
+        };
+
+        // Save to storage
+        const savedPost = await storage.saveContent(newPost);
+
+        generatedPosts.push({
+          id: savedPost.id,
+          title: savedPost.title,
+          content: savedPost.content,
+          metaDescription: savedPost.metaDescription,
+          seoScore: savedPost.seoScore,
+          status: savedPost.status,
+          keywords: savedPost.keywords,
+          createdAt: savedPost.createdAt
         });
 
-        generatedPosts.push(savedContent);
+        // Small delay to simulate processing
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
 
       res.json({
         success: true,
         generated: generatedPosts.length,
         contents: generatedPosts
-      });
-
-      for (let i = 0; i < count; i++) {
-        const post = await storage.createGeneratedContent({
-          title: subTopics[i],
-          content: `<h2>${subTopics[i]}</h2>\n\n<p>This is comprehensive content about ${mainKeyword}. This article covers essential aspects, practical tips, and expert insights.</p>\n\n<h3>Key Points</h3>\n<ul>\n<li>Understanding the fundamentals of ${mainKeyword}</li>\n<li>Step-by-step guidance and best practices</li>\n<li>Real-world examples and case studies</li>\n<li>Expert recommendations for success</li>\n</ul>\n\n<h3>Detailed Analysis</h3>\n<p>When dealing with ${mainKeyword}, it's crucial to understand all the nuances involved. This comprehensive guide breaks down everything you need to know to make informed decisions.</p>\n\n<p>Our expert analysis shows that successful outcomes in ${mainKeyword} require careful planning, proper execution, and ongoing attention to detail.</p>`,
-          metaDescription: `Complete guide to ${mainKeyword}. Learn best practices, avoid common mistakes, and get expert insights.`,
-          seoScore: Math.floor(Math.random() * 15) + 85,
-          keywords: `${mainKeyword}, guide, tips, best practices`,
-          status: 'draft'
-        });
-        
-        generatedPosts.push(post);
-      }
-
-      res.json({
-        success: true,
-        generated: generatedPosts.length,
-        posts: generatedPosts
       });
 
     } catch (error: any) {
