@@ -20,7 +20,8 @@ import {
   Trash2,
   Eye,
   Send,
-  Globe
+  Globe,
+  X
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -87,6 +88,7 @@ export default function BulkContentGenerator() {
   const [currentGenerating, setCurrentGenerating] = useState(0);
   const [promptSuggestion, setPromptSuggestion] = useState("");
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
+  const [previewPost, setPreviewPost] = useState<GeneratedPost | null>(null);
 
   // Analytics Data
   const monthlyStats = [
@@ -226,6 +228,10 @@ export default function BulkContentGenerator() {
       });
       setProgress(0);
       setCurrentGenerating(0);
+      setIsGenerating(false);
+      setGeneratedPosts([]);
+    },
+    onSettled: () => {
       setIsGenerating(false);
     }
   });
@@ -390,6 +396,24 @@ export default function BulkContentGenerator() {
   };
 
   const handleGenerate = () => {
+    const topics = baseTopics.split(',').map(t => t.trim()).filter(t => t.length > 0);
+    
+    if (topics.length === 0) {
+      toast({
+        title: "Error",
+        description: "Debes proporcionar al menos un tema",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (topics.length < postsCount) {
+      toast({
+        title: "Advertencia",
+        description: `Solo tienes ${topics.length} temas, pero solicitaste ${postsCount} posts. Se generarán ${topics.length} posts.`,
+      });
+    }
+
     setProgress(0);
     setCurrentGenerating(0);
     setGeneratedPosts([]);
@@ -883,9 +907,10 @@ export default function BulkContentGenerator() {
                 {isGenerating && (
                   <div className="space-y-2">
                     <Progress value={progress} className="h-2" />
-                    <p className="text-xs text-center text-slate-500">
-                      {Math.round(progress)}% completado
-                    </p>
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                      <span>Generando contenido...</span>
+                      <span>{Math.round(progress)}% completado</span>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -962,14 +987,23 @@ export default function BulkContentGenerator() {
                                   </Badge>
                                 </div>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => saveMutation.mutate(post)}
-                                disabled={saveMutation.isPending}
-                              >
-                                <Save className="w-4 h-4" />
-                              </Button>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setPreviewPost(post)}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => saveMutation.mutate(post)}
+                                  disabled={saveMutation.isPending}
+                                >
+                                  <Save className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
                           </CardHeader>
                           <CardContent>
@@ -1227,6 +1261,97 @@ export default function BulkContentGenerator() {
           )}
         </TabsContent>
       </Tabs>
+    {/* Preview Dialog */}
+      {previewPost && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <CardHeader className="border-b">
+              <div className="flex items-center justify-between">
+                <CardTitle>Vista Previa del Contenido</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPreviewPost(null)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="overflow-y-auto flex-1 pt-6">
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">{previewPost.title}</h2>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Badge variant="secondary">
+                      <TrendingUp className="w-3 h-3 mr-1" />
+                      SEO: {previewPost.seoScore}/100
+                    </Badge>
+                    <Badge variant="outline">
+                      {previewPost.content.split(/\s+/).length} palabras
+                    </Badge>
+                    {previewPost.keywords && previewPost.keywords.length > 0 && (
+                      <Badge variant="outline">
+                        {previewPost.keywords.length} keywords
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {previewPost.featuredImage && (
+                  <div className="mb-4">
+                    <img 
+                      src={previewPost.featuredImage} 
+                      alt="Featured" 
+                      className="w-full h-auto rounded-lg"
+                    />
+                  </div>
+                )}
+
+                <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
+                  <p className="text-sm font-medium text-blue-900 mb-1">Meta Descripción</p>
+                  <p className="text-sm text-blue-800">{previewPost.metaDescription}</p>
+                </div>
+
+                {previewPost.keywords && previewPost.keywords.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-900 mb-2">Palabras Clave</p>
+                    <div className="flex flex-wrap gap-2">
+                      {previewPost.keywords.map((keyword, idx) => (
+                        <Badge key={idx} variant="secondary">
+                          {keyword}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <Separator />
+
+                <div className="prose max-w-none">
+                  <div dangerouslySetInnerHTML={{ __html: previewPost.content }} />
+                </div>
+              </div>
+            </CardContent>
+            <div className="border-t p-4 flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setPreviewPost(null)}
+              >
+                Cerrar
+              </Button>
+              <Button
+                onClick={() => {
+                  saveMutation.mutate(previewPost);
+                  setPreviewPost(null);
+                }}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Guardar
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </SidebarLayout>
   );
 }
