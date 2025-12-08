@@ -439,6 +439,40 @@ export default function BulkContentGenerator() {
     });
   };
 
+  const exportPublishingReport = () => {
+    const report = {
+      fecha: new Date().toISOString(),
+      estadisticas: {
+        postsGenerados: 63,
+        seoPromedio: 87.5,
+        publicados: 48,
+        borradores: 15
+      },
+      rendimientoMensual: monthlyStats,
+      distribucionContenido: contentTypeDistribution,
+      seoPerformance: seoPerformance,
+      postsRecientes: generatedPosts.map(p => ({
+        titulo: p.title,
+        seoScore: p.seoScore,
+        palabrasClave: p.keywords
+      }))
+    };
+
+    const dataStr = JSON.stringify(report, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const exportFileDefaultName = `dashboard-generador-${new Date().toISOString().split('T')[0]}.json`;
+
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+
+    toast({
+      title: "Dashboard exportado",
+      description: "Reporte completo descargado exitosamente"
+    });
+  };
+
   return (
     <SidebarLayout>
       <div className="flex items-center justify-between mb-8">
@@ -455,6 +489,14 @@ export default function BulkContentGenerator() {
             <FileText className="w-4 h-4 mr-2" />
             {savedContents.length} guardados
           </Badge>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={exportPublishingReport}
+          >
+            <Download className="w-4 h-4" />
+            Exportar Dashboard
+          </Button>
         </div>
       </div>
 
@@ -918,9 +960,84 @@ export default function BulkContentGenerator() {
                       <h3 className="text-lg font-semibold text-slate-900 mb-2">
                         Listo para Generar Contenido
                       </h3>
-                      <p className="text-slate-500 max-w-md mx-auto">
+                      <p className="text-slate-500 max-w-md mx-auto mb-6">
                         Configura tus parámetros y presiona el botón para generar {postsCount} posts de alta calidad
                       </p>
+                      
+                      {/* Quick Start Templates */}
+                      <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto">
+                        <Button
+                          variant="outline"
+                          className="h-auto py-4 flex-col gap-2"
+                          onClick={() => {
+                            setBaseTopics("accidentes de auto, lesiones personales, compensación laboral, negligencia médica");
+                            setKeywords("abogado, lesiones, compensación, derechos");
+                            setWordCount(1200);
+                            toast({
+                              title: "Plantilla aplicada",
+                              description: "Configuración de Lesiones Personales cargada"
+                            });
+                          }}
+                        >
+                          <FileText className="w-6 h-6 text-blue-600" />
+                          <div className="text-sm font-medium">Lesiones Personales</div>
+                          <div className="text-xs text-slate-500">4 temas legales</div>
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          className="h-auto py-4 flex-col gap-2"
+                          onClick={() => {
+                            setBaseTopics("derecho familiar, divorcio, custodia de hijos, pensión alimenticia");
+                            setKeywords("abogado familiar, divorcio, custodia, legal");
+                            setWordCount(1500);
+                            toast({
+                              title: "Plantilla aplicada",
+                              description: "Configuración de Derecho Familiar cargada"
+                            });
+                          }}
+                        >
+                          <FileText className="w-6 h-6 text-purple-600" />
+                          <div className="text-sm font-medium">Derecho Familiar</div>
+                          <div className="text-xs text-slate-500">4 temas familiares</div>
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          className="h-auto py-4 flex-col gap-2"
+                          onClick={() => {
+                            setBaseTopics("accidentes de camión, responsabilidad de locales, accidentes de construcción, mordeduras de perro");
+                            setKeywords("accidentes, compensación, negligencia, seguridad");
+                            setWordCount(1200);
+                            toast({
+                              title: "Plantilla aplicada",
+                              description: "Configuración de Accidentes cargada"
+                            });
+                          }}
+                        >
+                          <FileText className="w-6 h-6 text-green-600" />
+                          <div className="text-sm font-medium">Accidentes</div>
+                          <div className="text-xs text-slate-500">4 tipos de casos</div>
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          className="h-auto py-4 flex-col gap-2"
+                          onClick={() => {
+                            setBaseTopics("defensa criminal, dui, delitos de drogas, casos federales");
+                            setKeywords("defensa criminal, abogado penal, derechos, justicia");
+                            setWordCount(1500);
+                            toast({
+                              title: "Plantilla aplicada",
+                              description: "Configuración de Derecho Penal cargada"
+                            });
+                          }}
+                        >
+                          <FileText className="w-6 h-6 text-amber-600" />
+                          <div className="text-sm font-medium">Derecho Penal</div>
+                          <div className="text-xs text-slate-500">4 áreas de defensa</div>
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
 

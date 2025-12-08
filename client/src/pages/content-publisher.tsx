@@ -242,6 +242,19 @@ El sistema ha optimizado este texto para lectura profesional.`;
 
   return (
     <SidebarLayout>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Publicador de Contenido</h1>
+          <p className="text-slate-500 mt-1">Sistema unificado con todas las integraciones activas</p>
+        </div>
+        <div className="flex gap-2">
+          <Badge className="bg-green-600 text-white px-4 py-2">
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Sistema Activo
+          </Badge>
+        </div>
+      </div>
+
       {/* Publishing Analytics Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100">
@@ -310,49 +323,60 @@ El sistema ha optimizado este texto para lectura profesional.`;
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Publicador de Contenido</h1>
-          <p className="text-slate-500 mt-1">Sistema unificado con todas las integraciones activas</p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => publishMutation.mutate(true)}
-            disabled={!title || !content || isPublishing}
-          >
-            <Save className="w-4 h-4" />
-            Guardar Borrador
-          </Button>
-          <Button
-            className="gap-2 bg-green-600 hover:bg-green-700"
-            onClick={() => publishMutation.mutate(false)}
-            disabled={!title || !content || isPublishing}
-          >
-            {isPublishing ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                Publicando...
-              </>
-            ) : (
-              <>
-                <Send className="w-4 h-4" />
-                Publicar Ahora
-              </>
-            )}
-          </Button>
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={exportPublishingReport}
-            disabled={isPublishing}
-          >
-            <Download className="w-4 h-4" />
-            Exportar Reporte
-          </Button>
-        </div>
-      </div>
+      {/* Quick Actions Bar */}
+      <Card className="mb-6 border-blue-200 bg-blue-50">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-blue-600" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900">Acciones Rápidas</p>
+                  <p className="text-xs text-blue-600">Gestiona tu contenido desde aquí</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => publishMutation.mutate(true)}
+                disabled={!title || !content || isPublishing}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Guardar Borrador
+              </Button>
+              <Button
+                size="sm"
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => publishMutation.mutate(false)}
+                disabled={!title || !content || isPublishing}
+              >
+                {isPublishing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Publicando...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Publicar Ahora
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportPublishingReport}
+                disabled={isPublishing}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Exportar Reporte
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {publishStatus && (
         <Card className="mb-6 border-green-200 bg-green-50">
