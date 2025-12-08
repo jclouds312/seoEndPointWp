@@ -44,6 +44,7 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
     { icon: Zap, label: "Jetpack Features", href: "/jetpack" },
     { icon: Settings, label: "Settings", href: "/settings" },
     { icon: Megaphone, label: "Campañas", href: "/campaigns" },
+    { icon: Globe, label: "Connected Sites", href: "/sites" },
   ];
 
   return (
@@ -110,7 +111,27 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
               }`}>
                 <Calendar className={`w-4 h-4 transition-colors ${location === "/bulk-generator" ? "text-white" : "text-slate-500 group-hover:text-white"}`} />
                 <span className="text-sm font-medium">Bulk Generator</span>
-                <span className="ml-auto text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">8 left</span>
+              </div>
+            </Link>
+            <Link href="/bulk-massive">
+              <div className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all cursor-pointer group ${
+                location === "/bulk-massive"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
+                  : "hover:bg-slate-900 hover:text-white text-slate-400"
+              }`}>
+                <Sparkles className={`w-4 h-4 transition-colors ${location === "/bulk-massive" ? "text-white" : "text-slate-500 group-hover:text-white"}`} />
+                <span className="text-sm font-medium">Bulk Massive (8x)</span>
+                <span className="ml-auto text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white px-1.5 py-0.5 rounded font-bold shadow-sm">PRO</span>
+              </div>
+            </Link>
+            <Link href="/content-manager">
+              <div className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all cursor-pointer group ${
+                location === "/content-manager"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
+                  : "hover:bg-slate-900 hover:text-white text-slate-400"
+              }`}>
+                <FileText className={`w-4 h-4 transition-colors ${location === "/content-manager" ? "text-white" : "text-slate-500 group-hover:text-white"}`} />
+                <span className="text-sm font-medium">Content Manager</span>
               </div>
             </Link>
             <Link href="/content-publisher">

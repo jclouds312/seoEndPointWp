@@ -20,6 +20,9 @@ import ContentCreator from "./pages/content-creator";
 import ContentPublisher from "./pages/content-publisher";
 import BulkContentGenerator from "./pages/bulk-content-generator";
 import JetpackIntegration from "@/pages/jetpack-integration";
+import BulkMassive from "@/pages/bulk-massive";
+import ContentManager from "@/pages/content-manager";
+import Sites from "@/pages/sites";
 
 function Router() {
   return (
@@ -39,6 +42,9 @@ function Router() {
       <Route path="/content-creator" component={ContentCreator} />
       <Route path="/content-publisher" component={ContentPublisher} />
       <Route path="/bulk-generator" component={BulkContentGenerator} />
+      <Route path="/bulk-massive" component={BulkMassive} />
+      <Route path="/content-manager" component={ContentManager} />
+      <Route path="/sites" component={Sites} />
       <Route path="/seo-analyzer" component={SeoAnalyzer} />
       <Route component={NotFound} />
     </Switch>
