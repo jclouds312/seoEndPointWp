@@ -48,6 +48,15 @@ const MOCK_WORKFLOWS = [
 export default function ContentPublisher() {
   const queryClient = useQueryClient();
 
+  const publishingStats = [
+    { time: '08:00', success: 12, pending: 2 },
+    { time: '10:00', success: 18, pending: 1 },
+    { time: '12:00', success: 24, pending: 3 },
+    { time: '14:00', success: 30, pending: 2 },
+    { time: '16:00', success: 28, pending: 1 },
+    { time: '18:00', success: 22, pending: 0 }
+  ];
+
   const exportPublishingReport = () => {
     const report = {
       fecha: new Date().toISOString(),
