@@ -9,6 +9,10 @@ export default function Documentation() {
     <SidebarLayout>
       <div className="flex items-center justify-between mb-8">
         <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Badge variant="outline" className="text-slate-600">v2.1.0</Badge>
+            <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">Enterprise</Badge>
+          </div>
           <h1 className="text-3xl font-bold text-slate-900">Documentation</h1>
           <p className="text-slate-500 mt-1">Installation guides, widget setup, and API references</p>
         </div>
