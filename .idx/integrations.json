@@ -1,5 +1,7 @@
 {
-  "firebase_hosting": {},
+  "firebase_hosting": {
+    "deploymentHostingUrl": "https://bdwpseo.web.app"
+  },
   "gemini_api": {},
   "secrets_manager": {}
 }

@@ -33,3 +33,22 @@
 [debug] [2025-12-08T22:35:22.285Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/bdwpseo [none]
 [debug] [2025-12-08T22:35:22.432Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/bdwpseo 200
 [debug] [2025-12-08T22:35:22.432Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/bdwpseo {"projectId":"bdwpseo","projectNumber":"441066465534","displayName":"bdwpseo","name":"projects/bdwpseo","resources":{"hostingSite":"bdwpseo"},"state":"ACTIVE","etag":"1_3c541b0b-d74f-4ea8-b1d8-56f6e6bbdea5"}
+[info] 
+   Thank you for trying our experimental support for Vite on Firebase Hosting.
+   While this integration is maintained by Googlers it is not a supported Firebase product.
+   Issues filed on GitHub will be addressed on a best-effort basis by maintainers and other community members.
+   The integration is known to work with Vite version 3 - 6. You may encounter errors.
+
+   Documentation: https://firebase.google.com/docs/hosting/frameworks/frameworks-overview
+   File a bug: https://github.com/firebase/firebase-tools/issues/new?template=bug_report.md
+   Submit a feature request: https://github.com/firebase/firebase-tools/issues/new?template=feature_request.md
+
+   We'd love to learn from you. Express your interest in helping us shape the future of Firebase Hosting: https://goo.gle/41enW5X
+
+[debug] [2025-12-08T22:35:36.723Z] Could not resolve entry module "index.html".
+    at getRollupError (file:///home/user/seoEndPointWp/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///home/user/seoEndPointWp/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (file:///home/user/seoEndPointWp/node_modules/rollup/dist/es/shared/node-entry.js:21611:20)
+    at async Promise.all (index 0)
+[error] 
+[error] Error: An unexpected error has occurred.
