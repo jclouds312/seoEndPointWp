@@ -11,8 +11,6 @@ import { cn } from "@/lib/utils";
 import SidebarLayout from "@/components/sidebar";
 import { toast } from "@/hooks/use-toast";
 
-import { toast } from "@/hooks/use-toast";
-
 interface GeneratedPost {
   id: string;
   title: string;
