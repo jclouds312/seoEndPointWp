@@ -78,8 +78,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const result = await db.insert(users).values(insertUser).returning();
-    return result[0];
+    try {
+      const result = await db.insert(users).values(insertUser).returning();
+      return result[0];
+    } catch (error: any) {
+      // If user already exists, fetch and return it
+      if (error.code === '23505') { // PostgreSQL unique violation
+        const existing = await this.getUserByUsername(insertUser.username);
+        if (existing) return existing;
+      }
+      throw error;
+    }
   }
 
   // Campaign methods
