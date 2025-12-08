@@ -52,3 +52,110 @@
     at async Promise.all (index 0)
 [error] 
 [error] Error: An unexpected error has occurred.
+[debug] [2025-12-08T22:35:48.693Z] ----------------------------------------------------------------------
+[debug] [2025-12-08T22:35:48.695Z] Command:       /nix/store/ws50yvm6vzlzf7jzz6n7xh4szddrack1-nodejs-20.19.1/bin/node /nix/store/c776mhyhgykcld7p90ajrka149ifn61a-firebase-tools-14.26.0/lib/node_modules/firebase-tools/lib/bin/firebase.js deploy --only hosting
+[debug] [2025-12-08T22:35:48.696Z] CLI Version:   14.26.0
+[debug] [2025-12-08T22:35:48.696Z] Platform:      linux
+[debug] [2025-12-08T22:35:48.696Z] Node Version:  v20.19.1
+[debug] [2025-12-08T22:35:48.696Z] Time:          Mon Dec 08 2025 22:35:48 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-12-08T22:35:48.697Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-12-08T22:35:48.923Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:35:48.923Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:35:48.926Z] >>> [apiv2][query] GET https://monospace-pa.googleapis.com/v1/workspaces/seoendpointwp-80547715 [none]
+[debug] [2025-12-08T22:35:49.492Z] <<< [apiv2][status] GET https://monospace-pa.googleapis.com/v1/workspaces/seoendpointwp-80547715 200
+[debug] [2025-12-08T22:35:49.492Z] <<< [apiv2][body] GET https://monospace-pa.googleapis.com/v1/workspaces/seoendpointwp-80547715 {"workspaceId":"seoendpointwp-80547715","name":"seoEndPointWp","workspaceRedirectUrl":"firebase-seoendpointwp-1765224499273.cluster-lr6dwlc2lzbcctqhqorax5zmro.cloudworkstations.dev","status":"WORKSPACE_STATUS_RUNNING","lastAccessDatetime":"2025-12-08T22:35:22.156110Z","workspaceTemplate":"WORKSPACE_TEMPLATE_FLUTTER","owner":"SELF","serviceAccountEmail":"msp-8308559547446855988@monospace-per-ws-sa-6.iam.gserviceaccount.com","gitRepoUrl":"https://github.com/jclouds312/seoEndPointWp.git","enableNix":true,"ownerEmail":"john474nvallejo@gmail.com","workstationAccessToken":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkLmdvb2dsZS5jb20vd29ya3N0YXRpb25zIiwiYXVkIjoiZmlyZWJhc2Utc2VvZW5kcG9pbnR3cC0xNzY1MjI0NDk5MjczLmNsdXN0ZXItbHI2ZHdsYzJsemJjY3RxaHFvcmF4NXptcm8uY2xvdWR3b3Jrc3RhdGlvbnMuZGV2IiwiaWF0IjoxNzY1MjMzMzQ5LCJleHAiOjE3NjUzMTk3NDl9.33I6Vid73S8hr7_NwEkA1Umf8ki8GhTdrEy9t26hKzhZpv9jqK_JjfUlWMYuDMGEo-3J1IqZ61Rsn-7jvyb86xmU9qsppKz5oFI7Oq8NB0ihAlsGzIgbKDhSrDKYTNnnhSIPLdmOzagZQzlXkpYcZ3dyREQo0IZw5nZA_aOhdKhDtRVq71vZWl1L4FWYgHAnlANHMNXVYRvvLBvbw2m_hbMzoicEVP8kmLdYVDi2M48_dRH9VNMHXHtF7oH2x3uQp4nDUsRfYjj0Z7Al-_KOs23ygr70oWyjft7zXQAhsZfwJ8Kwm59Vj7uV7V-lMOYHprGHJcJJSLgBEu565gUPbQ","firebaseProjectId":"bdwpseo"}
+[debug] [2025-12-08T22:35:49.494Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-12-08T22:35:49.495Z] > authorizing via signed-in user (john474nvallejo@gmail.com)
+[debug] [2025-12-08T22:35:49.495Z] [iam] checking project bdwpseo for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2025-12-08T22:35:49.495Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:35:49.495Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:35:49.495Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/bdwpseo:testIamPermissions [none]
+[debug] [2025-12-08T22:35:49.495Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/bdwpseo:testIamPermissions x-goog-quota-user=projects/bdwpseo
+[debug] [2025-12-08T22:35:49.495Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/bdwpseo:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-12-08T22:35:49.546Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/bdwpseo:testIamPermissions 200
+[debug] [2025-12-08T22:35:49.546Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/bdwpseo:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-12-08T22:35:49.547Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:35:49.547Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:35:49.547Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/bdwpseo [none]
+[debug] [2025-12-08T22:35:49.699Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/bdwpseo 200
+[debug] [2025-12-08T22:35:49.699Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/bdwpseo {"projectId":"bdwpseo","projectNumber":"441066465534","displayName":"bdwpseo","name":"projects/bdwpseo","resources":{"hostingSite":"bdwpseo"},"state":"ACTIVE","etag":"1_3c541b0b-d74f-4ea8-b1d8-56f6e6bbdea5"}
+[info] 
+   Thank you for trying our experimental support for Vite on Firebase Hosting.
+   While this integration is maintained by Googlers it is not a supported Firebase product.
+   Issues filed on GitHub will be addressed on a best-effort basis by maintainers and other community members.
+   The integration is known to work with Vite version 3 - 6. You may encounter errors.
+
+   Documentation: https://firebase.google.com/docs/hosting/frameworks/frameworks-overview
+   File a bug: https://github.com/firebase/firebase-tools/issues/new?template=bug_report.md
+   Submit a feature request: https://github.com/firebase/firebase-tools/issues/new?template=feature_request.md
+
+   We'd love to learn from you. Express your interest in helping us shape the future of Firebase Hosting: https://goo.gle/41enW5X
+
+[debug] [2025-12-08T22:36:03.941Z] Could not resolve entry module "index.html".
+    at getRollupError (file:///home/user/seoEndPointWp/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///home/user/seoEndPointWp/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (file:///home/user/seoEndPointWp/node_modules/rollup/dist/es/shared/node-entry.js:21611:20)
+    at async Promise.all (index 0)
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2025-12-08T22:36:20.923Z] ----------------------------------------------------------------------
+[debug] [2025-12-08T22:36:20.925Z] Command:       /nix/store/ws50yvm6vzlzf7jzz6n7xh4szddrack1-nodejs-20.19.1/bin/node /nix/store/c776mhyhgykcld7p90ajrka149ifn61a-firebase-tools-14.26.0/lib/node_modules/firebase-tools/lib/bin/firebase.js hosting:channel:deploy bdseowp
+[debug] [2025-12-08T22:36:20.926Z] CLI Version:   14.26.0
+[debug] [2025-12-08T22:36:20.926Z] Platform:      linux
+[debug] [2025-12-08T22:36:20.926Z] Node Version:  v20.19.1
+[debug] [2025-12-08T22:36:20.926Z] Time:          Mon Dec 08 2025 22:36:20 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-12-08T22:36:20.926Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-12-08T22:36:21.184Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:36:21.184Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:36:21.188Z] >>> [apiv2][query] GET https://monospace-pa.googleapis.com/v1/workspaces/seoendpointwp-80547715 [none]
+[debug] [2025-12-08T22:36:21.789Z] <<< [apiv2][status] GET https://monospace-pa.googleapis.com/v1/workspaces/seoendpointwp-80547715 200
+[debug] [2025-12-08T22:36:21.790Z] <<< [apiv2][body] GET https://monospace-pa.googleapis.com/v1/workspaces/seoendpointwp-80547715 {"workspaceId":"seoendpointwp-80547715","name":"seoEndPointWp","workspaceRedirectUrl":"firebase-seoendpointwp-1765224499273.cluster-lr6dwlc2lzbcctqhqorax5zmro.cloudworkstations.dev","status":"WORKSPACE_STATUS_RUNNING","lastAccessDatetime":"2025-12-08T22:35:22.156110Z","workspaceTemplate":"WORKSPACE_TEMPLATE_FLUTTER","owner":"SELF","serviceAccountEmail":"msp-8308559547446855988@monospace-per-ws-sa-6.iam.gserviceaccount.com","gitRepoUrl":"https://github.com/jclouds312/seoEndPointWp.git","enableNix":true,"ownerEmail":"john474nvallejo@gmail.com","workstationAccessToken":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkLmdvb2dsZS5jb20vd29ya3N0YXRpb25zIiwiYXVkIjoiZmlyZWJhc2Utc2VvZW5kcG9pbnR3cC0xNzY1MjI0NDk5MjczLmNsdXN0ZXItbHI2ZHdsYzJsemJjY3RxaHFvcmF4NXptcm8uY2xvdWR3b3Jrc3RhdGlvbnMuZGV2IiwiaWF0IjoxNzY1MjMzMzgxLCJleHAiOjE3NjUzMTk3ODF9.5uSSL3NmIyZ-SOACa1oZmvEnuC6QTpsWUpVpFhLOEIfu-4KQzRcxxryU11u5kdC8tyY9bb0gveqme94zouRPeoUbsiRb03uYBuIB-sFf6b2bjiolARtXzDDYWXxHyCZ0v7Eo04ADnfFUSHT7uWgvwJLfyP1Y2aQ6iTLSvphR9efvNEVJi1yaRkuVy8CpA1u-NQO-fkfe3Jh_kCySgvixQdppmxh_b3bXQxfw5BiO7rpyvcnia_m7DeVDNG-9l6wKVvjoqPj-pHg74zn6DfcXfne6HXDbYTRpfRj_8wPSVTgRWLSvHvtqkb3RhFON8S1iVZInPsUtdyFWpLjW1ray4Q","firebaseProjectId":"bdwpseo"}
+[debug] [2025-12-08T22:36:21.790Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-12-08T22:36:21.791Z] > authorizing via signed-in user (john474nvallejo@gmail.com)
+[debug] [2025-12-08T22:36:21.791Z] [iam] checking project bdwpseo for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2025-12-08T22:36:21.791Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:36:21.791Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:36:21.792Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/bdwpseo:testIamPermissions [none]
+[debug] [2025-12-08T22:36:21.792Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/bdwpseo:testIamPermissions x-goog-quota-user=projects/bdwpseo
+[debug] [2025-12-08T22:36:21.792Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/bdwpseo:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-12-08T22:36:21.839Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/bdwpseo:testIamPermissions 200
+[debug] [2025-12-08T22:36:21.839Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/bdwpseo:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-12-08T22:36:21.840Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:36:21.840Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:36:21.840Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/bdwpseo [none]
+[debug] [2025-12-08T22:36:21.988Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/bdwpseo 200
+[debug] [2025-12-08T22:36:21.989Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/bdwpseo {"projectId":"bdwpseo","projectNumber":"441066465534","displayName":"bdwpseo","name":"projects/bdwpseo","resources":{"hostingSite":"bdwpseo"},"state":"ACTIVE","etag":"1_3c541b0b-d74f-4ea8-b1d8-56f6e6bbdea5"}
+[debug] [2025-12-08T22:36:21.990Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:36:21.990Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:36:21.990Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/bdwpseo/sites/bdwpseo/channels/bdseowp [none]
+[debug] [2025-12-08T22:36:22.150Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/bdwpseo/sites/bdwpseo/channels/bdseowp 404
+[debug] [2025-12-08T22:36:22.150Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/bdwpseo/sites/bdwpseo/channels/bdseowp {"error":{"code":404,"message":"Requested entity was not found.","status":"NOT_FOUND"}}
+[debug] [2025-12-08T22:36:22.151Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:36:22.151Z] Checked if tokens are valid: true, expires at: 1765236781888
+[debug] [2025-12-08T22:36:22.151Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/bdwpseo/sites/bdwpseo/channels?channelId=bdseowp [none]
+[debug] [2025-12-08T22:36:22.151Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/bdwpseo/sites/bdwpseo/channels?channelId=bdseowp {"ttl":"604800s"}
+[debug] [2025-12-08T22:36:22.342Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/bdwpseo/sites/bdwpseo/channels?channelId=bdseowp 200
+[debug] [2025-12-08T22:36:22.343Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/bdwpseo/sites/bdwpseo/channels?channelId=bdseowp {"name":"projects/bdwpseo/sites/bdwpseo/channels/bdseowp","url":"https://bdwpseo--bdseowp-mkz9gbhx.web.app","createTime":"2025-12-08T22:36:22.307597479Z","updateTime":"2025-12-08T22:36:22.307597479Z","retainedReleaseCount":10,"expireTime":"2025-12-15T22:36:22.307597479Z"}
+[debug] [2025-12-08T22:36:22.343Z] [hosting] created new channnel for site bdwpseo {"name":"projects/bdwpseo/sites/bdwpseo/channels/bdseowp","url":"https://bdwpseo--bdseowp-mkz9gbhx.web.app","createTime":"2025-12-08T22:36:22.307597479Z","updateTime":"2025-12-08T22:36:22.307597479Z","retainedReleaseCount":10,"expireTime":"2025-12-15T22:36:22.307597479Z"}
+[info] ✔  hosting:channel: Channel bdseowp has been created on site bdwpseo. 
+[info] 
+   Thank you for trying our experimental support for Vite on Firebase Hosting.
+   While this integration is maintained by Googlers it is not a supported Firebase product.
+   Issues filed on GitHub will be addressed on a best-effort basis by maintainers and other community members.
+   The integration is known to work with Vite version 3 - 6. You may encounter errors.
+
+   Documentation: https://firebase.google.com/docs/hosting/frameworks/frameworks-overview
+   File a bug: https://github.com/firebase/firebase-tools/issues/new?template=bug_report.md
+   Submit a feature request: https://github.com/firebase/firebase-tools/issues/new?template=feature_request.md
+
+   We'd love to learn from you. Express your interest in helping us shape the future of Firebase Hosting: https://goo.gle/41enW5X
+
+[debug] [2025-12-08T22:36:36.965Z] Could not resolve entry module "index.html".
+    at getRollupError (file:///home/user/seoEndPointWp/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///home/user/seoEndPointWp/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (file:///home/user/seoEndPointWp/node_modules/rollup/dist/es/shared/node-entry.js:21611:20)
+    at async Promise.all (index 0)
+[error] 
+[error] Error: An unexpected error has occurred.
