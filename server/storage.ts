@@ -154,7 +154,7 @@ export class MemStorage implements IStorage {
       createdAt: new Date()
     }).returning();
     return result[0];
-  },
+  }
 
   async updateBulkBatch(batchId: string, data: any) {
     const result = await db.update(bulkGenerationBatches)
@@ -162,7 +162,7 @@ export class MemStorage implements IStorage {
       .where(eq(bulkGenerationBatches.batchId, batchId))
       .returning();
     return result[0];
-  },
+  }
 
   async getBulkBatches(userId?: string) {
     if (userId) {
@@ -174,7 +174,7 @@ export class MemStorage implements IStorage {
     return await db.select()
       .from(bulkGenerationBatches)
       .orderBy(desc(bulkGenerationBatches.createdAt));
-  },
+  }
 }
 
 export const storage = new MemStorage();
