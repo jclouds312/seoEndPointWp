@@ -77,7 +77,7 @@ async function generateContent({ topic, keywords, wordCount, tone, language }: a
 
 export default function BulkContentGenerator() {
   const queryClient = useQueryClient();
-  const [postsCount, setPostsCount] = useState(8);
+  const [postsCount, setPostsCount] = useState(4);
   const [baseTopics, setBaseTopics] = useState("lesiones personales, accidentes de auto, compensación laboral, negligencia médica, accidentes de trabajo, lesiones en construcción, accidentes de motocicleta, mordeduras de perro");
   const [keywords, setKeywords] = useState("abogado, lesiones, compensación, derechos legales");
   const [wordCount, setWordCount] = useState(1200);
@@ -564,9 +564,9 @@ export default function BulkContentGenerator() {
           <p className="text-slate-500 mt-1">Genera hasta 10 posts de alta calidad mensuales con IA</p>
         </div>
         <div className="flex gap-2">
-          <Badge className="bg-purple-600 text-white px-4 py-2">
+          <Badge className="bg-purple-600 text-white px-4 py-2 text-base">
             <Calendar className="w-4 h-4 mr-2" />
-            {postsCount} Posts configurados
+            x{postsCount} Posts configurados
           </Badge>
           <Badge variant="outline" className="px-4 py-2">
             <FileText className="w-4 h-4 mr-2" />
@@ -585,12 +585,12 @@ export default function BulkContentGenerator() {
 
       {/* Analytics Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
+        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-blue-600 uppercase tracking-wider">Posts Generados</p>
-                <p className="text-3xl font-bold text-blue-900 mt-1">63</p>
+                <p className="text-3xl font-bold text-blue-900 mt-1">{savedContents.length}</p>
                 <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" />
                   +12% vs mes anterior
@@ -788,12 +788,15 @@ export default function BulkContentGenerator() {
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Configuration */}
-            <Card className="lg:col-span-1">
-              <CardHeader>
-                <CardTitle className="text-lg">Configuración de Generación</CardTitle>
+            <Card className="lg:col-span-1 border-purple-200 bg-gradient-to-br from-purple-50/50 to-blue-50/50">
+              <CardHeader className="border-b border-purple-100 bg-white/50">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                  Configuración de Generación
+                </CardTitle>
                 <CardDescription>Define los parámetros para generar contenido masivo</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 pt-6">
                 <div className="space-y-2">
                   <Label>Cantidad de Posts</Label>
                   <Select value={postsCount.toString()} onValueChange={(v) => setPostsCount(parseInt(v))}>
@@ -801,13 +804,13 @@ export default function BulkContentGenerator() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="5">5 posts</SelectItem>
-                      <SelectItem value="8">8 posts (Plan Mensual)</SelectItem>
-                      <SelectItem value="10">10 posts (Máximo)</SelectItem>
+                      <SelectItem value="2">2 posts</SelectItem>
+                      <SelectItem value="4">4 posts</SelectItem>
+                      <SelectItem value="6">6 posts</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-slate-500">
-                    Límite mensual: 8-10 posts de alta calidad
+                    Genera contenido de alta calidad en grupos de 2, 4 o 6 posts
                   </p>
                 </div>
 
@@ -909,7 +912,7 @@ export default function BulkContentGenerator() {
                 <Separator />
 
                 <Button
-                  className="w-full h-12 gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                  className="w-full h-14 gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
                   onClick={handleGenerate}
                   disabled={isGenerating}
                 >
@@ -921,7 +924,7 @@ export default function BulkContentGenerator() {
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5" />
-                      Generar {postsCount} Posts
+                      Generar x{postsCount} Posts de Alta Calidad
                     </>
                   )}
                 </Button>
@@ -947,10 +950,10 @@ export default function BulkContentGenerator() {
                       <div>
                         <CardTitle className="text-lg flex items-center gap-2">
                           <CheckCircle2 className="w-5 h-5 text-green-600" />
-                          Contenido Generado
+                          ✓ Contenido Generado Exitosamente
                         </CardTitle>
                         <CardDescription>
-                          {generatedPosts.length} posts listos para revisar y publicar
+                          x{generatedPosts.length} posts de alta calidad listos para revisar y publicar
                         </CardDescription>
                       </div>
                       <div className="flex gap-2">
@@ -1054,7 +1057,7 @@ export default function BulkContentGenerator() {
                         Listo para Generar Contenido
                       </h3>
                       <p className="text-slate-500 max-w-md mx-auto mb-6">
-                        Configura tus parámetros y presiona el botón para generar {postsCount} posts de alta calidad
+                        Configura tus parámetros y presiona el botón para generar x2, x4 o x6 posts de alta calidad
                       </p>
                       
                       {/* Quick Start Templates */}
