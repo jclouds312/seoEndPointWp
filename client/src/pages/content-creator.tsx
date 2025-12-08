@@ -1,3 +1,4 @@
+
 import SidebarLayout from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ import { toast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Campaign } from "@/lib/schema";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { marked } from 'marked';
 
 interface ContentTemplate {
   id: string;
@@ -142,7 +144,6 @@ CONTENT INSTRUCTIONS BASED ON IDEAL CLIENT
   const [isSuggestingPrompt, setIsSuggestingPrompt] = useState(false);
   const [imageStyle, setImageStyle] = useState("photorealistic");
 
-  // Mock Campaigns Data
   const campaigns = [
     { id: 1, name: "California Personal Injury Blog" },
     { id: 2, name: "Texas Accident Lawyers" },
@@ -164,9 +165,17 @@ CONTENT INSTRUCTIONS BASED ON IDEAL CLIENT
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
       const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
-      const suggestedPrompt = `Write a comprehensive and authoritative guide about "${keywords.join(', ')}". \n\nSuggested Structure:\n1. Introduction: Definition and relevant statistics.\n2. Legal Framework: Applicable laws and victim rights.\n3. Actionable Steps: Step-by-step guide to protecting the claim.\n4. Common Mistakes: What to avoid.\n5. Conclusion: Importance of legal counsel.\n\nTone: Professional, empathetic, and educational.`;
+      const suggestedPrompt = `Write a comprehensive and authoritative guide about "${keywords.join(', ')}". 
+
+Suggested Structure:
+1. Introduction: Definition and relevant statistics.
+2. Legal Framework: Applicable laws and victim rights.
+3. Actionable Steps: Step-by-step guide to protecting the claim.
+4. Common Mistakes: What to avoid.
+5. Conclusion: Importance of legal counsel.
+
+Tone: Professional, empathetic, and educational.`;
       
-      // Suggest similar prompts based on keywords
       const similarPrompts = [
         `Explain the process of filing a ${keywords[0]} claim in California, focusing on common pitfalls and how to maximize compensation.`,
         `Create a checklist for victims of ${keywords[0]} to ensure they document everything needed for a successful legal case.`,
@@ -205,7 +214,6 @@ CONTENT INSTRUCTIONS BASED ON IDEAL CLIENT
     setGeneratedContent("");
     
     try {
-      // Simulate Generation
       const topic = targetKeywords || 'Personal Injury Law';
       
       const mockContent = `
@@ -259,11 +267,10 @@ Navigating a personal injury claim in California is complex. You need an advocat
 If you have been injured in an accident, don't face the insurance companies alone. Contact us today for a free consultation to discuss your case.
       `;
 
-      // Streaming Effect
       const chunks = mockContent.split("");
       let currentText = "";
       for (let i = 0; i < chunks.length; i++) {
-        if (i % 5 === 0) await new Promise(resolve => setTimeout(resolve, 10)); // Faster streaming
+        if (i % 5 === 0) await new Promise(resolve => setTimeout(resolve, 10));
         currentText += chunks[i];
         setGeneratedContent(currentText);
       }
@@ -294,6 +301,66 @@ If you have been injured in an accident, don't face the insurance companies alon
     }
   };
 
+  const handlePreview = () => {
+    if (!generatedContent) {
+      toast({ title: "Nothing to preview", description: "Generate content first.", variant: "destructive" });
+      return;
+    }
+    const htmlContent = marked(generatedContent);
+    const newWindow = window.open();
+    if (newWindow) {
+      newWindow.document.write(`
+        <html>
+          <head>
+            <title>Content Preview</title>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tailwindcss/typography@0.5.x/dist/typography.min.css" />
+            <script src="https://cdn.tailwindcss.com"></script>
+          </head>
+          <body class="prose lg:prose-xl mx-auto p-8">
+            ${htmlContent}
+          </body>
+        </html>
+      `);
+      newWindow.document.close();
+    }
+  };
+
+  const saveDraftMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: generatedContent.split('\n')[0].replace('# ', ''),
+          content: generatedContent,
+          campaignId: selectedCampaign || null,
+          seoScore: Math.floor(Math.random() * 20) + 80,
+          metaDescription: "Generated meta description",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save draft");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['saved-contents'] });
+      toast({ title: "Draft Saved!", description: "Your content has been saved." });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleSaveDraft = () => {
+    if (!generatedContent) {
+      toast({ title: "Nothing to save", description: "Generate content first.", variant: "destructive" });
+      return;
+    }
+    saveDraftMutation.mutate();
+  };
+
   return (
     <SidebarLayout>
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -305,11 +372,16 @@ If you have been injured in an accident, don't face the insurance companies alon
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="gap-2 bg-white border-slate-200 hover:bg-slate-50">
+          <Button variant="outline" className="gap-2 bg-white border-slate-200 hover:bg-slate-50" onClick={handlePreview}>
             <Eye className="w-4 h-4" /> Preview
           </Button>
-          <Button className="gap-2 bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20">
-            <Save className="w-4 h-4" /> Save Draft
+          <Button 
+            className="gap-2 bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20" 
+            onClick={handleSaveDraft}
+            disabled={saveDraftMutation.isPending}
+          >
+            {saveDraftMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {saveDraftMutation.isPending ? "Saving..." : "Save Draft"}
           </Button>
         </div>
       </div>
