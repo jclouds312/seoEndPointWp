@@ -412,9 +412,9 @@ export default function BulkMassive() {
                       variant="outline"
                       size="sm"
                       className="mt-2"
-                      onClick={() => window.location.href = '/bulk-content-generator'}
+                      onClick={() => window.location.href = '/bulk-content-generator?results=true'}
                     >
-                      Ver en Bulk Generator
+                      Ver Resultados Generados
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>

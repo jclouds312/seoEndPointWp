@@ -27,9 +27,10 @@ import {
   PieChart as PieChartIcon,
   Activity
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -66,6 +67,7 @@ interface GeneratedPost {
 
 export default function BulkContentGenerator() {
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [postsCount, setPostsCount] = useState(4);
   const [baseTopics, setBaseTopics] = useState("lesiones personales, accidentes de auto, compensación laboral, negligencia médica, accidentes de trabajo, lesiones en construcción, accidentes de motocicleta, mordeduras de perro");
   const [keywords, setKeywords] = useState("abogado, lesiones, compensación, derechos legales");
@@ -78,6 +80,25 @@ export default function BulkContentGenerator() {
   const [promptSuggestion, setPromptSuggestion] = useState("");
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
   const [previewPost, setPreviewPost] = useState<GeneratedPost | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("generator");
+
+  // Auto-generate on mount if URL parameter is present
+  useEffect(() => {
+    const autoGenerate = searchParams.get('auto');
+    const showResults = searchParams.get('results');
+    
+    if (showResults === 'true' && savedContents.length > 0) {
+      setActiveTab('history');
+      toast({
+        title: "Mostrando resultados guardados",
+        description: `Tienes ${savedContents.length} contenidos generados`
+      });
+    } else if (autoGenerate === 'true' && !isGenerating && baseTopics.trim()) {
+      setTimeout(() => {
+        handleGenerate();
+      }, 500);
+    }
+  }, [searchParams]);
 
   // Analytics Data
   const monthlyStats = [
@@ -533,6 +554,16 @@ export default function BulkContentGenerator() {
             <FileText className="w-4 h-4 mr-2" />
             {savedContents.length} guardados
           </Badge>
+          {savedContents.length > 0 && (
+            <Button
+              variant="default"
+              className="gap-2 bg-green-600 hover:bg-green-700"
+              onClick={() => setActiveTab('history')}
+            >
+              <Eye className="w-4 h-4" />
+              Ver Resultados
+            </Button>
+          )}
           <Button
             variant="outline"
             className="gap-2"
@@ -723,7 +754,7 @@ export default function BulkContentGenerator() {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="generator" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
           <TabsTrigger value="generator" className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <Sparkles className="w-4 h-4 mr-2" />
