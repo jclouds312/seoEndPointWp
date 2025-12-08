@@ -1,3 +1,4 @@
+
 import { Switch, Route, Router } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
@@ -22,9 +23,9 @@ import ContentPublisher from "./pages/content-publisher";
 import BulkContentGenerator from "./pages/bulk-content-generator";
 import JetpackIntegration from "@/pages/jetpack-integration";
 import BulkMassive from "@/pages/bulk-massive";
-import BulkGenerator from "@/pages/bulk-content-generator";
 import ContentManager from "@/pages/content-manager";
 import Sites from "@/pages/sites";
+import CampaignDetailsPage from "@/pages/campaign-details"; // <-- Importar la nueva página
 
 function AppRoutes() {
   return (
@@ -40,16 +41,20 @@ function AppRoutes() {
       <Route path="/deployment" component={Deployment} />
       <Route path="/documentation" component={Documentation} />
       <Route path="/settings" component={Settings} />
+      
+      {/* Rutas de Campañas y Contenido */}
       <Route path="/campaigns" component={Campaigns} />
+      <Route path="/campaign/:id" component={CampaignDetailsPage} /> {/* <-- Nueva ruta */}
+      
       <Route path="/content-creator" component={ContentCreator} />
       <Route path="/content-publisher" component={ContentPublisher} />
       <Route path="/content-manager" component={ContentManager} />
       <Route path="/sites" component={Sites} />
       
-      {/* Bulk Generator Routes - All within dashboard */}
-      <Route path="/bulk-generator" component={BulkContentGenerator} />
+      {/* Generadores de Contenido */}
       <Route path="/bulk-content-generator" component={BulkContentGenerator} />
       <Route path="/bulk-massive" component={BulkMassive} />
+      
       <Route path="/seo-analyzer" component={SeoAnalyzer} />
       <Route component={NotFound} />
     </Switch>
