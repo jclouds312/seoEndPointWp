@@ -9,14 +9,23 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, Zap, History, Globe, CheckCircle2, AlertCircle, ArrowRight, LayoutTemplate } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SidebarLayout from "@/components/sidebar";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
+
+interface GeneratedPost {
+  id: string;
+  title: string;
+  content: string;
+  metaDescription: string;
+  seoScore: number;
+  status: string;
+}
 
 export default function BulkMassive() {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [step, setStep] = useState(1);
+  const [currentPost, setCurrentPost] = useState(0);
   const [targetSite, setTargetSite] = useState("calinjurylaw");
   const [mainKeyword, setMainKeyword] = useState("");
-  const { toast } = useToast();
+  const [generatedPosts, setGeneratedPosts] = useState<GeneratedPost[]>([]);
 
   const handleGenerate = async () => {
     if (!mainKeyword.trim()) {
@@ -29,7 +38,16 @@ export default function BulkMassive() {
     }
 
     setIsGenerating(true);
-    setStep(2);
+    setCurrentPost(0);
+    setGeneratedPosts([]);
+    
+    // Simulate progress for better UX
+    const progressInterval = setInterval(() => {
+      setCurrentPost(prev => {
+        if (prev < 7) return prev + 1;
+        return prev;
+      });
+    }, 500);
     
     try {
       const response = await fetch('/api/bulk-massive/generate', {
@@ -42,6 +60,8 @@ export default function BulkMassive() {
         })
       });
 
+      clearInterval(progressInterval);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
         throw new Error(errorData.error || 'Error al generar contenido');
@@ -49,25 +69,23 @@ export default function BulkMassive() {
 
       const data = await response.json();
       
-      setStep(3);
+      setCurrentPost(8);
+      setGeneratedPosts(data.contents || []);
+      
       toast({
         title: "¡Generación Completada!",
-        description: `${data.generated || 8} posts generados exitosamente`,
+        description: `${data.generated || 8} posts generados y guardados exitosamente`,
       });
       
-      // Redirect to history after 2 seconds
-      setTimeout(() => {
-        window.location.href = '/bulk-content-generator';
-      }, 2000);
-      
     } catch (error: any) {
+      clearInterval(progressInterval);
       console.error('Error:', error);
       toast({
         title: "Error en Generación",
         description: error.message,
         variant: "destructive"
       });
-      setStep(1);
+      setCurrentPost(0);
     } finally {
       setIsGenerating(false);
     }
@@ -298,6 +316,11 @@ export default function BulkMassive() {
                       Processing
                     </Badge>
                   )}
+                  {!isGenerating && generatedPosts.length > 0 && (
+                    <Badge variant="secondary" className="bg-green-50 text-green-600">
+                      Completado
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -307,22 +330,33 @@ export default function BulkMassive() {
                       key={i} 
                       className={cn(
                         "flex items-center gap-3 p-3 rounded-lg border transition-all duration-500",
-                        isGenerating && i === 2 
+                        currentPost > i 
+                          ? "bg-green-50 border-green-200" 
+                          : currentPost === i && isGenerating
                           ? "bg-indigo-50 border-indigo-200 scale-[1.02] shadow-sm" 
                           : "bg-white border-slate-100"
                       )}
                     >
                       <div className={cn(
                         "flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-colors",
-                        isGenerating && i < 2 ? "bg-green-100 text-green-700" :
-                        isGenerating && i === 2 ? "bg-indigo-100 text-indigo-700 animate-pulse" :
+                        currentPost > i ? "bg-green-100 text-green-700" :
+                        currentPost === i && isGenerating ? "bg-indigo-100 text-indigo-700 animate-pulse" :
                         "bg-slate-100 text-slate-500"
                       )}>
-                        {isGenerating && i < 2 ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
+                        {currentPost > i ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        {isGenerating && i === 2 ? (
+                        {generatedPosts[i] ? (
+                          <div className="space-y-1">
+                            <div className="text-xs font-medium text-slate-900 truncate">
+                              {generatedPosts[i].title}
+                            </div>
+                            <div className="text-[10px] text-slate-500">
+                              SEO: {generatedPosts[i].seoScore}/100
+                            </div>
+                          </div>
+                        ) : currentPost === i && isGenerating ? (
                            <div className="space-y-1.5">
                              <div className="h-2.5 bg-indigo-200 rounded w-24 animate-pulse" />
                              <div className="h-2 bg-indigo-100 rounded w-16" />
@@ -335,7 +369,7 @@ export default function BulkMassive() {
                         )}
                       </div>
 
-                      {isGenerating && i === 2 && (
+                      {currentPost === i && isGenerating && (
                         <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-500" />
                       )}
                     </div>
@@ -347,11 +381,32 @@ export default function BulkMassive() {
                   <div className="w-full space-y-2">
                     <div className="flex justify-between text-xs font-medium text-slate-500">
                       <span>Overall Progress</span>
-                      <span>32%</span>
+                      <span>{Math.round((currentPost / 8) * 100)}%</span>
                     </div>
                     <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-600 w-[32%] rounded-full transition-all duration-500" />
+                      <div 
+                        className="h-full bg-indigo-600 rounded-full transition-all duration-500" 
+                        style={{ width: `${(currentPost / 8) * 100}%` }}
+                      />
                     </div>
+                  </div>
+                </CardFooter>
+              )}
+              {!isGenerating && generatedPosts.length > 0 && (
+                <CardFooter className="bg-green-50 border-t border-green-100 py-3">
+                  <div className="w-full text-center">
+                    <p className="text-sm font-medium text-green-900">
+                      {generatedPosts.length} posts generados exitosamente
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => window.location.href = '/bulk-content-generator'}
+                    >
+                      Ver en Bulk Generator
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
                   </div>
                 </CardFooter>
               )}
