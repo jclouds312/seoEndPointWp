@@ -1,4 +1,3 @@
-
 import { storage } from "./storage";
 
 const EXAMPLE_CAMPAIGNS = [
@@ -167,7 +166,7 @@ async function seedCampaigns() {
         .toLowerCase()
         .replace(/\s+/g, '-')
         .replace(/[^a-z0-9-]/g, '');
-      
+
       const embedCode = generateEmbedCode(blogIdentifier);
 
       try {
@@ -189,7 +188,7 @@ async function seedCampaigns() {
 
     console.log('🎉 Campaign seeding completed!\n');
     console.log('Run your application and navigate to /campaigns to see the results.');
-    
+
     process.exit(0);
   } catch (error: any) {
     console.error('❌ Seeding failed:', error.message);
