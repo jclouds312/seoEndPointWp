@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, Zap, History, Globe, CheckCircle2, AlertCircle, ArrowRight, LayoutTemplate } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SidebarLayout from "@/components/sidebar";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 interface GeneratedPost {
   id: string;
@@ -21,7 +21,6 @@ interface GeneratedPost {
 }
 
 export default function BulkMassive() {
-  const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentPost, setCurrentPost] = useState(0);
   const [targetSite, setTargetSite] = useState("calinjurylaw");

@@ -48,14 +48,7 @@ ${topic} is a crucial aspect that requires careful consideration and understandi
 
 ## Detailed Analysis
 
-When dealing with ${mainKeyword}, it's essential to have a thorough understanding of the subject matter. Our experience shows that taking a systematic approach yields the best results.
-
-### Important Considerations
-
-1. **Research thoroughly**: Make sure you understand all aspects
-2. **Plan ahead**: Create a comprehensive strategy
-3. **Stay updated**: Keep current with latest developments
-4. **Seek expertise**: Consult with professionals when needed
+When dealing with ${mainKeyword}, it's crucial to understand all the nuances involved. This comprehensive guide breaks down everything you need to know to make informed decisions.
 
 ## Conclusion
 
@@ -63,21 +56,15 @@ ${topic} requires attention to detail and a strategic approach. By following the
 
 For more information or personalized assistance, consider consulting with a professional in this field.`;
 
-        const newPost = {
+        // Save to storage
+        const savedPost = await storage.saveGeneratedContent({
           title: topic,
           content: content,
           metaDescription: `Learn everything you need to know about ${topic}. Expert insights and practical advice.`,
           seoScore: Math.floor(Math.random() * 15) + 85,
           status: 'draft',
-          keywords: `${mainKeyword}, ${topic}`,
-          featuredImage: null,
-          createdAt: new Date().toISOString(),
-          campaignId: null,
-          targetSite: targetSite
-        };
-
-        // Save to storage
-        const savedPost = await storage.saveContent(newPost);
+          keywords: `${mainKeyword}, ${topic}`
+        });
 
         generatedPosts.push({
           id: savedPost.id,
