@@ -29,6 +29,7 @@ export function AutoPublishWorkflowDialog({
     wpUrl: "https://www.californiapersonalinjurylawyersblog.com",
     wpUsername: "walchlaw4",
     wpPassword: "eJs3M*LnfSSo68P!RtXC9lZ",
+    publishMethod: "rest-api",
     postType: "post",
     titleSource: "ai_generated",
     contentStructure: "standard",
@@ -172,6 +173,27 @@ export function AutoPublishWorkflowDialog({
                       </p>
                     </div>
                   </div>
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  <Label>Método de Publicación</Label>
+                  <Select 
+                    value={config.publishMethod || 'rest-api'} 
+                    onValueChange={(val) => setConfig({...config, publishMethod: val})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="rest-api">REST API (Application Password)</SelectItem>
+                      <SelectItem value="auto-login">Auto-Login (WordPress Password)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500">
+                    {config.publishMethod === 'auto-login' 
+                      ? 'Usa tu contraseña normal de WordPress para login automático'
+                      : 'Requiere Application Password generado en WordPress'}
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

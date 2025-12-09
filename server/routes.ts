@@ -430,31 +430,36 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // Auto-publish with browser login (fallback method)
   app.post('/api/wordpress/auto-publish-browser', async (req, res) => {
     try {
-      const { siteUrl, username, password, postIds, postsPerMonth = 9 } = req.body;
+      const { siteUrl, username, password, postIds, posts: directPosts, postsPerMonth = 9 } = req.body;
       
       if (!siteUrl || !username || !password) {
         return res.status(400).json({ error: 'WordPress credentials required' });
       }
 
-      if (!postIds || !Array.isArray(postIds) || postIds.length === 0) {
-        return res.status(400).json({ error: 'Post IDs array required' });
-      }
-
       const { WordPressAutoPost } = await import('./wordpress-auto-post');
       const autoPost = new WordPressAutoPost(siteUrl, username, password);
 
-      // Get posts from database
-      const posts = [];
-      for (const id of postIds.slice(0, postsPerMonth)) {
-        const post = await storage.getGeneratedContent(parseInt(id, 10));
-        if (post) {
-          posts.push({
-            title: post.title,
-            content: post.content,
-            tags: post.keywords?.split(',').map((k: string) => k.trim()),
-            status: 'publish' as const
-          });
+      let posts = [];
+      
+      // Support direct posts array (for single post publishing)
+      if (directPosts && Array.isArray(directPosts)) {
+        posts = directPosts;
+      }
+      // Support postIds array (for bulk publishing from database)
+      else if (postIds && Array.isArray(postIds) && postIds.length > 0) {
+        for (const id of postIds.slice(0, postsPerMonth)) {
+          const post = await storage.getGeneratedContent(parseInt(id, 10));
+          if (post) {
+            posts.push({
+              title: post.title,
+              content: post.content,
+              tags: post.keywords?.split(',').map((k: string) => k.trim()).filter(Boolean),
+              status: 'publish' as const
+            });
+          }
         }
+      } else {
+        return res.status(400).json({ error: 'Either postIds or posts array required' });
       }
 
       if (posts.length === 0) {
@@ -464,10 +469,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // Publish posts
       const results = await autoPost.bulkPublish(posts);
 
-      // Update database
-      for (let i = 0; i < results.length; i++) {
-        if (results[i].success && postIds[i]) {
-          await storage.publishGeneratedContent(parseInt(postIds[i], 10));
+      // Update database if postIds were provided
+      if (postIds && Array.isArray(postIds)) {
+        for (let i = 0; i < results.length; i++) {
+          if (results[i].success && postIds[i]) {
+            await storage.publishGeneratedContent(parseInt(postIds[i], 10));
+          }
         }
       }
 

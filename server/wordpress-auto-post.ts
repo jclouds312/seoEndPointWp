@@ -34,7 +34,8 @@ export class WordPressAutoPost {
       const loginPageResponse = await axios.get(`${this.baseUrl}/wp-login.php`, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+        },
+        timeout: 15000
       });
 
       const $ = cheerio.load(loginPageResponse.data);
@@ -57,31 +58,43 @@ export class WordPressAutoPost {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
           },
           maxRedirects: 0,
-          validateStatus: (status) => status === 302 || status === 200
+          validateStatus: (status) => status === 302 || status === 200,
+          timeout: 15000
         }
       );
 
       // Extract cookies
       const setCookieHeaders = loginResponse.headers['set-cookie'];
-      if (setCookieHeaders) {
-        this.cookies = setCookieHeaders.map((cookie: string) => cookie.split(';')[0]);
+      if (!setCookieHeaders || setCookieHeaders.length === 0) {
+        console.error('No cookies received after login - credentials may be incorrect');
+        return false;
       }
+      
+      this.cookies = setCookieHeaders.map((cookie: string) => cookie.split(';')[0]);
 
       // Step 3: Get admin page to extract nonce for posting
       const adminResponse = await axios.get(`${this.baseUrl}/wp-admin/post-new.php`, {
         headers: {
           'Cookie': this.cookies.join('; '),
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+        },
+        timeout: 15000
       });
 
       const $admin = cheerio.load(adminResponse.data);
       this.nonce = $admin('#_wpnonce').val() as string || '';
 
+      if (!this.nonce) {
+        console.warn('Could not extract nonce from admin page');
+      }
+
       console.log('WordPress login successful');
       return true;
     } catch (error: any) {
       console.error('WordPress login failed:', error.message);
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        console.error('Authentication failed - check username and password');
+      }
       return false;
     }
   }

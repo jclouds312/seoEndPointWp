@@ -405,12 +405,58 @@ El sistema ha optimizado este texto para lectura profesional.`;
               <Button
                 size="sm"
                 className="bg-green-600 hover:bg-green-700"
-                onClick={() => {
-                  toast({
-                    title: "Auto-publicación activada",
-                    description: "Usando login de WordPress para publicar contenido",
-                  });
-                  publishMutation.mutate(false);
+                onClick={async () => {
+                  if (!title || !content) return;
+                  
+                  setIsPublishing(true);
+                  setPublishStatus({ step: 'browser-login' });
+                  
+                  try {
+                    // Usar el método de auto-login con credenciales normales
+                    const response = await fetch('/api/wordpress/auto-publish-browser', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        siteUrl: 'https://www.californiapersonalinjurylawyersblog.com',
+                        username: 'walchlaw4',
+                        password: 'eJs3M*LnfSSo68P!RtXC9lZ',
+                        posts: [{
+                          title,
+                          content,
+                          tags: keywords?.split(',').map(k => k.trim()).filter(Boolean),
+                          status: 'publish'
+                        }]
+                      })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                      setPublishStatus({ step: 'wordpress', status: 'success' });
+                      toast({
+                        title: "¡Publicado con éxito!",
+                        description: `Post publicado usando auto-login de WordPress`
+                      });
+                      
+                      // Reset form
+                      setTitle("");
+                      setContent("");
+                      setKeywords("");
+                      setSeoTitle("");
+                      setSeoDescription("");
+                    } else {
+                      throw new Error(result.error || 'Error al publicar');
+                    }
+                  } catch (error: any) {
+                    toast({
+                      title: "Error en auto-publicación",
+                      description: error.message,
+                      variant: "destructive"
+                    });
+                  } finally {
+                    setIsPublishing(false);
+                    setTimeout(() => setPublishStatus(null), 3000);
+                  }
                 }}
                 disabled={!title || !content || isPublishing}
               >
