@@ -1,7 +1,6 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { serveStatic } from "./static";
 import { createServer } from "http";
 
 const app = express();
@@ -71,9 +70,7 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
-  } else {
+  if (process.env.NODE_ENV !== "production") {
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
   }

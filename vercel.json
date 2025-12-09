@@ -1,11 +1,11 @@
-
 {
   "version": 2,
-  "public": "dist/public",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/api"
+  "functions": {
+    "dist/index.cjs": {
+      "memory": 1024
     }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "dist/index.cjs" }
   ]
 }
