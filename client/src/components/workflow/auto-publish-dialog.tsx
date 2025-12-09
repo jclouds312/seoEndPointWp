@@ -26,16 +26,16 @@ export function AutoPublishWorkflowDialog({
   const [connectionMessage, setConnectionMessage] = useState('');
   const [config, setConfig] = useState({
     n8nWebhook: "",
-    wpUrl: "",
-    wpUsername: "",
-    wpPassword: "",
+    wpUrl: "https://www.californiapersonalinjurylawyersblog.com",
+    wpUsername: "walchlaw4",
+    wpPassword: "eJs3M*LnfSSo68P!RtXC9lZ",
     postType: "post",
     titleSource: "ai_generated",
     contentStructure: "standard",
     includeImages: true,
     imageSource: "stock_ai",
     postsPerMonth: "9",
-    status: "draft"
+    status: "publish"
   });
 
   const testConnection = async () => {
@@ -163,10 +163,12 @@ export function AutoPublishWorkflowDialog({
                   <div className="flex gap-3">
                     <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                     <div className="text-sm text-blue-800">
-                      <p className="font-medium mb-1">Native REST API Connection</p>
+                      <p className="font-medium mb-1">Métodos de Conexión Disponibles</p>
+                      <p className="leading-relaxed mb-2">
+                        <strong>REST API (Recomendado):</strong> Usa Application Password, sin plugins.
+                      </p>
                       <p className="leading-relaxed">
-                        This workflow uses the native WordPress REST API. No plugins required.
-                        You'll need an <strong>Application Password</strong> (not your login password).
+                        <strong>Auto-Login:</strong> Usa credenciales de wp-login.php para publicar directamente.
                       </p>
                     </div>
                   </div>
@@ -195,21 +197,22 @@ export function AutoPublishWorkflowDialog({
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label>Application Password</Label>
+                      <Label>Password</Label>
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button variant="link" className="p-0 h-auto text-xs text-blue-600">
-                              How to get this?
+                              Application Password o Login?
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-[300px] p-4">
-                            <ol className="list-decimal ml-4 space-y-1 text-xs">
-                              <li>Go to WP Admin {'>'} Users {'>'} Profile</li>
+                            <p className="text-xs mb-2"><strong>Application Password (REST API):</strong></p>
+                            <ol className="list-decimal ml-4 space-y-1 text-xs mb-3">
+                              <li>WP Admin {'>'} Users {'>'} Profile</li>
                               <li>Scroll to "Application Passwords"</li>
-                              <li>Enter a name (e.g. "n8n Auto")</li>
-                              <li>Click "Add New" and copy the code</li>
+                              <li>Add New and copy the code</li>
                             </ol>
+                            <p className="text-xs"><strong>Login Password:</strong> Tu contraseña normal de wp-login.php (e.g., eJs3M*LnfSSo68P!RtXC9lZ)</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -218,14 +221,14 @@ export function AutoPublishWorkflowDialog({
                       <Key className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                       <Input 
                         type="password" 
-                        placeholder="abcd EFGH 1234 ijkl" 
+                        placeholder="Application Password o Login Password" 
                         className="pl-9 font-mono"
                         value={config.wpPassword}
                         onChange={(e) => setConfig({...config, wpPassword: e.target.value})}
                       />
                     </div>
                     <p className="text-xs text-slate-500">
-                      Format: xxxx xxxx xxxx xxxx (spaces are optional)
+                      Soporta Application Password (xxxx xxxx xxxx xxxx) o contraseña normal
                     </p>
                   </div>
                 </div>

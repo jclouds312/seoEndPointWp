@@ -427,6 +427,63 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  // Auto-publish with browser login (fallback method)
+  app.post('/api/wordpress/auto-publish-browser', async (req, res) => {
+    try {
+      const { siteUrl, username, password, postIds, postsPerMonth = 9 } = req.body;
+      
+      if (!siteUrl || !username || !password) {
+        return res.status(400).json({ error: 'WordPress credentials required' });
+      }
+
+      if (!postIds || !Array.isArray(postIds) || postIds.length === 0) {
+        return res.status(400).json({ error: 'Post IDs array required' });
+      }
+
+      const { WordPressAutoPost } = await import('./wordpress-auto-post');
+      const autoPost = new WordPressAutoPost(siteUrl, username, password);
+
+      // Get posts from database
+      const posts = [];
+      for (const id of postIds.slice(0, postsPerMonth)) {
+        const post = await storage.getGeneratedContent(parseInt(id, 10));
+        if (post) {
+          posts.push({
+            title: post.title,
+            content: post.content,
+            tags: post.keywords?.split(',').map((k: string) => k.trim()),
+            status: 'publish' as const
+          });
+        }
+      }
+
+      if (posts.length === 0) {
+        return res.status(404).json({ error: 'No valid posts found' });
+      }
+
+      // Publish posts
+      const results = await autoPost.bulkPublish(posts);
+
+      // Update database
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].success && postIds[i]) {
+          await storage.publishGeneratedContent(parseInt(postIds[i], 10));
+        }
+      }
+
+      const successCount = results.filter(r => r.success).length;
+      res.json({
+        success: true,
+        published: successCount,
+        total: posts.length,
+        results
+      });
+    } catch (error: any) {
+      console.error('Auto-publish error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Calculate publish schedule for 9 posts/month
   app.post('/api/wordpress/schedule', async (req, res) => {
     try {

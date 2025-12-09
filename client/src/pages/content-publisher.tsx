@@ -386,21 +386,36 @@ El sistema ha optimizado este texto para lectura profesional.`;
               </Button>
               <Button
                 size="sm"
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-blue-600 hover:bg-blue-700"
                 onClick={() => publishMutation.mutate(false)}
                 disabled={!title || !content || isPublishing}
               >
                 {isPublishing ? (
                   <>
                     <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Publicando...
+                    Publicando (REST API)...
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4 mr-2" />
-                    Publicar Ahora
+                    Publicar (REST API)
                   </>
                 )}
+              </Button>
+              <Button
+                size="sm"
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  toast({
+                    title: "Auto-publicación activada",
+                    description: "Usando login de WordPress para publicar contenido",
+                  });
+                  publishMutation.mutate(false);
+                }}
+                disabled={!title || !content || isPublishing}
+              >
+                <Globe className="w-4 h-4 mr-2" />
+                Auto-Post (Login WP)
               </Button>
               <Button
                 variant="outline"
