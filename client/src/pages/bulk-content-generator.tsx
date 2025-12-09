@@ -68,29 +68,19 @@ export default function BulkContentGenerator() {
       const wpUrl = localStorage.getItem("wpUrl") || "https://www.californiapersonalinjurylawyersblog.com";
       const wpUser = localStorage.getItem("wpUser") || "walchlaw4";
       const wpPass = localStorage.getItem("wpPass") || "eJs3M*LnfSSo68P!RtXC9lZ";
-      const n8nUrl = localStorage.getItem("n8nUrl") || "";
-      
-      // Publish each post using the unified service
-      const results = [];
-      for (let i = 0; i < generatedPosts.length; i++) {
-        const post = generatedPosts[i];
-        
-        toast({
-          title: `Publicando ${i + 1}/${generatedPosts.length}`,
-          description: post.title.substring(0, 50) + '...',
-        });
-        
-        const result = await fetch('/api/wordpress/publish', {
+
+      let published = 0;
+
+      for (const post of generatedPosts) {
+        const response = await fetch('/api/wordpress/publish', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             credentials: {
               siteUrl: wpUrl,
               username: wpUser,
-              password: wpPass,
               applicationPassword: wpPass
             },
-            n8nConfig: n8nUrl ? { webhookUrl: n8nUrl } : null,
             post: {
               title: post.title,
               content: post.content,
@@ -102,28 +92,34 @@ export default function BulkContentGenerator() {
               }
             },
             config: {
-              method: workflowMode === 'auto-publish' ? 'n8n-webhook' : 'browser-auto-login',
-              status: 'publish'
+              status: workflowMode === 'auto-publish' ? 'publish' : 'draft'
             }
           })
         });
-        
-        const data = await result.json();
-        results.push(data);
-        
-        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const result = await response.json();
+
+        if (result.success) {
+          published++;
+          toast({
+            title: `Published ${published}/${generatedPosts.length}`,
+            description: post.title,
+          });
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
-      
+
       toast({
-        title: "¡Publicación masiva completada!",
-        description: `${results.filter(r => r.success).length}/${generatedPosts.length} posts publicados exitosamente`,
+        title: "Bulk Publishing Complete!",
+        description: `Successfully published ${published} posts to WordPress.`,
       });
-      
+
       if (campaignId) {
         setLocation(`/campaign/${campaignId}`);
       }
     } catch (e: any) {
-      toast({ title: "Error", description: e.message || "Failed to trigger workflow", variant: "destructive" });
+      toast({ title: "Error", description: e.message || "Failed to publish posts", variant: "destructive" });
     } finally {
       setIsPublishing(false);
     }
@@ -181,8 +177,8 @@ export default function BulkContentGenerator() {
                   </div>
                   <div className="flex gap-2">
                     {workflowMode === 'auto-publish' && (
-                       <Button 
-                         variant="default" 
+                       <Button
+                         variant="default"
                          className="bg-indigo-600 hover:bg-indigo-700 text-white"
                          onClick={handlePublishAll}
                          disabled={isPublishing}

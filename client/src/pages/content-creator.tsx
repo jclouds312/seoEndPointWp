@@ -143,6 +143,9 @@ CONTENT INSTRUCTIONS BASED ON IDEAL CLIENT
   const [isGeneratingImages, setIsGeneratingImages] = useState(false);
   const [isSuggestingPrompt, setIsSuggestingPrompt] = useState(false);
   const [imageStyle, setImageStyle] = useState("photorealistic");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+
 
   const campaigns = [
     { id: 1, name: "California Personal Injury Blog" },
@@ -235,7 +238,7 @@ In California, establishing liability is the cornerstone of any personal injury 
 For our ideal clients—those who are clearly not at fault—the path to compensation is clearer, but not guaranteed. Insurance companies will often try to minimize payouts, even when liability seems obvious.
 
 **Key Evidence to Preserve:**
-1.  **Photos of Property Damage:** Significant visible damage to your vehicle is powerful evidence.
+1.  **Photos of Property Damage:** Significant visible damage to your client’s vehicle is powerful evidence.
 2.  **Police Reports:** Essential for establishing the facts of the accident.
 3.  **Witness Statements:** Independent verification of your account.
 
@@ -373,21 +376,56 @@ If you have been injured in an accident, don't face the insurance companies alon
 
     try {
       const title = generatedContent.split('\n')[0].replace('# ', '');
-      // Mock call for frontend prototype
-      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      toast({
-        title: "Sent to n8n & WordPress",
-        description: (
-          <div className="flex flex-col gap-1">
-            <span className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-green-500"/> Content Published</span>
-            <span className="flex items-center gap-2"><Workflow className="w-3 h-3 text-indigo-500"/> Workflow Triggered</span>
-          </div>
-        )
+      const wpUrl = localStorage.getItem("wpUrl") || "https://www.californiapersonalinjurylawyersblog.com";
+      const wpUser = localStorage.getItem("wpUser") || "walchlaw4";
+      const wpPass = localStorage.getItem("wpPass") || "eJs3M*LnfSSo68P!RtXC9lZ";
+
+      const response = await fetch('/api/wordpress/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          credentials: {
+            siteUrl: wpUrl,
+            username: wpUser,
+            applicationPassword: wpPass
+          },
+          post: {
+            title: title,
+            content: generatedContent.replace(/^# .+\n/, ''),
+            excerpt: seoDescription || generatedContent.substring(0, 160),
+            slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            meta: {
+              _yoast_wpseo_title: seoTitle || title,
+              _yoast_wpseo_metadesc: seoDescription
+            }
+          },
+          config: {
+            status: 'publish'
+          }
+        })
       });
 
-      setGeneratedContent("");
-      setTargetKeywords("");
+      const result = await response.json();
+
+      if (result.success) {
+        toast({
+          title: "Published to WordPress!",
+          description: (
+            <div className="flex flex-col gap-1">
+              <span>Post ID: {result.postId}</span>
+              <a href={result.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">View Post</a>
+            </div>
+          )
+        });
+
+        setGeneratedContent("");
+        setTargetKeywords("");
+        setSeoTitle("");
+        setSeoDescription("");
+      } else {
+        throw new Error(result.error || 'Publishing failed');
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -417,8 +455,8 @@ If you have been injured in an accident, don't face the insurance companies alon
             className="gap-2 bg-white border-green-200 hover:bg-green-50 text-green-700"
             onClick={handleAutoPublish}
           >
-            <Workflow className="w-4 h-4 text-indigo-600" />
-            <span className="text-slate-700">Auto-Publish (n8n + WP)</span>
+            <Globe className="w-4 h-4 text-indigo-600" />
+            <span className="text-slate-700">Auto-Publish to WordPress</span>
           </Button>
           <Button
             className="gap-2 bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20"

@@ -88,14 +88,51 @@ export default function BulkMassive() {
       setIsGenerating(false);
       setCurrentPost(8);
       
+      // Auto-publish to WordPress
+      const wpUrl = localStorage.getItem("wpUrl") || "https://www.californiapersonalinjurylawyersblog.com";
+      const wpUser = localStorage.getItem("wpUser") || "walchlaw4";
+      const wpPass = localStorage.getItem("wpPass") || "eJs3M*LnfSSo68P!RtXC9lZ";
+
+      let published = 0;
+      for (const post of data.contents) {
+        try {
+          const publishResponse = await fetch('/api/wordpress/publish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              credentials: {
+                siteUrl: wpUrl,
+                username: wpUser,
+                applicationPassword: wpPass
+              },
+              post: {
+                title: post.title,
+                content: post.content,
+                excerpt: post.metaDescription,
+                slug: post.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+              },
+              config: {
+                status: 'publish'
+              }
+            })
+          });
+
+          const result = await publishResponse.json();
+          if (result.success) published++;
+          await new Promise(resolve => setTimeout(resolve, 800));
+        } catch (err) {
+          console.error('Publish error:', err);
+        }
+      }
+      
       setRecentBatches(prev => [
-        { topic: mainKeyword, date: "Just now", status: "Completed" },
+        { topic: mainKeyword, date: "Just now", status: `Published (${published}/${data.contents.length})` },
         ...prev.slice(0, 4)
       ]);
 
       toast({
-        title: "¡Generación Completada!",
-        description: `${data.generated} posts generados y guardados exitosamente`,
+        title: "¡Generación y Publicación Completada!",
+        description: `${published} posts publicados en WordPress de ${data.generated} generados`,
       });
     } catch (error: any) {
       console.error('Generation error:', error);

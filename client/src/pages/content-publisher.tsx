@@ -200,27 +200,29 @@ El sistema ha optimizado este texto para lectura profesional.`;
         }
       };
 
-      // Call the centralized service
-      const result = await WordPressService.publishPost(
-        {
-          siteUrl: wpUrl,
-          username: wpUser,
-          password: wpPass, // For auto-login
-          applicationPassword: wpPass // For REST API
-        },
-        { webhookUrl: n8nUrl },
-        postData,
-        {
-          method: publishMethod,
-          status: isDraft ? 'draft' : 'publish'
-        }
-      );
+      // Call backend API
+      const response = await fetch('/api/wordpress/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          credentials: {
+            siteUrl: wpUrl,
+            username: wpUser,
+            applicationPassword: wpPass
+          },
+          post: postData,
+          config: {
+            status: isDraft ? 'draft' : 'publish'
+          }
+        })
+      });
+
+      const result = await response.json();
 
       if (!result.success) {
         throw new Error(result.error || 'Publishing failed');
       }
 
-      // Simulate step-by-step UI updates based on result
       setPublishStatus({ step: 'wordpress', status: 'success', postId: result.postId });
       
       if (autoOptimizeSEO) {
@@ -232,7 +234,7 @@ El sistema ha optimizado este texto para lectura profesional.`;
          setPublishStatus((prev: any) => ({ ...prev, workflow: 'success' }));
       }
 
-      return { postId: result.postId, isDraft, postData, logs: result.logs };
+      return { postId: result.postId, isDraft, postData, link: result.link };
     },
     onSuccess: (data) => {
       setIsPublishing(false);
