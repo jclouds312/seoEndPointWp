@@ -2,6 +2,7 @@ import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
+import { rm, readFile } from "fs/promises";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -44,7 +45,6 @@ async function build() {
   }
 }
 
-build();
 // which helps cold start times
 const allowlist = [
   "@google/generative-ai",
@@ -95,7 +95,7 @@ async function buildAll() {
     format: "cjs",
     outfile: "dist/index.cjs",
     define: {
-      "process.env.NODE_ENV": '"production"',
+      "process.env.NODE_ENV": ''''production'''',
     },
     minify: true,
     external: externals,
