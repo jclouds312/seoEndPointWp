@@ -23,6 +23,7 @@ import ContentPublisher from "./pages/content-publisher";
 import BulkContentGenerator from "./pages/bulk-content-generator";
 import JetpackIntegration from "@/pages/jetpack-integration";
 import BulkMassive from "@/pages/bulk-massive";
+import BulkContentGenerator from "@/pages/bulk-content-generator";
 import ContentManager from "@/pages/content-manager";
 import Sites from "@/pages/sites";
 import CampaignDetailsPage from "@/pages/campaign-details"; // <-- Importar la nueva página
@@ -54,6 +55,7 @@ function AppRoutes() {
       {/* Generadores de Contenido */}
       <Route path="/bulk-content-generator" component={BulkContentGenerator} />
       <Route path="/bulk-massive" component={BulkMassive} />
+          <Route path="/bulk-content-generator" component={BulkContentGenerator} />
       
       <Route path="/seo-analyzer" component={SeoAnalyzer} />
       <Route component={NotFound} />

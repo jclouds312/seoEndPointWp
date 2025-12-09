@@ -56,6 +56,7 @@ export default function BulkContentGenerator() {
   const [progress, setProgress] = useState(0);
   const [generatedPosts, setGeneratedPosts] = useState<GeneratedPost[]>([]);
   const [stats, setStats] = useState<GenerationStats | null>(null);
+  const [showResults, setShowResults] = useState(false);
 
   const { data: campaignData, isLoading: isLoadingCampaign } = useQuery<CampaignDetails>({
     queryKey: ['campaignDetails', campaignId],
@@ -91,6 +92,7 @@ export default function BulkContentGenerator() {
       const selectedTopics = topics.slice(0, postsToGenerate);
 
       setProgress(10);
+      setShowResults(false);
 
       const response = await fetch('/api/bulk-generate', {
         method: 'POST',
@@ -112,22 +114,32 @@ export default function BulkContentGenerator() {
       }
 
       const data = await response.json();
-      setProgress(100);
+      
+      // Simular progreso incremental para mejor UX
+      for (let i = 10; i <= 100; i += 10) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        setProgress(i);
+      }
+      
       return data.contents as GeneratedPost[];
     },
     onSuccess: (data) => {
       setGeneratedPosts(data);
       setStats(calculateStats(data));
+      setShowResults(true);
       queryClient.invalidateQueries({ queryKey: ['campaignDetails', campaignId] });
+      queryClient.invalidateQueries({ queryKey: ['generated-content'] });
+      
       toast({
         title: "¡Éxito!",
-        description: `Se generaron ${data.length} posts para la campaña "${campaignData?.campaign.name || ''}".`,
+        description: `Se generaron ${data.length} posts exitosamente.`,
       });
 
+      // Solo redirigir si hay campaña, sino mostrar resultados
       if (campaignId) {
         setTimeout(() => {
           setLocation(`/campaign/${campaignId}`);
-        }, 1200);
+        }, 2000);
       }
     },
     onError: (error: any) => {
@@ -219,7 +231,15 @@ export default function BulkContentGenerator() {
 
             <div className="space-y-2">
               <Label>Número de Posts a Generar</Label>
-              <Input type="number" value={postsCount} onChange={(e) => setPostsCount(Number(e.target.value))} min={1} />
+              <Input type="number" value={postsCount} onChange={(e) => setPostsCount(Number(e.target.value))} min={1} max={20} />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label>Palabras por Post</Label>
+                <span className="text-sm text-slate-500">{wordCount} palabras</span>
+              </div>
+              <Input type="number" value={wordCount} onChange={(e) => setWordCount(Number(e.target.value))} min={500} max={3000} step={100} />
             </div>
 
             <Separator className="my-4" />
@@ -295,20 +315,45 @@ export default function BulkContentGenerator() {
 
             {generatedPosts.length > 0 && (
               <div className="space-y-4">
-                <div className="flex items-center gap-3 text-green-600 mb-4">
-                  <CheckCircle2/>
-                  <h4>¡Generación completada! Serás redirigido en un momento.</h4>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3 text-green-600">
+                    <CheckCircle2 className="w-5 h-5"/>
+                    <h4 className="font-semibold">¡Generación completada!</h4>
+                  </div>
+                  {!campaignId && (
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setLocation('/content-manager')}>
+                        <FileText className="w-4 h-4 mr-2" />
+                        Ver en Gestor
+                      </Button>
+                      <Button size="sm" onClick={() => {
+                        setGeneratedPosts([]);
+                        setStats(null);
+                        setShowResults(false);
+                        setProgress(0);
+                      }}>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Generar Más
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 {generatedPosts.map((post, index) => (
-                  <div key={index} className="p-4 border rounded-lg hover:border-blue-300 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{post.title}</h3>
-                        <p className="text-sm text-slate-600 mt-1 line-clamp-2">{post.metaDescription}</p>
+                  <div key={index} className="p-4 border rounded-lg hover:border-blue-300 transition-colors bg-white">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs font-medium text-slate-500">Post #{index + 1}</span>
+                          <Badge variant="secondary" className="text-xs">
+                            SEO: {post.seoScore}/100
+                          </Badge>
+                        </div>
+                        <h3 className="font-semibold text-lg text-slate-900 mb-1">{post.title}</h3>
+                        <p className="text-sm text-slate-600 line-clamp-2">{post.metaDescription}</p>
                       </div>
-                      <Badge variant="secondary" className="ml-4">
-                        SEO: {post.seoScore}
-                      </Badge>
+                      <Button variant="ghost" size="sm" className="shrink-0">
+                        <Eye className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                 ))}
