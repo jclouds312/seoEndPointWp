@@ -10,6 +10,12 @@ export default defineConfig({
     tailwindcss(),
     metaImagesPlugin(),
   ],
+  optimizeDeps: {
+    exclude: [
+      '@babel/core',
+      '@babel/preset-typescript',
+    ]
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
