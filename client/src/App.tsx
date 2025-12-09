@@ -1,4 +1,3 @@
-
 import { Switch, Route, Router } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
@@ -41,20 +40,20 @@ function AppRoutes() {
       <Route path="/deployment" component={Deployment} />
       <Route path="/documentation" component={Documentation} />
       <Route path="/settings" component={Settings} />
-      
+
       {/* Rutas de Campañas y Contenido */}
       <Route path="/campaigns" component={Campaigns} />
       <Route path="/campaign/:id" component={CampaignDetailsPage} /> {/* <-- Nueva ruta */}
-      
+
       <Route path="/content-creator" component={ContentCreator} />
       <Route path="/content-publisher" component={ContentPublisher} />
       <Route path="/content-manager" component={ContentManager} />
       <Route path="/sites" component={Sites} />
-      
+
       {/* Generadores de Contenido */}
       <Route path="/bulk-content-generator" component={BulkContentGenerator} />
       <Route path="/bulk-massive" component={BulkMassive} />
-      
+
       <Route path="/seo-analyzer" component={SeoAnalyzer} />
       <Route component={NotFound} />
     </Switch>
