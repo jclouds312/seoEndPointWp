@@ -1,0 +1,62 @@
+14:13:39.411 Running build in Washington, D.C., USA (East) – iad1
+14:13:39.412 Build machine configuration: 2 cores, 8 GB
+14:13:39.734 Cloning github.com/jclouds312/seoEndPointWp (Branch: v7, Commit: 2fa0999)
+14:13:39.735 Previous build caches not available.
+14:13:40.586 Cloning completed: 852.000ms
+14:13:41.506 Running "vercel build"
+14:13:41.926 Vercel CLI 49.1.2
+14:13:42.574 Installing dependencies...
+14:13:45.285 npm warn deprecated tokenizer2@2.0.1: This package is no longer maintained.
+14:13:47.426 npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+14:13:47.428 npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+14:13:53.681 
+14:13:53.681 added 575 packages in 11s
+14:13:53.681 
+14:13:53.682 102 packages are looking for funding
+14:13:53.682   run `npm fund` for details
+14:13:53.746 Running "npm run build"
+14:13:53.856 
+14:13:53.856 > rest-express@1.0.0 build
+14:13:53.856 > tsx script/build.ts
+14:13:53.857 
+14:13:55.103 building client...
+14:13:55.799 [36mvite v7.1.12 [32mbuilding for production...[36m[39m
+14:13:56.039 transforming...
+14:14:01.344 [32m✓[39m 2517 modules transformed.
+14:14:02.033 rendering chunks...
+14:14:02.045 [meta-images] no Replit deployment domain found, skipping meta tag updates
+14:14:02.053 computing gzip size...
+14:14:02.086 [2m../dist/public/[22m[32mindex.html                                                  [39m[1m[2m    2.64 kB[22m[1m[22m[2m │ gzip:   0.91 kB[22m
+14:14:02.086 [2m../dist/public/[22m[2massets/[22m[32mabstract_tech_background_for_dashboard-hP2nzSTH.png  [39m[1m[2m1,314.90 kB[22m[1m[22m
+14:14:02.087 [2m../dist/public/[22m[2massets/[22m[35mindex-l9h-T-9_.css                                   [39m[1m[2m  148.47 kB[22m[1m[22m[2m │ gzip:  22.55 kB[22m
+14:14:02.087 [2m../dist/public/[22m[2massets/[22m[36mindex-BkcD4YPo.js                                    [39m[1m[33m1,101.92 kB[39m[22m[2m │ gzip: 306.63 kB[22m
+14:14:02.088 [33m
+14:14:02.088 (!) Some chunks are larger than 500 kB after minification. Consider:
+14:14:02.088 - Using dynamic import() to code-split the application
+14:14:02.088 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+14:14:02.088 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+14:14:02.089 [32m✓ built in 6.09s[39m
+14:14:02.089 building server...
+14:14:02.094 ✘ [ERROR] Expected identifier but found ","
+14:14:02.095 
+14:14:02.095     server/storage.ts:157:3:
+14:14:02.095       157 │   },
+14:14:02.095           ╵    ^
+14:14:02.095 
+14:14:02.162 1 error
+14:14:02.165 Error: Build failed with 1 error:
+14:14:02.167 server/storage.ts:157:3: ERROR: Expected identifier but found ","
+14:14:02.167     at failureErrorWithLog (/vercel/path0/node_modules/esbuild/lib/main.js:1467:15)
+14:14:02.167     at /vercel/path0/node_modules/esbuild/lib/main.js:926:25
+14:14:02.168     at /vercel/path0/node_modules/esbuild/lib/main.js:878:52
+14:14:02.168     at buildResponseToResult (/vercel/path0/node_modules/esbuild/lib/main.js:924:7)
+14:14:02.168     at /vercel/path0/node_modules/esbuild/lib/main.js:951:16
+14:14:02.168     at responseCallbacks.<computed> (/vercel/path0/node_modules/esbuild/lib/main.js:603:9)
+14:14:02.168     at handleIncomingPacket (/vercel/path0/node_modules/esbuild/lib/main.js:658:12)
+14:14:02.168     at Socket.readFromStdout (/vercel/path0/node_modules/esbuild/lib/main.js:581:7)
+14:14:02.168     at Socket.emit (node:events:508:28)
+14:14:02.168     at addChunk (node:internal/streams/readable:559:12) {
+14:14:02.168   errors: [Getter/Setter],
+14:14:02.168   warnings: [Getter/Setter]
+14:14:02.169 }
+14:14:02.221 Error: Command "npm run build" exited with 1
