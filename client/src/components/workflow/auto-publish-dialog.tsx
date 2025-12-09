@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { Globe, Database, FileText, Image as ImageIcon, Calendar, CheckCircle2, ArrowRight, Zap, Settings } from "lucide-react";
+import { Globe, FileText, Image as ImageIcon, Calendar, CheckCircle2, ArrowRight, Zap, Settings, Info, AlertTriangle, Key } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function AutoPublishWorkflowDialog({ 
   open, 
@@ -67,6 +66,7 @@ export function AutoPublishWorkflowDialog({
           </div>
           <DialogDescription>
             Configure an automated flow to connect n8n with WordPress for scheduled content publishing.
+            No paid plugins required - uses native WordPress REST API.
           </DialogDescription>
         </DialogHeader>
 
@@ -99,6 +99,20 @@ export function AutoPublishWorkflowDialog({
                   <Globe className="w-4 h-4" />
                   <h3>WordPress Configuration</h3>
                 </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <div className="flex gap-3">
+                    <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                    <div className="text-sm text-blue-800">
+                      <p className="font-medium mb-1">Native REST API Connection</p>
+                      <p className="leading-relaxed">
+                        This workflow uses the native WordPress REST API. No plugins required.
+                        You'll need an <strong>Application Password</strong> (not your login password).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2 col-span-2">
                     <Label>WordPress Site URL</Label>
@@ -107,6 +121,10 @@ export function AutoPublishWorkflowDialog({
                       value={config.wpUrl}
                       onChange={(e) => setConfig({...config, wpUrl: e.target.value})}
                     />
+                    <div className="flex items-center gap-1 text-xs text-amber-600 mt-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      <span>Permalinks must be set to "Post Name" (Settings {'>'} Permalinks)</span>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Username</Label>
@@ -117,13 +135,39 @@ export function AutoPublishWorkflowDialog({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Application Password</Label>
-                    <Input 
-                      type="password" 
-                      placeholder="xxxx xxxx xxxx xxxx" 
-                      value={config.wpPassword}
-                      onChange={(e) => setConfig({...config, wpPassword: e.target.value})}
-                    />
+                    <div className="flex items-center justify-between">
+                      <Label>Application Password</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="link" className="p-0 h-auto text-xs text-blue-600">
+                              How to get this?
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-[300px] p-4">
+                            <ol className="list-decimal ml-4 space-y-1 text-xs">
+                              <li>Go to WP Admin {'>'} Users {'>'} Profile</li>
+                              <li>Scroll to "Application Passwords"</li>
+                              <li>Enter a name (e.g. "n8n Auto")</li>
+                              <li>Click "Add New" and copy the code</li>
+                            </ol>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                      <Input 
+                        type="password" 
+                        placeholder="abcd EFGH 1234 ijkl" 
+                        className="pl-9 font-mono"
+                        value={config.wpPassword}
+                        onChange={(e) => setConfig({...config, wpPassword: e.target.value})}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Format: xxxx xxxx xxxx xxxx (spaces are optional)
+                    </p>
                   </div>
                 </div>
               </div>
@@ -155,6 +199,15 @@ export function AutoPublishWorkflowDialog({
                   <h3>Content Structure</h3>
                 </div>
                 
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-4">
+                  <h4 className="text-sm font-medium text-slate-900 mb-2">AI Content Generation</h4>
+                  <ul className="text-xs text-slate-600 space-y-1 list-disc ml-4">
+                    <li>Generates structured content (JSON) separating <strong>Title</strong> and <strong>Body</strong></li>
+                    <li>Automatically handles HTML formatting for WordPress</li>
+                    <li>Optimized for SEO with keyword integration</li>
+                  </ul>
+                </div>
+
                 <div className="grid gap-4">
                   <div className="space-y-2">
                     <Label>Title Generation</Label>
@@ -225,7 +278,17 @@ export function AutoPublishWorkflowDialog({
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                        
+                        <div className="bg-white p-3 rounded border border-slate-200 text-xs text-slate-600">
+                          <p className="font-medium mb-1 text-slate-900">Workflow Process (Automated):</p>
+                          <ol className="list-decimal ml-4 space-y-1">
+                            <li>Workflow uploads image to WordPress Media Library</li>
+                            <li>Gets the new Media ID</li>
+                            <li>Attaches Media ID as "Featured Image" to the post</li>
+                          </ol>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm text-slate-600 mt-2">
                           <CheckCircle2 className="w-4 h-4 text-green-600" />
                           <span>Images will be automatically inserted between H2 headers</span>
                         </div>
