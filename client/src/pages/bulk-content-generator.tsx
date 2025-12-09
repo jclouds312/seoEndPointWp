@@ -14,6 +14,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch, useLocation, Link } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { WordPressService } from "@/lib/wordpress-service";
 
 interface GeneratedPost {
   id?: string;
@@ -64,20 +65,65 @@ export default function BulkContentGenerator() {
   const handlePublishAll = async () => {
     setIsPublishing(true);
     try {
-      // Mock n8n trigger
-      await new Promise(resolve => setTimeout(resolve, 2500));
+      const wpUrl = localStorage.getItem("wpUrl") || "https://www.californiapersonalinjurylawyersblog.com";
+      const wpUser = localStorage.getItem("wpUser") || "walchlaw4";
+      const wpPass = localStorage.getItem("wpPass") || "eJs3M*LnfSSo68P!RtXC9lZ";
+      const n8nUrl = localStorage.getItem("n8nUrl") || "";
+      
+      // Publish each post using the unified service
+      const results = [];
+      for (let i = 0; i < generatedPosts.length; i++) {
+        const post = generatedPosts[i];
+        
+        toast({
+          title: `Publicando ${i + 1}/${generatedPosts.length}`,
+          description: post.title.substring(0, 50) + '...',
+        });
+        
+        const result = await fetch('/api/wordpress/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            credentials: {
+              siteUrl: wpUrl,
+              username: wpUser,
+              password: wpPass,
+              applicationPassword: wpPass
+            },
+            n8nConfig: n8nUrl ? { webhookUrl: n8nUrl } : null,
+            post: {
+              title: post.title,
+              content: post.content,
+              excerpt: post.metaDescription,
+              slug: post.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+              meta: {
+                _yoast_wpseo_title: post.title,
+                _yoast_wpseo_metadesc: post.metaDescription
+              }
+            },
+            config: {
+              method: workflowMode === 'auto-publish' ? 'n8n-webhook' : 'browser-auto-login',
+              status: 'publish'
+            }
+          })
+        });
+        
+        const data = await result.json();
+        results.push(data);
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
       
       toast({
-        title: "Workflow Triggered",
-        description: `Sent ${generatedPosts.length} posts to n8n for processing and WordPress publishing.`,
+        title: "¡Publicación masiva completada!",
+        description: `${results.filter(r => r.success).length}/${generatedPosts.length} posts publicados exitosamente`,
       });
       
-      // Navigate away or reset
       if (campaignId) {
         setLocation(`/campaign/${campaignId}`);
       }
-    } catch (e) {
-      toast({ title: "Error", description: "Failed to trigger workflow", variant: "destructive" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to trigger workflow", variant: "destructive" });
     } finally {
       setIsPublishing(false);
     }

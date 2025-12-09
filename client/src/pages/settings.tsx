@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Bell, Shield, Key, Workflow, Globe, CheckCircle2 } from "lucide-react";
+import { User, Bell, Shield, Key, Workflow, Globe, CheckCircle2, Lock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 
@@ -15,7 +15,7 @@ export default function Settings() {
   const [wpUrl, setWpUrl] = useState(() => localStorage.getItem("wpUrl") || "https://www.californiapersonalinjurylawyersblog.com");
   const [wpUser, setWpUser] = useState(() => localStorage.getItem("wpUser") || "walchlaw4");
   const [wpPass, setWpPass] = useState(() => localStorage.getItem("wpPass") || "eJs3M*LnfSSo68P!RtXC9lZ");
-  
+
   const [isTestingN8n, setIsTestingN8n] = useState(false);
   const [isTestingWp, setIsTestingWp] = useState(false);
 

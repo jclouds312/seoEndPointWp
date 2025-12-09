@@ -1,4 +1,3 @@
-
 import SidebarLayout from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,13 +10,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { 
-  FileText, 
-  Wand2, 
-  Send, 
-  Save, 
-  Eye, 
-  RefreshCw, 
+import {
+  FileText,
+  Wand2,
+  Send,
+  Save,
+  Eye,
+  RefreshCw,
   Sparkles,
   Settings2,
   Globe,
@@ -162,11 +161,11 @@ CONTENT INSTRUCTIONS BASED ON IDEAL CLIENT
     }
 
     setIsSuggestingPrompt(true);
-    
+
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
       const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
-      const suggestedPrompt = `Write a comprehensive and authoritative guide about "${keywords.join(', ')}". 
+      const suggestedPrompt = `Write a comprehensive and authoritative guide about "${keywords.join(', ')}".
 
 Suggested Structure:
 1. Introduction: Definition and relevant statistics.
@@ -176,16 +175,16 @@ Suggested Structure:
 5. Conclusion: Importance of legal counsel.
 
 Tone: Professional, empathetic, and educational.`;
-      
+
       const similarPrompts = [
         `Explain the process of filing a ${keywords[0]} claim in California, focusing on common pitfalls and how to maximize compensation.`,
         `Create a checklist for victims of ${keywords[0]} to ensure they document everything needed for a successful legal case.`,
         `Discuss the long-term impact of ${keywords[0]} injuries and why immediate medical attention is crucial for both health and legal reasons.`
       ];
-      
+
       setContentPrompt(suggestedPrompt);
-      toast({ 
-        title: "Prompt Suggested!", 
+      toast({
+        title: "Prompt Suggested!",
         description: (
           <div className="flex flex-col gap-2">
             <span>Main prompt applied. Try these variations too:</span>
@@ -213,10 +212,10 @@ Tone: Professional, empathetic, and educational.`;
 
     setIsGenerating(true);
     setGeneratedContent("");
-    
+
     try {
       const topic = targetKeywords || 'Personal Injury Law';
-      
+
       const mockContent = `
 # ${topic}: A Guide for California Accident Victims
 
@@ -277,7 +276,7 @@ If you have been injured in an accident, don't face the insurance companies alon
       }
 
       toast({ title: "Content Generated", description: `Created with ${aiProvider === 'free' ? 'no-cost-ai' : aiProvider}.` });
-      
+
       if (includeImages) handleGenerateImages();
 
     } catch (error: any) {
@@ -362,6 +361,43 @@ If you have been injured in an accident, don't face the insurance companies alon
     saveDraftMutation.mutate();
   };
 
+  const handleAutoPublish = async () => {
+    if (!generatedContent) {
+      toast({
+        title: "No content",
+        description: "Generate content first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const title = generatedContent.split('\n')[0].replace('# ', '');
+      // Mock call for frontend prototype
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      toast({
+        title: "Sent to n8n & WordPress",
+        description: (
+          <div className="flex flex-col gap-1">
+            <span className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-green-500"/> Content Published</span>
+            <span className="flex items-center gap-2"><Workflow className="w-3 h-3 text-indigo-500"/> Workflow Triggered</span>
+          </div>
+        )
+      });
+
+      setGeneratedContent("");
+      setTargetKeywords("");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+
   return (
     <SidebarLayout>
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -376,50 +412,16 @@ If you have been injured in an accident, don't face the insurance companies alon
           <Button variant="outline" className="gap-2 bg-white border-slate-200 hover:bg-slate-50" onClick={handlePreview}>
             <Eye className="w-4 h-4" /> Preview
           </Button>
-          <Button 
+          <Button
             variant="outline"
-            className="gap-2 bg-white border-green-200 hover:bg-green-50 text-green-700" 
-            onClick={async () => {
-              if (!generatedContent) {
-                toast({ 
-                  title: "No content", 
-                  description: "Generate content first.", 
-                  variant: "destructive" 
-                });
-                return;
-              }
-
-              try {
-                const title = generatedContent.split('\n')[0].replace('# ', '');
-                // Mock call for frontend prototype
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                toast({
-                  title: "Sent to n8n & WordPress",
-                  description: (
-                    <div className="flex flex-col gap-1">
-                      <span className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-green-500"/> Content Published</span>
-                      <span className="flex items-center gap-2"><Workflow className="w-3 h-3 text-indigo-500"/> Workflow Triggered</span>
-                    </div>
-                  )
-                });
-                
-                setGeneratedContent("");
-                setTargetKeywords("");
-              } catch (error: any) {
-                toast({
-                  title: "Error",
-                  description: error.message,
-                  variant: "destructive"
-                });
-              }
-            }}
+            className="gap-2 bg-white border-green-200 hover:bg-green-50 text-green-700"
+            onClick={handleAutoPublish}
           >
-            <Workflow className="w-4 h-4 text-indigo-600" /> 
+            <Workflow className="w-4 h-4 text-indigo-600" />
             <span className="text-slate-700">Auto-Publish (n8n + WP)</span>
           </Button>
-          <Button 
-            className="gap-2 bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20" 
+          <Button
+            className="gap-2 bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20"
             onClick={handleSaveDraft}
             disabled={saveDraftMutation.isPending}
           >
@@ -430,7 +432,7 @@ If you have been injured in an accident, don't face the insurance companies alon
       </div>
 
       <div className="grid lg:grid-cols-12 gap-6 h-[calc(100vh-200px)] min-h-[600px]">
-        
+
         {/* LEFT PANEL - Editor */}
         <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-6">
           <Card className="flex-1 border-slate-200 shadow-sm flex flex-col overflow-hidden">
@@ -443,9 +445,9 @@ If you have been injured in an accident, don't face the insurance companies alon
                  {isGenerating ? <span className="flex items-center gap-1 text-blue-600"><RefreshCw className="w-3 h-3 animate-spin" /> Writing...</span> : <span>Ready</span>}
                </div>
             </div>
-            
+
             <div className="flex-1 p-0 relative">
-              <Textarea 
+              <Textarea
                 className="w-full h-full resize-none border-0 focus-visible:ring-0 p-6 text-lg font-serif leading-relaxed text-slate-800 placeholder:text-slate-300"
                 placeholder="Start writing or generate content..."
                 value={generatedContent}
@@ -489,7 +491,7 @@ If you have been injured in an accident, don't face the insurance companies alon
               <CardDescription>Configure generation parameters</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
-              
+
               <div className="space-y-3">
                 <Label>Target Campaign</Label>
                 <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
@@ -508,9 +510,9 @@ If you have been injured in an accident, don't face the insurance companies alon
                 <Label>Keywords</Label>
                 <div className="relative">
                   <Target className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                  <Input 
-                    className="pl-9 bg-white" 
-                    placeholder="e.g. personal injury, lawyer..." 
+                  <Input
+                    className="pl-9 bg-white"
+                    placeholder="e.g. personal injury, lawyer..."
                     value={targetKeywords}
                     onChange={(e) => setTargetKeywords(e.target.value)}
                   />
@@ -525,7 +527,7 @@ If you have been injured in an accident, don't face the insurance companies alon
                      Auto-Suggest
                   </Button>
                 </div>
-                <Textarea 
+                <Textarea
                   placeholder="Describe what you want to write about..."
                   className="min-h-[100px] resize-none bg-white font-mono text-sm"
                   value={contentPrompt}
@@ -539,7 +541,7 @@ If you have been injured in an accident, don't face the insurance companies alon
                 <h4 className="font-medium text-sm text-slate-900 flex items-center gap-2">
                   <Settings2 className="w-4 h-4" /> Advanced Settings
                 </h4>
-                
+
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <Label className="text-xs text-slate-500">Word Count</Label>
@@ -592,7 +594,7 @@ If you have been injured in an accident, don't face the insurance companies alon
 
             </CardContent>
             <CardFooter className="bg-slate-50 border-t border-slate-100 p-4 sticky bottom-0">
-               <Button 
+               <Button
                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md text-lg h-12"
                  onClick={handleGenerate}
                  disabled={isGenerating}

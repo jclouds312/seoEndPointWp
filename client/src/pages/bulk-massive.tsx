@@ -40,6 +40,8 @@ export default function BulkMassive() {
     { topic: "Slip and Fall Settlements", date: "3 days ago", status: "Drafts" }
   ]);
 
+  const [autoPublish, setAutoPublish] = useState(false);
+
   const handleGenerate = async () => {
     if (!mainKeyword.trim() || !apiKey.trim()) {
       toast({
