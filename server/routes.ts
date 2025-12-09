@@ -427,19 +427,26 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  // Auto-publish with browser login (fallback method)
+  // Auto-publish with browser login (fallback method) + n8n webhook integration
   app.post('/api/wordpress/auto-publish-browser', async (req, res) => {
     try {
-      const { siteUrl, username, password, postIds, posts: directPosts, postsPerMonth = 9 } = req.body;
+      const { 
+        siteUrl, 
+        username, 
+        password, 
+        postIds, 
+        posts: directPosts, 
+        postsPerMonth = 9,
+        useN8n = false,
+        n8nWebhookUrl 
+      } = req.body;
       
       if (!siteUrl || !username || !password) {
         return res.status(400).json({ error: 'WordPress credentials required' });
       }
 
-      const { WordPressAutoPost } = await import('./wordpress-auto-post');
-      const autoPost = new WordPressAutoPost(siteUrl, username, password);
-
       let posts = [];
+      let postIdsToUpdate: number[] = [];
       
       // Support direct posts array (for single post publishing)
       if (directPosts && Array.isArray(directPosts)) {
@@ -456,6 +463,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
               tags: post.keywords?.split(',').map((k: string) => k.trim()).filter(Boolean),
               status: 'publish' as const
             });
+            postIdsToUpdate.push(parseInt(id, 10));
           }
         }
       } else {
@@ -466,13 +474,48 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(404).json({ error: 'No valid posts found' });
       }
 
-      // Publish posts
-      const results = await autoPost.bulkPublish(posts);
+      let results;
 
-      // Update database if postIds were provided
-      if (postIds && Array.isArray(postIds)) {
-        for (let i = 0; i < results.length; i++) {
-          if (results[i].success && postIds[i]) {
+      // Use n8n webhook if configured
+      if (useN8n && n8nWebhookUrl) {
+        try {
+          const n8nResponse = await fetch(n8nWebhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              siteUrl,
+              username,
+              password,
+              posts
+            })
+          });
+
+          if (!n8nResponse.ok) {
+            throw new Error('n8n webhook failed');
+          }
+
+          const n8nData = await n8nResponse.json();
+          results = n8nData.results || posts.map(() => ({ success: true, method: 'n8n' }));
+        } catch (n8nError) {
+          console.warn('n8n webhook failed, falling back to direct publish:', n8nError);
+          useN8n = false;
+        }
+      }
+
+      // Fallback to direct browser automation
+      if (!useN8n) {
+        const { WordPressAutoPost } = await import('./wordpress-auto-post');
+        const autoPost = new WordPressAutoPost(siteUrl, username, password);
+        results = await autoPost.bulkPublish(posts);
+      }
+
+      // Update database
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].success) {
+          if (postIdsToUpdate[i]) {
+            await storage.publishGeneratedContent(postIdsToUpdate[i]);
+          }
+          if (postIds && postIds[i]) {
             await storage.publishGeneratedContent(parseInt(postIds[i], 10));
           }
         }
@@ -483,6 +526,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         success: true,
         published: successCount,
         total: posts.length,
+        method: useN8n ? 'n8n' : 'browser',
         results
       });
     } catch (error: any) {

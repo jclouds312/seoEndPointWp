@@ -42,8 +42,13 @@ export const generatedContent = pgTable("generated_content", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   userId: varchar("user_id").references(() => users.id),
   campaignId: integer("campaign_id").references(() => campaigns.id),
-  batchId: text("batch_id"), // For bulk generation tracking
-  bulkType: text("bulk_type"), // 'standard' or 'massive'
+  batchId: text("batch_id"),
+  bulkType: text("bulk_type"),
+  wordpressPostId: integer("wordpress_post_id"),
+  wordpressUrl: text("wordpress_url"),
+  autoPublished: integer("auto_published").default(0),
+  n8nWorkflowId: text("n8n_workflow_id"),
+  n8nExecutionId: text("n8n_execution_id"),
   metadata: jsonb("metadata"),
 });
 
@@ -53,13 +58,26 @@ export const bulkGenerationBatches = pgTable("bulk_generation_batches", {
   userId: varchar("user_id").notNull().references(() => users.id),
   mainKeyword: text("main_keyword").notNull(),
   targetSite: text("target_site"),
-  bulkType: text("bulk_type").notNull(), // 'standard' or 'massive'
+  bulkType: text("bulk_type").notNull(),
   totalPosts: integer("total_posts").notNull(),
   completedPosts: integer("completed_posts").default(0),
-  status: text("status").notNull().default("processing"), // processing, completed, failed
+  status: text("status").notNull().default("processing"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
   metadata: jsonb("metadata"),
+});
+
+export const wordpressConnections = pgTable("wordpress_connections", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  siteUrl: text("site_url").notNull(),
+  username: text("username").notNull(),
+  applicationPassword: text("application_password").notNull(),
+  n8nWebhookUrl: text("n8n_webhook_url"),
+  isDefault: integer("is_default").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({

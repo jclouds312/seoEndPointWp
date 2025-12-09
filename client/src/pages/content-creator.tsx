@@ -397,6 +397,8 @@ If you have been injured in an accident, don't face the insurance companies alon
                     siteUrl: 'https://www.californiapersonalinjurylawyersblog.com',
                     username: 'walchlaw4',
                     password: 'eJs3M*LnfSSo68P!RtXC9lZ',
+                    useN8n: true,
+                    n8nWebhookUrl: process.env.N8N_WEBHOOK_URL || null,
                     posts: [{
                       title,
                       content: generatedContent,
@@ -411,10 +413,9 @@ If you have been injured in an accident, don't face the insurance companies alon
                 if (result.success) {
                   toast({
                     title: "¡Publicado con éxito!",
-                    description: `Post publicado en WordPress via n8n workflow`
+                    description: `Post publicado en WordPress ${result.method === 'n8n' ? 'via n8n workflow' : 'directamente'}`
                   });
                   
-                  // Clear content after publishing
                   setGeneratedContent("");
                   setTargetKeywords("");
                 } else {
@@ -429,7 +430,7 @@ If you have been injured in an accident, don't face the insurance companies alon
               }
             }}
           >
-            <Zap className="w-4 h-4" /> Auto-Publish (n8n)
+            <Zap className="w-4 h-4" /> Auto-Publish WordPress
           </Button>
           <Button 
             className="gap-2 bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20" 
