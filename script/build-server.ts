@@ -1,8 +1,7 @@
 import { build as esbuild } from "esbuild";
-import { build as viteBuild } from "vite";
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
-import { rm, readFile } from "fs/promises";
+import { readFile } from "fs/promises";
 import { existsSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -23,7 +22,6 @@ async function getProjectDependencies() {
   ];
 }
 
-
 async function buildServer() {
   console.log('building server...');
   const externals = await getProjectDependencies();
@@ -40,30 +38,7 @@ async function buildServer() {
   });
 }
 
-async function buildClient() {
-  console.log("building client...");
-  await viteBuild({
-    root: resolve(__dirname, '../client'),
-    build: {
-      outDir: resolve(__dirname, '../dist/public'),
-      emptyOutDir: true,
-    },
-    logLevel: "info",
-  });
-}
-
-async function build() {
-  await rm(resolve(__dirname, "../dist"), { recursive: true, force: true });
-
-  try {
-    await Promise.all([
-      buildServer(),
-      buildClient()
-    ]);
-  } catch (error) {
-    console.error(error);
+buildServer().catch((e) => {
+    console.error(e);
     process.exit(1);
-  }
-}
-
-build();
+});
