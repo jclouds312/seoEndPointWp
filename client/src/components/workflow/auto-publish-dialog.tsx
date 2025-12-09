@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Globe, FileText, Image as ImageIcon, Calendar, CheckCircle2, ArrowRight, Zap, Settings, Info, AlertTriangle, Key } from "lucide-react";
+import { Globe, FileText, Image as ImageIcon, Calendar, CheckCircle2, ArrowRight, Zap, Settings, Info, AlertTriangle, Key, Loader2, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -21,6 +21,9 @@ export function AutoPublishWorkflowDialog({
 }) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
+  const [testing, setTesting] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [connectionMessage, setConnectionMessage] = useState('');
   const [config, setConfig] = useState({
     n8nWebhook: "",
     wpUrl: "",
@@ -31,9 +34,64 @@ export function AutoPublishWorkflowDialog({
     contentStructure: "standard",
     includeImages: true,
     imageSource: "stock_ai",
-    postsPerMonth: "8",
+    postsPerMonth: "9",
     status: "draft"
   });
+
+  const testConnection = async () => {
+    if (!config.wpUrl || !config.wpUsername || !config.wpPassword) {
+      toast({
+        title: "Missing credentials",
+        description: "Please fill in all WordPress connection fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setTesting(true);
+    setConnectionStatus('idle');
+    
+    try {
+      const response = await fetch('/api/wordpress/test-connection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          siteUrl: config.wpUrl,
+          username: config.wpUsername,
+          applicationPassword: config.wpPassword.replace(/\s+/g, ' ').trim()
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setConnectionStatus('success');
+        setConnectionMessage(result.message);
+        toast({
+          title: "Connection successful!",
+          description: result.message,
+        });
+      } else {
+        setConnectionStatus('error');
+        setConnectionMessage(result.message);
+        toast({
+          title: "Connection failed",
+          description: result.message,
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      setConnectionStatus('error');
+      setConnectionMessage(error.message || 'Connection failed');
+      toast({
+        title: "Error",
+        description: error.message || 'Failed to test connection',
+        variant: "destructive"
+      });
+    } finally {
+      setTesting(false);
+    }
+  };
 
   const handleNext = () => {
     if (step < 3) setStep(step + 1);
@@ -47,11 +105,12 @@ export function AutoPublishWorkflowDialog({
   const handleCreate = () => {
     toast({
       title: "Workflow Created",
-      description: "Auto-publishing workflow has been successfully configured.",
+      description: `Auto-publishing workflow configured for ${config.postsPerMonth} posts per month.`,
     });
     if (onCreate) onCreate(config);
     onOpenChange(false);
-    setStep(1); // Reset for next time
+    setStep(1);
+    setConnectionStatus('idle');
   };
 
   return (
@@ -170,12 +229,42 @@ export function AutoPublishWorkflowDialog({
                     </p>
                   </div>
                 </div>
+
+                <div className="pt-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={testConnection}
+                    disabled={testing}
+                    className="w-full"
+                    data-testid="button-test-connection"
+                  >
+                    {testing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Testing Connection...
+                      </>
+                    ) : connectionStatus === 'success' ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
+                        Connected: {connectionMessage}
+                      </>
+                    ) : connectionStatus === 'error' ? (
+                      <>
+                        <XCircle className="w-4 h-4 mr-2 text-red-600" />
+                        Failed - Click to retry
+                      </>
+                    ) : (
+                      <>Test WordPress Connection</>
+                    )}
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-slate-900 font-semibold border-b pb-2">
                   <Settings className="w-4 h-4" />
-                  <h3>n8n Configuration</h3>
+                  <h3>n8n Configuration (Optional)</h3>
                 </div>
                 <div className="space-y-2">
                   <Label>n8n Webhook URL</Label>
@@ -322,12 +411,13 @@ export function AutoPublishWorkflowDialog({
                       value={config.postsPerMonth} 
                       onValueChange={(val) => setConfig({...config, postsPerMonth: val})}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger data-testid="select-posts-per-month">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="4">4 Posts (1 per week)</SelectItem>
                         <SelectItem value="8">8 Posts (2 per week)</SelectItem>
+                        <SelectItem value="9">9 Posts (Recommended)</SelectItem>
                         <SelectItem value="12">12 Posts (3 per week)</SelectItem>
                         <SelectItem value="30">30 Posts (Daily)</SelectItem>
                       </SelectContent>

@@ -4,6 +4,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { randomUUID } from "crypto";
+import { WordPressService, publishToWordPress, calculatePublishDates } from "./wordpress";
 
 const MODEL_NAME = "gemini-1.0-pro";
 
@@ -274,8 +275,188 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  // === WORDPRESS & JETPACK INTEGRATION ROUTES ===
+  // === WORDPRESS AUTO-PUBLISHING ROUTES ===
   
+  // Test WordPress connection
+  app.post('/api/wordpress/test-connection', async (req, res) => {
+    try {
+      const { siteUrl, username, applicationPassword } = req.body;
+      
+      if (!siteUrl || !username || !applicationPassword) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Site URL, username, and application password are required' 
+        });
+      }
+
+      const wp = new WordPressService({ siteUrl, username, applicationPassword });
+      const result = await wp.testConnection();
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  // Get WordPress categories
+  app.post('/api/wordpress/categories', async (req, res) => {
+    try {
+      const { siteUrl, username, applicationPassword } = req.body;
+      
+      if (!siteUrl || !username || !applicationPassword) {
+        return res.status(400).json({ error: 'Credentials required' });
+      }
+
+      const wp = new WordPressService({ siteUrl, username, applicationPassword });
+      const categories = await wp.getCategories();
+      res.json({ categories });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Auto-publish posts to WordPress (9 posts per month schedule)
+  app.post('/api/wordpress/auto-publish', async (req, res) => {
+    try {
+      const { 
+        siteUrl, 
+        username, 
+        applicationPassword, 
+        postIds,
+        postsPerMonth = 9,
+        publishImmediately = false 
+      } = req.body;
+      
+      if (!siteUrl || !username || !applicationPassword) {
+        return res.status(400).json({ error: 'WordPress credentials required' });
+      }
+
+      if (!postIds || !Array.isArray(postIds) || postIds.length === 0) {
+        return res.status(400).json({ error: 'Post IDs array required' });
+      }
+
+      const posts = [];
+      for (const id of postIds) {
+        const post = await storage.getGeneratedContent(parseInt(id, 10));
+        if (post) {
+          posts.push({
+            title: post.title,
+            content: post.content,
+            metaDescription: post.metaDescription || undefined,
+            focusKeyword: post.keywords || undefined,
+            slug: post.slug
+          });
+        }
+      }
+
+      if (posts.length === 0) {
+        return res.status(404).json({ error: 'No valid posts found' });
+      }
+
+      const results = await publishToWordPress(
+        { siteUrl, username, applicationPassword },
+        posts,
+        { publishImmediately, postsPerMonth, useSchedule: true }
+      );
+
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].success && postIds[i]) {
+          await storage.publishGeneratedContent(parseInt(postIds[i], 10));
+        }
+      }
+
+      const successCount = results.filter(r => r.success).length;
+      res.json({ 
+        success: true, 
+        published: successCount,
+        total: posts.length,
+        results 
+      });
+    } catch (error: any) {
+      console.error('WordPress auto-publish error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Publish single post to WordPress
+  app.post('/api/wordpress/publish-single', async (req, res) => {
+    try {
+      const { 
+        siteUrl, 
+        username, 
+        applicationPassword, 
+        postId,
+        publishImmediately = true 
+      } = req.body;
+      
+      if (!siteUrl || !username || !applicationPassword || !postId) {
+        return res.status(400).json({ error: 'Credentials and post ID required' });
+      }
+
+      const post = await storage.getGeneratedContent(parseInt(postId, 10));
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
+      const wp = new WordPressService({ siteUrl, username, applicationPassword });
+      
+      const wpPost = await wp.createPost({
+        title: post.title,
+        content: post.content,
+        status: publishImmediately ? 'publish' : 'draft',
+        slug: post.slug,
+        excerpt: post.metaDescription || undefined,
+      });
+
+      if (post.metaDescription || post.keywords) {
+        await wp.updateYoastMeta(wpPost.id, {
+          description: post.metaDescription || undefined,
+          focusKeyword: post.keywords || undefined,
+        });
+      }
+
+      await storage.publishGeneratedContent(parseInt(postId, 10));
+
+      res.json({ 
+        success: true, 
+        wordpressPostId: wpPost.id,
+        link: wpPost.link 
+      });
+    } catch (error: any) {
+      console.error('WordPress publish error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Calculate publish schedule for 9 posts/month
+  app.post('/api/wordpress/schedule', async (req, res) => {
+    try {
+      const { postsPerMonth = 9, startDate } = req.body;
+      
+      const dates = calculatePublishDates({ 
+        postsPerMonth, 
+        startDate: startDate ? new Date(startDate) : new Date() 
+      });
+
+      res.json({ 
+        postsPerMonth,
+        schedule: dates.map((date, i) => ({
+          postNumber: i + 1,
+          scheduledDate: date.toISOString(),
+          formattedDate: date.toLocaleDateString('es-ES', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        }))
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // WordPress SEO health check
   app.get('/api/wp-seo/health', async (req, res) => {
     try {
