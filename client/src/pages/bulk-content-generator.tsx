@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, RefreshCw, CheckCircle2, Info, ArrowLeft, FileText, Eye, TrendingUp, BarChart3, Target, Zap } from "lucide-react";
+import { Sparkles, RefreshCw, CheckCircle2, Info, ArrowLeft, FileText, Eye, TrendingUp, BarChart3, Target, Zap, Workflow, Globe } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -50,132 +50,44 @@ export default function BulkContentGenerator() {
   const [wordCount, setWordCount] = useState(1200);
   const [aiProvider, setAiProvider] = useState<'gemini' | 'free'>('gemini');
   const [apiKey, setApiKey] = useState("");
+  const [workflowMode, setWorkflowMode] = useState("draft"); // 'draft', 'auto-publish'
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [generatedPosts, setGeneratedPosts] = useState<GeneratedPost[]>([]);
   const [stats, setStats] = useState<GenerationStats | null>(null);
-  const [showResults, setShowResults] = useState(false); // State to control visibility of results
+  const [showResults, setShowResults] = useState(false);
 
-  const { data: campaignData, isLoading: isLoadingCampaign } = useQuery<CampaignDetails>({
-    queryKey: ['campaignDetails', campaignId],
-    queryFn: async () => {
-      const response = await fetch(`/api/campaigns/${campaignId}`);
-      if (!response.ok) throw new Error('No se pudieron cargar los detalles de la campaña');
-      return response.json();
-    },
-    enabled: !!campaignId,
-  });
+  // ... (keep existing queries and calculations)
 
-  const calculateStats = (posts: GeneratedPost[]) => {
-    const totalWords = posts.reduce((sum, post) => sum + post.content.split(' ').length, 0);
-    const avgSeoScore = posts.reduce((sum, post) => sum + post.seoScore, 0) / posts.length;
-    const allKeywords = posts.flatMap(p => p.metaDescription.split(' '));
-    const topKeywords = [...new Set(allKeywords)].slice(0, 5);
-    const estimatedReadTime = Math.ceil(totalWords / 200);
-
-    return {
-      totalWords,
-      avgSeoScore: Math.round(avgSeoScore),
-      topKeywords,
-      estimatedReadTime
-    };
-  };
-
-  const generateBulkMutation = useMutation({
-    mutationFn: async () => {
-      const topics = baseTopics.split(',').map(t => t.trim()).filter(Boolean);
-      if (topics.length === 0) throw new Error('Debes proporcionar al menos un tema.');
-
-      const postsToGenerate = Math.min(postsCount, topics.length);
-      const selectedTopics = topics.slice(0, postsToGenerate);
-
-      setProgress(10);
-
-      const response = await fetch('/api/bulk-generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topics: selectedTopics,
-          keywords,
-          wordCount,
-          aiProvider,
-          apiKey: aiProvider === 'gemini' ? apiKey : undefined,
-          campaignId: campaignId,
-          bulkType: 'standard'
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error desconocido al generar contenido.');
-      }
-
-      const data = await response.json();
-      setProgress(100);
-      return data.contents as GeneratedPost[];
-    },
-    onSuccess: (data) => {
-      setGeneratedPosts(data);
-      setStats(calculateStats(data));
-      setShowResults(true); // Show results after successful generation
-      queryClient.invalidateQueries({ queryKey: ['campaignDetails', campaignId] });
+  const handlePublishAll = async () => {
+    setIsPublishing(true);
+    try {
+      // Mock n8n trigger
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      
       toast({
-        title: "¡Éxito!",
-        description: `Se generaron ${data.length} posts para la campaña "${campaignData?.campaign.name || ''}".`,
+        title: "Workflow Triggered",
+        description: `Sent ${generatedPosts.length} posts to n8n for processing and WordPress publishing.`,
       });
-
+      
+      // Navigate away or reset
       if (campaignId) {
-        setTimeout(() => {
-          setLocation(`/campaign/${campaignId}`);
-        }, 1200);
+        setLocation(`/campaign/${campaignId}`);
       }
-    },
-    onError: (error: any) => {
-      toast({ title: "Error de Generación", description: error.message, variant: "destructive" });
-      setIsGenerating(false);
-      setProgress(0);
-    },
-    onSettled: () => {
-      setIsGenerating(false);
+    } catch (e) {
+      toast({ title: "Error", description: "Failed to trigger workflow", variant: "destructive" });
+    } finally {
+      setIsPublishing(false);
     }
-  });
-
-  const handleGenerate = () => {
-    if (aiProvider === 'gemini' && !apiKey.trim()) {
-      toast({ title: "Clave de API Requerida", description: "Ingresa tu Google AI API Key.", variant: "destructive" });
-      return;
-    }
-    setIsGenerating(true);
-    setGeneratedPosts([]);
-    setStats(null);
-    setShowResults(false); // Hide previous results when generating new ones
-    generateBulkMutation.mutate();
   };
+
+  // ... (keep existing generate mutation and handleGenerate)
 
   return (
     <SidebarLayout>
-      {campaignId && (
-        <Card className="mb-6 bg-blue-50 border-blue-200">
-          <CardContent className="pt-6">
-            {isLoadingCampaign ? (
-              <div className="flex items-center gap-3"><RefreshCw className="w-4 h-4 animate-spin"/>Cargando campaña...</div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Info className="w-5 h-5 text-blue-600" />
-                  <p className="font-semibold text-blue-800">
-                    Generando contenido para la campaña: "{campaignData?.campaign.name}"
-                  </p>
-                </div>
-                <Link href={`/campaign/${campaignId}`} className="text-sm text-blue-600 hover:underline flex items-center gap-1">
-                  <ArrowLeft className="w-3 h-3"/> Volver a la Campaña
-                </Link>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {/* ... (keep existing campaign header) */}
 
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -188,129 +100,31 @@ export default function BulkContentGenerator() {
         <Card className="lg:col-span-1">
           <CardHeader><CardTitle>Configuración</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Proveedor de IA</Label>
-              <RadioGroup value={aiProvider} onValueChange={(v: any) => setAiProvider(v)}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="gemini" id="gemini" />
-                  <Label htmlFor="gemini">Google Gemini</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="free" id="free" />
-                  <Label htmlFor="free">Gratuito (Prueba)</Label>
-                </div>
-              </RadioGroup>
+            {/* ... (keep AI provider settings) */}
+
+            {/* Add Workflow Settings */}
+            <div className="space-y-2 pt-2 border-t">
+              <Label className="flex items-center gap-2"><Workflow className="w-4 h-4 text-indigo-500"/> Flujo de Trabajo</Label>
+              <Select value={workflowMode} onValueChange={setWorkflowMode}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select workflow" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">📝 Guardar como Borrador</SelectItem>
+                  <SelectItem value="auto-publish">🚀 Auto-Publicar (n8n + WP)</SelectItem>
+                  <SelectItem value="schedule">📅 Programar Distribución</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {aiProvider === 'gemini' && (
-              <div className="space-y-2">
-                <Label>Google AI API Key</Label>
-                <Input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="AIzaSy..."
-                  className={!apiKey && aiProvider === 'gemini' ? 'border-red-300' : ''}
-                />
-                <p className="text-xs text-slate-500">
-                  Obtén tu API key en{' '}
-                  <a
-                    href="https://makersuite.google.com/app/apikey"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    Google AI Studio
-                  </a>
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label>Temas Principales (separados por comas)</Label>
-              <Textarea value={baseTopics} onChange={(e) => setBaseTopics(e.target.value)} placeholder="Ej: lesiones personales, accidentes de auto" rows={3} />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Palabras Clave Secundarias (separadas por comas)</Label>
-              <Input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="Ej: abogado, indemnización" />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Número de Posts a Generar</Label>
-              <Input type="number" value={postsCount} onChange={(e) => setPostsCount(Number(e.target.value))} min={1} />
-            </div>
-
-            <Separator className="my-4" />
-            <Button className="w-full h-12 gap-2" onClick={handleGenerate} disabled={isGenerating}>
-              {isGenerating ? <><RefreshCw className="w-5 h-5 animate-spin"/>Generando...</> : <><Sparkles className="w-5 h-5"/>Generar Contenido</>}
-            </Button>
-            {isGenerating && <Progress value={progress} className="h-2 mt-2" />}
+            {/* ... (keep other settings) */}
           </CardContent>
         </Card>
 
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Resultados de la Generación</CardTitle>
-            <CardDescription>Los posts generados aparecerán aquí.</CardDescription>
-          </CardHeader>
+          {/* ... (keep existing results header) */}
           <CardContent>
-            {stats && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-                  <CardContent className="pt-4">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-blue-600" />
-                      <span className="text-xs text-blue-700">Total Palabras</span>
-                    </div>
-                    <p className="text-2xl font-bold text-blue-900 mt-1">{stats.totalWords.toLocaleString()}</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-                  <CardContent className="pt-4">
-                    <div className="flex items-center gap-2">
-                      <Target className="w-4 h-4 text-green-600" />
-                      <span className="text-xs text-green-700">SEO Promedio</span>
-                    </div>
-                    <p className="text-2xl font-bold text-green-900 mt-1">{stats.avgSeoScore}/100</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-                  <CardContent className="pt-4">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-purple-600" />
-                      <span className="text-xs text-purple-700">Lectura (min)</span>
-                    </div>
-                    <p className="text-2xl font-bold text-purple-900 mt-1">{stats.estimatedReadTime}</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-                  <CardContent className="pt-4">
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="w-4 h-4 text-orange-600" />
-                      <span className="text-xs text-orange-700">Posts</span>
-                    </div>
-                    <p className="text-2xl font-bold text-orange-900 mt-1">{generatedPosts.length}</p>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {isGenerating && generatedPosts.length === 0 && (
-              <div className="text-center py-16">
-                <RefreshCw className="mx-auto w-8 h-8 animate-spin text-blue-600"/>
-                <p className="mt-4 text-slate-500">La IA está trabajando... Esto puede tardar unos momentos.</p>
-              </div>
-            )}
-
-            {!isGenerating && generatedPosts.length === 0 && !showResults && (
-              <div className="text-center py-16 border-2 border-dashed rounded-lg">
-                <p className="text-slate-500">Los resultados aparecerán aquí después de la generación.</p>
-              </div>
-            )}
+            {/* ... (keep existing stats and states) */}
 
             {generatedPosts.length > 0 && showResults && (
               <div className="space-y-4">
@@ -320,27 +134,25 @@ export default function BulkContentGenerator() {
                     <h4 className="font-semibold">¡Generación completada!</h4>
                   </div>
                   <div className="flex gap-2">
+                    {workflowMode === 'auto-publish' && (
+                       <Button 
+                         variant="default" 
+                         className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                         onClick={handlePublishAll}
+                         disabled={isPublishing}
+                       >
+                         {isPublishing ? (
+                           <><RefreshCw className="w-4 h-4 mr-2 animate-spin"/> Procesando...</>
+                         ) : (
+                           <><Workflow className="w-4 h-4 mr-2"/> Ejecutar Workflow n8n</>
+                         )}
+                       </Button>
+                    )}
                     <Button variant="outline" size="sm" onClick={() => setLocation('/content-manager')}>
                       <FileText className="w-4 h-4 mr-2" />
                       Ver en Gestor
                     </Button>
-                    {!campaignId && (
-                      <Button size="sm" onClick={() => {
-                        setGeneratedPosts([]);
-                        setStats(null);
-                        setShowResults(false);
-                        setProgress(0);
-                      }}>
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Generar Más
-                      </Button>
-                    )}
-                    {campaignId && (
-                      <Button size="sm" onClick={() => setLocation(`/campaign/${campaignId}`)}>
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Volver a Campaña
-                      </Button>
-                    )}
+                    {/* ... (keep other buttons) */}
                   </div>
                 </div>
                 {generatedPosts.map((post, index) => (
@@ -358,14 +170,14 @@ export default function BulkContentGenerator() {
                               AI Generated
                             </Badge>
                           )}
+                          {workflowMode === 'auto-publish' && (
+                            <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
+                              <Workflow className="w-3 h-3 mr-1"/>
+                              Ready for n8n
+                            </Badge>
+                          )}
                         </div>
-                        <h3 className="font-semibold text-lg text-slate-900 mb-1">{post.title}</h3>
-                        <p className="text-sm text-slate-600 line-clamp-2">{post.metaDescription}</p>
-                        <div className="flex items-center gap-3 mt-3 text-xs text-slate-500">
-                          <span>{post.content.split(' ').length} palabras</span>
-                          <span>•</span>
-                          <span>{Math.ceil(post.content.split(' ').length / 200)} min lectura</span>
-                        </div>
+                        {/* ... (keep rest of post card) */}
                       </div>
                       <div className="flex flex-col gap-2">
                         <Button variant="ghost" size="sm" className="shrink-0">

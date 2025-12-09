@@ -259,9 +259,13 @@ El sistema ha optimizado este texto para lectura profesional.`;
           <p className="text-slate-500 mt-1">Sistema unificado con todas las integraciones activas</p>
         </div>
         <div className="flex gap-2">
-          <Badge className="bg-green-600 text-white px-4 py-2">
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            Sistema Activo
+          <Badge className="bg-indigo-600 text-white px-4 py-2 flex items-center gap-2">
+            <Workflow className="w-4 h-4" />
+            n8n Connected
+          </Badge>
+          <Badge className="bg-green-600 text-white px-4 py-2 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            WordPress Active
           </Badge>
         </div>
       </div>

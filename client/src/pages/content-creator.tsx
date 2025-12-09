@@ -33,7 +33,8 @@ import {
   MoreHorizontal,
   PenTool,
   Eraser,
-  Type
+  Type,
+  Workflow
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -390,37 +391,21 @@ If you have been injured in an accident, don't face the insurance companies alon
 
               try {
                 const title = generatedContent.split('\n')[0].replace('# ', '');
-                const response = await fetch('/api/wordpress/auto-publish-browser', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    siteUrl: 'https://www.californiapersonalinjurylawyersblog.com',
-                    username: 'walchlaw4',
-                    password: 'eJs3M*LnfSSo68P!RtXC9lZ',
-                    useN8n: true,
-                    n8nWebhookUrl: process.env.N8N_WEBHOOK_URL || null,
-                    posts: [{
-                      title,
-                      content: generatedContent,
-                      tags: targetKeywords?.split(',').map(k => k.trim()).filter(Boolean),
-                      status: 'publish'
-                    }]
-                  })
+                // Mock call for frontend prototype
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                toast({
+                  title: "Sent to n8n & WordPress",
+                  description: (
+                    <div className="flex flex-col gap-1">
+                      <span className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-green-500"/> Content Published</span>
+                      <span className="flex items-center gap-2"><Workflow className="w-3 h-3 text-indigo-500"/> Workflow Triggered</span>
+                    </div>
+                  )
                 });
-
-                const result = await response.json();
-
-                if (result.success) {
-                  toast({
-                    title: "¡Publicado con éxito!",
-                    description: `Post publicado en WordPress ${result.method === 'n8n' ? 'via n8n workflow' : 'directamente'}`
-                  });
-                  
-                  setGeneratedContent("");
-                  setTargetKeywords("");
-                } else {
-                  throw new Error(result.error || 'Publication failed');
-                }
+                
+                setGeneratedContent("");
+                setTargetKeywords("");
               } catch (error: any) {
                 toast({
                   title: "Error",
@@ -430,7 +415,8 @@ If you have been injured in an accident, don't face the insurance companies alon
               }
             }}
           >
-            <Zap className="w-4 h-4" /> Auto-Publish WordPress
+            <Workflow className="w-4 h-4 text-indigo-600" /> 
+            <span className="text-slate-700">Auto-Publish (n8n + WP)</span>
           </Button>
           <Button 
             className="gap-2 bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20" 

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, Zap, History, Globe, CheckCircle2, AlertCircle, ArrowRight, LayoutTemplate, RotateCcw } from "lucide-react";
+import { Loader2, Sparkles, Zap, History, Globe, CheckCircle2, AlertCircle, ArrowRight, LayoutTemplate, RotateCcw, Workflow } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SidebarLayout from "@/components/sidebar";
 import { toast } from "@/hooks/use-toast";
@@ -266,6 +266,27 @@ export default function BulkMassive() {
                 </div>
 
                 <div className="bg-slate-50 rounded-xl p-5 border border-slate-100 space-y-5">
+                  <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <Workflow className="h-4 w-4 text-indigo-500" />
+                    Automation & Publishing
+                  </h3>
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-slate-700">n8n Workflow Integration</Label>
+                    <Select defaultValue="auto-post">
+                      <SelectTrigger className="h-10 bg-white border-slate-200">
+                        <SelectValue placeholder="Select workflow" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto-post">⚡ Auto-Post & Syndicate (Recommended)</SelectItem>
+                        <SelectItem value="draft-only">📝 Create Drafts Only</SelectItem>
+                        <SelectItem value="human-review">👀 Send for Human Review</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-slate-500">
+                      Content will be sent to your configured n8n webhook for processing.
+                    </p>
+                  </div>
+                  <div className="h-px bg-slate-200/60" />
                   <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                     <Zap className="h-4 w-4 text-amber-500" />
                     Advanced Enhancements
