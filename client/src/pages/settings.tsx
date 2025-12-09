@@ -6,16 +6,24 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Bell, Shield, Key, Workflow, Globe, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 
 export default function Settings() {
-  const [n8nUrl, setN8nUrl] = useState("");
-  const [wpUrl, setWpUrl] = useState("https://www.californiapersonalinjurylawyersblog.com");
-  const [wpUser, setWpUser] = useState("walchlaw4");
-  const [wpPass, setWpPass] = useState("eJs3M*LnfSSo68P!RtXC9lZ");
+  // Load initial state from localStorage if available
+  const [n8nUrl, setN8nUrl] = useState(() => localStorage.getItem("n8nUrl") || "");
+  const [wpUrl, setWpUrl] = useState(() => localStorage.getItem("wpUrl") || "https://www.californiapersonalinjurylawyersblog.com");
+  const [wpUser, setWpUser] = useState(() => localStorage.getItem("wpUser") || "walchlaw4");
+  const [wpPass, setWpPass] = useState(() => localStorage.getItem("wpPass") || "eJs3M*LnfSSo68P!RtXC9lZ");
+  
   const [isTestingN8n, setIsTestingN8n] = useState(false);
   const [isTestingWp, setIsTestingWp] = useState(false);
+
+  // Save to localStorage whenever values change
+  useEffect(() => { localStorage.setItem("n8nUrl", n8nUrl); }, [n8nUrl]);
+  useEffect(() => { localStorage.setItem("wpUrl", wpUrl); }, [wpUrl]);
+  useEffect(() => { localStorage.setItem("wpUser", wpUser); }, [wpUser]);
+  useEffect(() => { localStorage.setItem("wpPass", wpPass); }, [wpPass]);
 
   const handleTestN8n = async () => {
     if (!n8nUrl) return;

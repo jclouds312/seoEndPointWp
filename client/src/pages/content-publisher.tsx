@@ -24,10 +24,16 @@ import {
   Search,
   Clock as ClockIcon,
   Download,
+  Settings,
+  Server,
+  Laptop
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { WordPressService } from "@/lib/wordpress-service";
+import { PublishConfig } from "@/lib/wordpress-schema";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   LineChart,
   Line,
@@ -47,6 +53,15 @@ const MOCK_WORKFLOWS = [
 
 export default function ContentPublisher() {
   const queryClient = useQueryClient();
+
+  // Load credentials from localStorage (mock DB)
+  const [wpUrl] = useState(() => localStorage.getItem("wpUrl") || "https://www.californiapersonalinjurylawyersblog.com");
+  const [wpUser] = useState(() => localStorage.getItem("wpUser") || "walchlaw4");
+  const [wpPass] = useState(() => localStorage.getItem("wpPass") || "eJs3M*LnfSSo68P!RtXC9lZ");
+  const [n8nUrl] = useState(() => localStorage.getItem("n8nUrl") || "");
+
+  // Publish Method State
+  const [publishMethod, setPublishMethod] = useState<'rest-api' | 'browser-auto-login' | 'n8n-webhook'>('browser-auto-login');
 
   const exportPublishingReport = () => {
     const report = {
@@ -173,64 +188,57 @@ El sistema ha optimizado este texto para lectura profesional.`;
         throw new Error('Título y contenido son requeridos');
       }
 
-      // Step 1: Create WordPress post
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const postId = Math.floor(Math.random() * 10000);
-      setPublishStatus({ step: 'wordpress', status: 'success', postId });
-
-      // Step 2: Optimize SEO
-      if (autoOptimizeSEO) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setPublishStatus((prev: any) => ({ ...prev, seo: 'success' }));
-      }
-
-      // Step 3: Generate and upload images if enabled
-      if (generateImages) {
-        await new Promise(resolve => setTimeout(resolve, 1200));
-        setPublishStatus((prev: any) => ({ ...prev, images: 'success' }));
-      }
-
-      // Step 4: Share to social media
-      if (publishToSocial && !isDraft) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setPublishStatus((prev: any) => ({ ...prev, social: 'success' }));
-      }
-
-      // Step 5: Execute n8n workflow
-      if (selectedWorkflow && selectedWorkflow !== 'none') {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setPublishStatus((prev: any) => ({ ...prev, workflow: 'success' }));
-      }
-
-      // Save to database
+      // Prepare data for service
       const postData = {
         title,
         content,
         slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         excerpt: seoDescription,
-        keywords: keywords,
-        metaDescription: seoDescription,
-        focusKeyword: keywords.split(',')[0]?.trim(),
-        seoScore: 85,
-        status: isDraft ? 'draft' : 'published',
-        provider: 'openai',
-        publishedAt: isDraft ? null : new Date(),
-        metadata: {
-          seoTitle,
-          autoOptimizeSEO,
-          publishToSocial,
-          generateImages,
-          workflow: selectedWorkflow
+        meta: {
+          _yoast_wpseo_title: seoTitle,
+          _yoast_wpseo_metadesc: seoDescription,
         }
       };
 
-      return { postId, isDraft, postData };
+      // Call the centralized service
+      const result = await WordPressService.publishPost(
+        {
+          siteUrl: wpUrl,
+          username: wpUser,
+          password: wpPass, // For auto-login
+          applicationPassword: wpPass // For REST API
+        },
+        { webhookUrl: n8nUrl },
+        postData,
+        {
+          method: publishMethod,
+          status: isDraft ? 'draft' : 'publish'
+        }
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || 'Publishing failed');
+      }
+
+      // Simulate step-by-step UI updates based on result
+      setPublishStatus({ step: 'wordpress', status: 'success', postId: result.postId });
+      
+      if (autoOptimizeSEO) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setPublishStatus((prev: any) => ({ ...prev, seo: 'success' }));
+      }
+      
+      if (publishMethod === 'n8n-webhook') {
+         setPublishStatus((prev: any) => ({ ...prev, workflow: 'success' }));
+      }
+
+      return { postId: result.postId, isDraft, postData, logs: result.logs };
     },
     onSuccess: (data) => {
       setIsPublishing(false);
       toast({
         title: data.isDraft ? "Borrador guardado" : "Publicado exitosamente",
-        description: `Post ID: ${data.postId}. Todas las integraciones completadas.`
+        description: `Método: ${publishMethod}. ID: ${data.postId}`
       });
 
       // Reset form
@@ -239,7 +247,8 @@ El sistema ha optimizado este texto para lectura profesional.`;
       setKeywords("");
       setSeoTitle("");
       setSeoDescription("");
-      setPublishStatus(null);
+      // Keep status visible for a bit
+      setTimeout(() => setPublishStatus(null), 5000);
     },
     onError: (error: any) => {
       setIsPublishing(false);
@@ -368,114 +377,106 @@ El sistema ha optimizado este texto para lectura profesional.`;
       {/* Quick Actions Bar */}
       <Card className="mb-6 border-blue-200 bg-blue-50">
         <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-blue-600" />
-                <div>
-                  <p className="text-sm font-medium text-blue-900">Acciones Rápidas</p>
-                  <p className="text-xs text-blue-600">Gestiona tu contenido desde aquí</p>
+          <div className="flex flex-col gap-4">
+            
+            {/* Publishing Method Selector */}
+            <div className="bg-white/60 p-3 rounded-lg border border-blue-100">
+              <div className="flex items-center gap-2 mb-2">
+                <Settings className="w-4 h-4 text-slate-500" />
+                <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Método de Publicación</span>
+              </div>
+              <RadioGroup 
+                value={publishMethod} 
+                onValueChange={(v: any) => setPublishMethod(v)}
+                className="grid grid-cols-1 md:grid-cols-3 gap-3"
+              >
+                <div className={`flex items-center space-x-2 border p-3 rounded-md transition-all ${publishMethod === 'browser-auto-login' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white'}`}>
+                  <RadioGroupItem value="browser-auto-login" id="m1" />
+                  <Label htmlFor="m1" className="flex items-center gap-2 cursor-pointer">
+                    <Laptop className="w-4 h-4 text-blue-600" />
+                    <div className="flex flex-col">
+                      <span className="font-medium text-slate-900">Browser Auto-Login</span>
+                      <span className="text-[10px] text-slate-500">Simula navegación real</span>
+                    </div>
+                  </Label>
+                </div>
+
+                <div className={`flex items-center space-x-2 border p-3 rounded-md transition-all ${publishMethod === 'n8n-webhook' ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white'}`}>
+                  <RadioGroupItem value="n8n-webhook" id="m2" />
+                  <Label htmlFor="m2" className="flex items-center gap-2 cursor-pointer">
+                    <Workflow className="w-4 h-4 text-indigo-600" />
+                    <div className="flex flex-col">
+                      <span className="font-medium text-slate-900">n8n Workflow</span>
+                      <span className="text-[10px] text-slate-500">Procesamiento avanzado</span>
+                    </div>
+                  </Label>
+                </div>
+
+                <div className={`flex items-center space-x-2 border p-3 rounded-md transition-all ${publishMethod === 'rest-api' ? 'border-green-500 bg-green-50' : 'border-slate-200 bg-white'}`}>
+                  <RadioGroupItem value="rest-api" id="m3" />
+                  <Label htmlFor="m3" className="flex items-center gap-2 cursor-pointer">
+                    <Server className="w-4 h-4 text-green-600" />
+                    <div className="flex flex-col">
+                      <span className="font-medium text-slate-900">WP REST API</span>
+                      <span className="text-[10px] text-slate-500">Conexión directa rápida</span>
+                    </div>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">Acciones Rápidas</p>
+                    <p className="text-xs text-blue-600">
+                      Publicando en: <span className="font-semibold">{wpUrl.replace('https://', '')}</span>
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => publishMutation.mutate(true)}
-                disabled={!title || !content || isPublishing}
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Guardar Borrador
-              </Button>
-              <Button
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700"
-                onClick={() => publishMutation.mutate(false)}
-                disabled={!title || !content || isPublishing}
-              >
-                {isPublishing ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Publicando (REST API)...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4 mr-2" />
-                    Publicar (REST API)
-                  </>
-                )}
-              </Button>
-              <Button
-                size="sm"
-                className="bg-green-600 hover:bg-green-700"
-                onClick={async () => {
-                  if (!title || !content) return;
-                  
-                  setIsPublishing(true);
-                  setPublishStatus({ step: 'browser-login' });
-                  
-                  try {
-                    // Usar el método de auto-login con credenciales normales
-                    const response = await fetch('/api/wordpress/auto-publish-browser', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        siteUrl: 'https://www.californiapersonalinjurylawyersblog.com',
-                        username: 'walchlaw4',
-                        password: 'eJs3M*LnfSSo68P!RtXC9lZ',
-                        posts: [{
-                          title,
-                          content,
-                          tags: keywords?.split(',').map(k => k.trim()).filter(Boolean),
-                          status: 'publish'
-                        }]
-                      })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                      setPublishStatus({ step: 'wordpress', status: 'success' });
-                      toast({
-                        title: "¡Publicado con éxito!",
-                        description: `Post publicado usando auto-login de WordPress`
-                      });
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => publishMutation.mutate(true)}
+                  disabled={!title || !content || isPublishing}
+                  className="bg-white"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Guardar Borrador
+                </Button>
+                
+                <Button
+                  size="sm"
+                  className={`${
+                    publishMethod === 'n8n-webhook' ? 'bg-indigo-600 hover:bg-indigo-700' : 
+                    publishMethod === 'browser-auto-login' ? 'bg-blue-600 hover:bg-blue-700' : 
+                    'bg-green-600 hover:bg-green-700'
+                  } transition-colors text-white min-w-[180px]`}
+                  onClick={() => publishMutation.mutate(false)}
+                  disabled={!title || !content || isPublishing}
+                >
+                  {isPublishing ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Procesando...
+                    </>
+                  ) : (
+                    <>
+                      {publishMethod === 'n8n-webhook' && <Workflow className="w-4 h-4 mr-2" />}
+                      {publishMethod === 'browser-auto-login' && <Laptop className="w-4 h-4 mr-2" />}
+                      {publishMethod === 'rest-api' && <Send className="w-4 h-4 mr-2" />}
                       
-                      // Reset form
-                      setTitle("");
-                      setContent("");
-                      setKeywords("");
-                      setSeoTitle("");
-                      setSeoDescription("");
-                    } else {
-                      throw new Error(result.error || 'Error al publicar');
-                    }
-                  } catch (error: any) {
-                    toast({
-                      title: "Error en auto-publicación",
-                      description: error.message,
-                      variant: "destructive"
-                    });
-                  } finally {
-                    setIsPublishing(false);
-                    setTimeout(() => setPublishStatus(null), 3000);
-                  }
-                }}
-                disabled={!title || !content || isPublishing}
-              >
-                <Globe className="w-4 h-4 mr-2" />
-                Auto-Post (Login WP)
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={exportPublishingReport}
-                disabled={isPublishing}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Exportar Reporte
-              </Button>
+                      {publishMethod === 'n8n-webhook' ? 'Enviar a Workflow' : 
+                       publishMethod === 'browser-auto-login' ? 'Iniciar Auto-Login' : 
+                       'Publicar Ahora'}
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
