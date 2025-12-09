@@ -1,5 +1,50 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+async function buildServer() {
+  console.log('Building server...');
+  await esbuild({
+    entryPoints: [resolve(__dirname, '../server/index.ts')],
+    bundle: true,
+    platform: 'node',
+    target: 'node20',
+    format: 'cjs',
+    outfile: resolve(__dirname, '../dist/index.cjs'),
+    external: ['pg-native'],
+    logLevel: 'info',
+  });
+  console.log('Server build complete!');
+}
+
+async function buildClient() {
+  console.log('Building client...');
+  await viteBuild({
+    root: resolve(__dirname, '../client'),
+    build: {
+      outDir: resolve(__dirname, '../dist/public'),
+      emptyOutDir: true,
+    },
+  });
+  console.log('Client build complete!');
+}
+
+async function build() {
+  try {
+    await buildServer();
+    await buildClient();
+    console.log('Build completed successfully!');
+  } catch (error) {
+    console.error('Build failed:', error);
+    process.exit(1);
+  }
+}
+
+build();
 import { rm, readFile } from "fs/promises";
 
 // server deps to bundle to reduce openat(2) syscalls
