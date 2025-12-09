@@ -376,6 +376,62 @@ If you have been injured in an accident, don't face the insurance companies alon
             <Eye className="w-4 h-4" /> Preview
           </Button>
           <Button 
+            variant="outline"
+            className="gap-2 bg-white border-green-200 hover:bg-green-50 text-green-700" 
+            onClick={async () => {
+              if (!generatedContent) {
+                toast({ 
+                  title: "No content", 
+                  description: "Generate content first.", 
+                  variant: "destructive" 
+                });
+                return;
+              }
+
+              try {
+                const title = generatedContent.split('\n')[0].replace('# ', '');
+                const response = await fetch('/api/wordpress/auto-publish-browser', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    siteUrl: 'https://www.californiapersonalinjurylawyersblog.com',
+                    username: 'walchlaw4',
+                    password: 'eJs3M*LnfSSo68P!RtXC9lZ',
+                    posts: [{
+                      title,
+                      content: generatedContent,
+                      tags: targetKeywords?.split(',').map(k => k.trim()).filter(Boolean),
+                      status: 'publish'
+                    }]
+                  })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                  toast({
+                    title: "¡Publicado con éxito!",
+                    description: `Post publicado en WordPress via n8n workflow`
+                  });
+                  
+                  // Clear content after publishing
+                  setGeneratedContent("");
+                  setTargetKeywords("");
+                } else {
+                  throw new Error(result.error || 'Publication failed');
+                }
+              } catch (error: any) {
+                toast({
+                  title: "Error",
+                  description: error.message,
+                  variant: "destructive"
+                });
+              }
+            }}
+          >
+            <Zap className="w-4 h-4" /> Auto-Publish (n8n)
+          </Button>
+          <Button 
             className="gap-2 bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20" 
             onClick={handleSaveDraft}
             disabled={saveDraftMutation.isPending}
