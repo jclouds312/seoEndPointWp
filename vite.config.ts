@@ -4,18 +4,17 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import { metaImagesPlugin } from "./vite-plugin-meta-images";
 
-export default defineConfig({
+export default defineConfig(({
+  command
+}) => ({
   plugins: [
     react(),
     tailwindcss(),
-    metaImagesPlugin(),
+    {
+      ...metaImagesPlugin(),
+      apply: 'build',
+    },
   ],
-  optimizeDeps: {
-    exclude: [
-      '@babel/core',
-      '@babel/preset-typescript',
-    ]
-  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -41,4 +40,4 @@ export default defineConfig({
       deny: ["**/.*"],
     },
   },
-});
+}));
