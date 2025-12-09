@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +28,7 @@ interface Batch {
 
 export default function BulkMassive() {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [currentPost, setCurrentPost] = useState(0);
   const [targetSite, setTargetSite] = useState("calinjurylaw");
   const [mainKeyword, setMainKeyword] = useState("Legal SEO Strategy");
@@ -41,6 +41,7 @@ export default function BulkMassive() {
   ]);
 
   const [autoPublish, setAutoPublish] = useState(false);
+  const [n8nWorkflow, setN8nWorkflow] = useState("auto-post");
 
   const handleGenerate = async () => {
     if (!mainKeyword.trim() || !apiKey.trim()) {
@@ -76,7 +77,7 @@ export default function BulkMassive() {
       }
 
       const data = await response.json();
-      
+
       if (data.contents && Array.isArray(data.contents)) {
         for (let i = 0; i < data.contents.length; i++) {
           await new Promise(resolve => setTimeout(resolve, 400));
@@ -87,9 +88,9 @@ export default function BulkMassive() {
 
       setIsGenerating(false);
       setCurrentPost(8);
-      
+
       // Auto-publish to WordPress
-      const wpUrl = localStorage.getItem("wpUrl") || "https://www.californiapersonalinjurylawyersblog.com";
+      const wpUrl = localStorage.getItem("wpUrl") || "https://www.calinjurylaw.com";
       const wpUser = localStorage.getItem("wpUser") || "walchlaw4";
       const wpPass = localStorage.getItem("wpPass") || "eJs3M*LnfSSo68P!RtXC9lZ";
 
@@ -124,7 +125,7 @@ export default function BulkMassive() {
           console.error('Publish error:', err);
         }
       }
-      
+
       setRecentBatches(prev => [
         { topic: mainKeyword, date: "Just now", status: `Published (${published}/${data.contents.length})` },
         ...prev.slice(0, 4)
@@ -151,6 +152,61 @@ export default function BulkMassive() {
       title: "Cargado para regeneración",
       description: `El tema "${batchTopic}" ha sido cargado en el formulario.`,
     });
+  };
+
+  const handlePublishAll = async () => {
+    setIsPublishing(true);
+    const wpUrl = localStorage.getItem("wpUrl") || "https://www.calinjurylaw.com";
+    const wpUser = localStorage.getItem("wpUser") || "walchlaw4";
+    const wpPass = localStorage.getItem("wpPass") || "eJs3M*LnfSSo68P!RtXC9lZ";
+
+    let publishedCount = 0;
+    for (const post of generatedPosts) {
+      try {
+        const publishResponse = await fetch('/api/wordpress/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            credentials: {
+              siteUrl: wpUrl,
+              username: wpUser,
+              applicationPassword: wpPass
+            },
+            post: {
+              title: post.title,
+              content: post.content,
+              excerpt: post.metaDescription,
+              slug: post.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+            },
+            config: {
+              status: 'publish'
+            }
+          })
+        });
+        const result = await publishResponse.json();
+        if (result.success) {
+          publishedCount++;
+        }
+        await new Promise(resolve => setTimeout(resolve, 800)); // Delay between requests
+      } catch (err) {
+        console.error('Publish error:', err);
+        toast({
+          title: "Error de Publicación",
+          description: `No se pudo publicar el post: ${post.title}.`,
+          variant: "destructive"
+        });
+      }
+    }
+
+    setIsPublishing(false);
+    toast({
+      title: "Publicación Completada",
+      description: `${publishedCount} de ${generatedPosts.length} posts publicados en WordPress.`,
+    });
+    setRecentBatches(prev => [
+      { topic: mainKeyword, date: "Just now", status: `Published (${publishedCount}/${generatedPosts.length})` },
+      ...prev.slice(0, 4)
+    ]);
   };
 
   return (
@@ -243,8 +299,8 @@ export default function BulkMassive() {
                 <div className="space-y-3">
                   <Label className="text-sm font-semibold text-slate-700">Main Keyword / Topic Cluster</Label>
                   <div className="relative">
-                    <Input 
-                      placeholder="e.g. 'Car Accident Settlements in California'" 
+                    <Input
+                      placeholder="e.g. 'Car Accident Settlements in California'"
                       className="h-12 text-lg pl-4 pr-12 border-slate-200 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                       value={mainKeyword}
                       onChange={(e) => setMainKeyword(e.target.value)}
@@ -261,7 +317,7 @@ export default function BulkMassive() {
                 {/* Nuevo campo para la API Key */}
                 <div className="space-y-3">
                   <Label className="text-sm font-semibold text-slate-700">Google AI API Key</Label>
-                  <Input 
+                  <Input
                     type="password"
                     placeholder="Ingresa tu clave de API de Google AI"
                     className="h-11 border-slate-200 shadow-sm"
@@ -311,7 +367,7 @@ export default function BulkMassive() {
                   </h3>
                   <div className="space-y-3">
                     <Label className="text-sm font-medium text-slate-700">n8n Workflow Integration</Label>
-                    <Select defaultValue="auto-post">
+                    <Select value={n8nWorkflow} onValueChange={setN8nWorkflow}>
                       <SelectTrigger className="h-10 bg-white border-slate-200">
                         <SelectValue placeholder="Select workflow" />
                       </SelectTrigger>
@@ -356,11 +412,11 @@ export default function BulkMassive() {
                 </div>
 
                 <div className="pt-4">
-                  <Button 
+                  <Button
                     className={cn(
                       "w-full h-14 text-lg font-medium shadow-lg transition-all duration-300",
                       isGenerating || !mainKeyword || !apiKey
-                        ? "bg-slate-100 text-slate-400 shadow-none cursor-not-allowed" 
+                        ? "bg-slate-100 text-slate-400 shadow-none cursor-not-allowed"
                         : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200"
                     )}
                     onClick={handleGenerate}
@@ -410,14 +466,14 @@ export default function BulkMassive() {
               <CardContent>
                 <div className="space-y-3">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div 
-                      key={i} 
+                    <div
+                      key={i}
                       className={cn(
                         "flex items-center gap-3 p-3 rounded-lg border transition-all duration-500",
-                        currentPost > i 
-                          ? "bg-green-50 border-green-200" 
+                        currentPost > i
+                          ? "bg-green-50 border-green-200"
                           : currentPost === i && isGenerating
-                          ? "bg-indigo-50 border-indigo-200 scale-[1.02] shadow-sm" 
+                          ? "bg-indigo-50 border-indigo-200 scale-[1.02] shadow-sm"
                           : "bg-white border-slate-100"
                       )}
                     >
@@ -466,8 +522,8 @@ export default function BulkMassive() {
                       <span>{Math.round((currentPost / 8) * 100)}%</span>
                     </div>
                     <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-indigo-600 rounded-full transition-all duration-500" 
+                      <div
+                        className="h-full bg-indigo-600 rounded-full transition-all duration-500"
                         style={{ width: `${(currentPost / 8) * 100}%` }}
                       />
                     </div>
@@ -515,9 +571,9 @@ export default function BulkMassive() {
                         )}>
                           {batch.status}
                         </Badge>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                           title="Regenerate this batch"
                           onClick={() => handleRegenerate(batch.topic)}

@@ -68,10 +68,38 @@ export default function BulkContentGenerator() {
       const wpUrl = localStorage.getItem("wpUrl") || "https://www.californiapersonalinjurylawyersblog.com";
       const wpUser = localStorage.getItem("wpUser") || "walchlaw4";
       const wpPass = localStorage.getItem("wpPass") || "eJs3M*LnfSSo68P!RtXC9lZ";
+      const n8nUrl = localStorage.getItem("n8nUrl") || "";
 
       let published = 0;
 
       for (const post of generatedPosts) {
+        // If n8n workflow mode is enabled, trigger webhook
+        if (workflowMode === 'auto-publish' && n8nUrl) {
+          try {
+            await fetch(n8nUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                credentials: { siteUrl: wpUrl, username: wpUser, applicationPassword: wpPass },
+                post: {
+                  title: post.title,
+                  content: post.content,
+                  excerpt: post.metaDescription,
+                  slug: post.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                  meta: {
+                    _yoast_wpseo_title: post.title,
+                    _yoast_wpseo_metadesc: post.metaDescription
+                  }
+                },
+                workflowMode: 'auto-publish'
+              })
+            });
+          } catch (n8nError) {
+            console.error('n8n webhook error:', n8nError);
+          }
+        }
+
+        // Direct WordPress publish
         const response = await fetch('/api/wordpress/publish', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -102,7 +130,7 @@ export default function BulkContentGenerator() {
         if (result.success) {
           published++;
           toast({
-            title: `Published ${published}/${generatedPosts.length}`,
+            title: `${workflowMode === 'auto-publish' ? 'Published' : 'Saved'} ${published}/${generatedPosts.length}`,
             description: post.title,
           });
         }
@@ -111,15 +139,15 @@ export default function BulkContentGenerator() {
       }
 
       toast({
-        title: "Bulk Publishing Complete!",
-        description: `Successfully published ${published} posts to WordPress.`,
+        title: "Bulk Processing Complete!",
+        description: `Successfully ${workflowMode === 'auto-publish' ? 'published' : 'saved'} ${published} posts.`,
       });
 
       if (campaignId) {
         setLocation(`/campaign/${campaignId}`);
       }
     } catch (e: any) {
-      toast({ title: "Error", description: e.message || "Failed to publish posts", variant: "destructive" });
+      toast({ title: "Error", description: e.message || "Failed to process posts", variant: "destructive" });
     } finally {
       setIsPublishing(false);
     }

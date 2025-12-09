@@ -82,14 +82,14 @@ export default function Settings() {
                 <div className="space-y-2">
                   <Label>Webhook URL (Production)</Label>
                   <div className="flex gap-2">
-                    <Input 
-                      placeholder="https://n8n.your-domain.com/webhook/..." 
+                    <Input
+                      placeholder="https://n8n.your-domain.com/webhook/..."
                       value={n8nUrl}
                       onChange={(e) => setN8nUrl(e.target.value)}
                       className="bg-white"
                     />
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={handleTestN8n}
                       disabled={isTestingN8n || !n8nUrl}
                     >
@@ -116,8 +116,8 @@ export default function Settings() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Site URL</Label>
-                  <Input 
-                    value={wpUrl} 
+                  <Input
+                    value={wpUrl}
                     onChange={(e) => setWpUrl(e.target.value)}
                     className="bg-white"
                   />
@@ -125,24 +125,24 @@ export default function Settings() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Username</Label>
-                    <Input 
-                      value={wpUser} 
+                    <Input
+                      value={wpUser}
                       onChange={(e) => setWpUser(e.target.value)}
                       className="bg-white"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Application Password</Label>
-                    <Input 
+                    <Input
                       type="password"
-                      value={wpPass} 
+                      value={wpPass}
                       onChange={(e) => setWpPass(e.target.value)}
                       className="bg-white"
                     />
                   </div>
                 </div>
                 <div className="pt-2">
-                  <Button 
+                  <Button
                     className="w-full bg-blue-600 hover:bg-blue-700"
                     onClick={handleTestWp}
                     disabled={isTestingWp}

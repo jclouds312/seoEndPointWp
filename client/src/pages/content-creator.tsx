@@ -32,8 +32,7 @@ import {
   MoreHorizontal,
   PenTool,
   Eraser,
-  Type,
-  Workflow
+  Type
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -451,12 +450,13 @@ If you have been injured in an accident, don't face the insurance companies alon
             <Eye className="w-4 h-4" /> Preview
           </Button>
           <Button
-            variant="outline"
-            className="gap-2 bg-white border-green-200 hover:bg-green-50 text-green-700"
+            variant="default"
+            className="gap-2 bg-green-600 hover:bg-green-700 text-white"
             onClick={handleAutoPublish}
+            disabled={!generatedContent}
           >
-            <Globe className="w-4 h-4 text-indigo-600" />
-            <span className="text-slate-700">Auto-Publish to WordPress</span>
+            <Globe className="w-4 h-4" />
+            Auto-Publish to WordPress
           </Button>
           <Button
             className="gap-2 bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20"
