@@ -1,0 +1,46 @@
+Mira lo que me dice gemini: Sí, es absolutamente posible. No necesita pagar por ningún plugin para hacer esto.
+Desde la versión 5.6 de WordPress, la API REST y las "Contraseñas de Aplicación" están integradas directamente en el software central. Esto significa que puede conectar n8n a WordPress de forma nativa y gratuita.
+Aquí tiene el método paso a paso para publicar de 8 a 10 publicaciones de blog generadas por IA al mes sin gastar un céntimo en plugins.
+El Concepto Central
+Utilizará la API REST de WordPress integrada.
+* Lado de WordPress: Genera una "Contraseña de Aplicación" específica para n8n.
+* Lado de n8n: Utiliza el nodo nativo de "WordPress" para enviar los datos de la publicación del blog.
+Paso 1: Generar una Contraseña de Aplicación Gratuita
+Esta es la forma moderna y segura de permitir que las herramientas externas se comuniquen con su sitio sin revelar su contraseña principal de administrador.
+1. Inicie sesión en su panel de administración de WordPress.
+2. Vaya a Usuarios > Perfil.
+3. Desplácese hacia abajo hasta la sección etiquetada Contraseñas de Aplicación.
+* Nota: Si no ve esto, verifique que su sitio se esté ejecutando en HTTPS (se requiere SSL para esta función).
+4. Ingrese un nombre para la aplicación (por ejemplo, n8n Automatización).
+5. Haga clic en Añadir Nueva Contraseña de Aplicación.
+6. Copie la contraseña inmediatamente. Se verá como una cadena de caracteres aleatorios (por ejemplo, abcd EFGH 1234 ijkl). No podrá verla de nuevo.
+Paso 2: Configurar n8n
+1. Abra su flujo de trabajo (workflow) de n8n.
+2. Agregue un nodo de WordPress (es un nodo estándar y gratuito en n8n).
+3. En la configuración del nodo, busque Credencial para conectar con y seleccione Crear Nuevo.
+4. Rellene los detalles:
+* Usuario: Su nombre de usuario de WordPress (el que usa para iniciar sesión).
+* Contraseña: La Contraseña de Aplicación que acaba de generar (NO su contraseña de inicio de sesión).
+* URL: La URL de su sitio web (por ejemplo, https://ejemplo.com).
+5. Haga clic en Guardar. Si se conecta correctamente, está listo para publicar.
+Paso 3: Construir el Flujo de Trabajo
+Su flujo de trabajo se verá aproximadamente así:
+1. Activador (Trigger): (p. ej., "Programado" para una vez a la semana, o un "Webhook" si lo activa manualmente).
+2. Agente de IA (LLM): Genera el contenido del blog.
+* Consejo: Pida a la IA que devuelva el resultado en formato JSON para que pueda separar fácilmente el "Título" del "Cuerpo".
+3. Nodo de WordPress:
+* Recurso (Resource): Post
+* Operación (Operation): Create
+* Título (Title): Mapee esto al título generado por su IA.
+* Contenido (Content): Mapee esto al texto del cuerpo generado por su IA.
+* Estado (Status): Establezca en Draft (Borrador) (recomendado para que pueda revisar antes de publicar) o Publish (Publicar) (si confía completamente en la IA).
+Errores Comunes Importantes a Considerar
+* Permalinks: La API REST a veces falla si sus Enlaces Permanentes de WordPress están configurados como "Simple". Vaya a Ajustes > Enlaces Permanentes y asegúrese de que esté configurado como Nombre de la entrada (o cualquier otra cosa que no sea "Simple").
+* Plugins de Seguridad: Si utiliza plugins de seguridad como Wordfence o iThemes Security, a veces bloquean la API REST. Es posible que deba incluir la dirección IP de su servidor n8n en la lista blanca o habilitar las "Contraseñas de Aplicación" en la configuración del plugin.
+* Imágenes: El nodo estándar de "Crear Publicación" solo crea texto. Si desea una Imagen Destacada, necesita un flujo de trabajo de dos pasos:
+1. Utilice el nodo de WordPress para Subir Medios (Upload Media) (subir la imagen).
+2. Pase el ID de esa imagen subida al nodo de Crear Publicación en el campo "Featured Image ID" (ID de Imagen Destacada).
+Resumen de Costos
+* Plugin de WordPress: 0 $ (Característica nativa).
+* Nodo de WordPress de n8n: 0 $ (Incluido en n8n gratuito/autoalojado).
+* Uso de API: 0 $ (Su propio servidor).

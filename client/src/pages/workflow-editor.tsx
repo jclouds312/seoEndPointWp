@@ -24,6 +24,7 @@ import {
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { AutoPublishWorkflowDialog } from "@/components/workflow/auto-publish-dialog";
 
 interface N8nWorkflow {
   id: string;
@@ -117,6 +118,7 @@ export default function Workflows() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [showAutoPublishDialog, setShowAutoPublishDialog] = useState(false);
   const [n8nUrl, setN8nUrl] = useState('');
 
   // Fetch workflows
@@ -236,10 +238,18 @@ export default function Workflows() {
           </Button>
           <Button 
             className="gap-2 bg-primary hover:bg-blue-700"
+            onClick={() => setShowAutoPublishDialog(true)}
+          >
+            <Zap className="w-4 h-4" />
+            Auto-Publish Flow
+          </Button>
+          <Button 
+            className="gap-2"
+            variant="outline"
             onClick={() => setShowTemplateDialog(true)}
           >
             <Plus className="w-4 h-4" />
-            New from Template
+            More Templates
           </Button>
         </div>
       </div>
@@ -286,6 +296,20 @@ export default function Workflows() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => {
+              setShowTemplateDialog(false);
+              setShowAutoPublishDialog(true);
+            }}>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-orange-600" />
+                  Auto-Publishing Machine
+                </CardTitle>
+                <CardDescription>
+                  Full automation: 8 posts/month with AI content & images to WordPress
+                </CardDescription>
+              </CardHeader>
+            </Card>
             <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => createTemplateMutation.mutate('yoast-sync')}>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
@@ -327,6 +351,15 @@ export default function Workflows() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      <AutoPublishWorkflowDialog 
+        open={showAutoPublishDialog} 
+        onOpenChange={setShowAutoPublishDialog}
+        onCreate={(config) => {
+          // Here we would typically make an API call to create the workflow in n8n
+          console.log("Creating workflow with config:", config);
+        }}
+      />
     </SidebarLayout>
   );
 }
