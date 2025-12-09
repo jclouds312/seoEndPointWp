@@ -33,7 +33,7 @@ async function buildServer() {
     target: 'node20',
     format: 'cjs',
     outfile: resolve(__dirname, '../dist/index.cjs'),
-    external: externals,
+    external: [...externals, "vite.config.ts"],
     logLevel: 'info',
   });
 }
