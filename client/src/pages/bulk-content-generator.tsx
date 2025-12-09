@@ -196,10 +196,24 @@ export default function BulkContentGenerator() {
 
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setGeneratedPosts(data.contents || []);
       setShowResults(true);
       setProgress(100);
+      
+      // Guardar en base de datos
+      if (data.contents && data.contents.length > 0) {
+        await fetch('/api/content/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            posts: data.contents,
+            batchId: `bulk-generator-${Date.now()}`,
+            bulkType: 'bulk-generator'
+          })
+        });
+      }
+      
       toast({
         title: "Generation Complete!",
         description: `Successfully generated ${data.contents?.length || 0} posts.`,

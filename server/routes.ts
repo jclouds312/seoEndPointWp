@@ -26,6 +26,38 @@ export async function registerRoutes(
     res.json({ status: "ok" });
   });
 
+  // Content Manager endpoints
+  app.get('/api/generated-content', async (_req, res) => {
+    try {
+      const contents = await db.select().from(generatedContent).orderBy(generatedContent.createdAt);
+      res.json(contents);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete('/api/content/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await db.delete(generatedContent).where(eq(generatedContent.id, id));
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/content/:id/publish', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await db.update(generatedContent)
+        .set({ status: 'published', publishedAt: new Date() })
+        .where(eq(generatedContent.id, id));
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // WordPress publishing endpoints
   app.post("/api/wordpress/publish", publishToWordPress);
   app.post("/api/wordpress/test-connection", testWordPressConnection);
@@ -123,6 +155,34 @@ export async function registerRoutes(
     }
   });
 
+  // Save generated content
+  app.post('/api/content/save', async (req, res) => {
+    try {
+      const { posts, userId, batchId, bulkType } = req.body;
+      
+      const insertedPosts = [];
+      for (const post of posts) {
+        const [inserted] = await db.insert(generatedContent).values({
+          title: post.title,
+          content: post.content,
+          metaDescription: post.metaDescription,
+          seoScore: post.seoScore,
+          status: 'draft',
+          userId: userId || null,
+          batchId: batchId || null,
+          bulkType: bulkType || 'bulk-massive',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }).returning();
+        insertedPosts.push(inserted);
+      }
+      
+      res.json({ success: true, saved: insertedPosts.length });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Bulk Massive Generator with Google AI
   app.post('/api/bulk-massive/generate', async (req, res) => {
     try {
@@ -194,6 +254,80 @@ Return ONLY the HTML content without any markdown or code blocks.`;
             content: content,
             metaDescription: item.metaDescription,
             seoScore: item.seoScore || Math.floor(Math.random() * 15) + 80,
+            status: 'draft'
+          };
+        })
+      );
+
+      res.json({
+        success: true,
+        generated: contents.length,
+        contents
+      });
+    } catch (error: any) {
+      console.error('Bulk generation error:', error);
+      res.status(500).json({ error: error.message || 'Generation failed' });
+    }
+  });
+
+  // Bulk content generation
+  app.post('/api/bulk-generate', async (req, res) => {
+    try {
+      const { count, topics, keywords, wordCount, provider, apiKey } = req.body;
+
+      if (provider === 'gemini' && !apiKey) {
+        return res.status(400).json({ error: 'API Key is required for Gemini' });
+      }
+
+      const topicsArray = topics.split(',').map((t: string) => t.trim());
+      const keywordsArray = keywords.split(',').map((k: string) => k.trim());
+
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+      const contents = await Promise.all(
+        Array.from({ length: count }).map(async (_, i) => {
+          const topic = topicsArray[i % topicsArray.length];
+          const keyword = keywordsArray[i % keywordsArray.length];
+
+          const prompt = `Escribe un artículo de blog profesional sobre "${topic}" optimizado para SEO con la palabra clave "${keyword}".
+
+Longitud: ${wordCount} palabras aproximadamente
+Formato: HTML limpio con etiquetas <h2>, <p>, <ul>, <li>
+
+Incluye:
+- Título atractivo y optimizado para SEO
+- Meta descripción (120-160 caracteres)
+- Introducción convincente
+- 3-4 secciones principales con H2
+- Consejos prácticos y accionables
+- Conclusión con llamado a la acción
+
+Devuelve SOLO un objeto JSON válido con esta estructura:
+{
+  "title": "Título del artículo",
+  "content": "Contenido HTML completo",
+  "metaDescription": "Meta descripción SEO",
+  "seoScore": 85
+}`;
+
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          const text = response.text();
+
+          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) {
+            throw new Error('Could not extract JSON from AI response');
+          }
+
+          const parsed = JSON.parse(jsonMatch[0]);
+
+          return {
+            id: `bulk-${Date.now()}-${i}`,
+            title: parsed.title,
+            content: parsed.content,
+            metaDescription: parsed.metaDescription,
+            seoScore: parsed.seoScore || Math.floor(Math.random() * 15) + 80,
             status: 'draft'
           };
         })

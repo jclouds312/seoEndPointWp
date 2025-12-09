@@ -32,7 +32,8 @@ import {
   MoreHorizontal,
   PenTool,
   Eraser,
-  Type
+  Type,
+  Workflow // Imported Workflow icon
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -479,6 +480,8 @@ If you have been injured in an accident, don't face the insurance companies alon
                <Separator orientation="vertical" className="h-4 mx-1" />
                <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><Sparkles className="w-4 h-4 text-purple-600" /></Button>
                <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><ImageIcon className="w-4 h-4 text-blue-600" /></Button>
+               {/* Added Workflow icon */}
+               <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><Workflow className="w-4 h-4 text-green-600" /></Button>
                <div className="ml-auto flex items-center gap-2 text-xs text-slate-400 px-2">
                  {isGenerating ? <span className="flex items-center gap-1 text-blue-600"><RefreshCw className="w-3 h-3 animate-spin" /> Writing...</span> : <span>Ready</span>}
                </div>

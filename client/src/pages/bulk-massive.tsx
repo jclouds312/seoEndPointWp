@@ -84,6 +84,17 @@ export default function BulkMassive() {
           setCurrentPost(i + 1);
           setGeneratedPosts(prev => [...prev, data.contents[i]]);
         }
+        
+        // Guardar en base de datos
+        await fetch('/api/content/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            posts: data.contents,
+            batchId: `bulk-massive-${Date.now()}`,
+            bulkType: 'bulk-massive'
+          })
+        });
       }
 
       setIsGenerating(false);
