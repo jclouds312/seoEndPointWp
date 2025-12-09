@@ -103,13 +103,13 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
                 <span className="text-sm font-medium">Content Creator</span>
               </div>
             </Link>
-            <Link href="/bulk-content-generator">
+            <Link href="/bulk-generator">
               <div className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all cursor-pointer group ${
-                location === "/bulk-content-generator"
+                location === "/bulk-generator"
                   ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
                   : "hover:bg-slate-900 hover:text-white text-slate-400"
               }`}>
-                <Calendar className={`w-4 h-4 transition-colors ${location === "/bulk-content-generator" ? "text-white" : "text-slate-500 group-hover:text-white"}`} />
+                <Calendar className={`w-4 h-4 transition-colors ${location === "/bulk-generator" ? "text-white" : "text-slate-500 group-hover:text-white"}`} />
                 <span className="text-sm font-medium">Bulk Generator</span>
               </div>
             </Link>
