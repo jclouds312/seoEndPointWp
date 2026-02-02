@@ -1,7 +1,7 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, serial, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -80,12 +80,28 @@ export const wordpressConnections = pgTable("wordpress_connections", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const dataSources = pgTable("data_sources", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // 'url', 'file', 'integration'
+  config: jsonb("config").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
 });
 
+export const insertCampaignSchema = createInsertSchema(campaigns).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertGeneratedContentSchema = createInsertSchema(generatedContent).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertWordpressConnectionSchema = createInsertSchema(wordpressConnections).omit({ id: true, createdAt: true, updatedAt: true });
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Campaign = typeof campaigns.$inferSelect;
+export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
 export type GeneratedContent = typeof generatedContent.$inferSelect;
+export type InsertGeneratedContent = z.infer<typeof insertGeneratedContentSchema>;
+export type WordpressConnection = typeof wordpressConnections.$inferSelect;
+export type InsertWordpressConnection = z.infer<typeof insertWordpressConnectionSchema>;
